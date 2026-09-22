@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Learning Tracker</title>
 <meta name="description" content="Team learning tracker with private playlists, progress and leaderboard.">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#f6f7fb;--surface:#fff;--surface2:#f0f2f8;--line:#e1e4ed;--text:#171927;--muted:#687087;--accent:#5b5bd6;--accent2:#8b5cf6;--good:#159b79;--bad:#d9534f;--r:16px;--shadow:0 8px 28px rgba(20,24,50,.07)}
 :root[data-theme=dark]{--bg:#0d0f18;--surface:#161927;--surface2:#1e2233;--line:#2b3044;--text:#eef0fb;--muted:#9da4bf;--accent:#8b8bff;--accent2:#b48bff;--good:#34d3a6;--bad:#ff7772;--shadow:0 8px 28px rgba(0,0,0,.28)}
@@ -42,7 +42,7 @@ table{width:100%;border-collapse:collapse}th{text-align:left;color:var(--muted);
 "use strict";
 const SUPABASE_URL="https://ejlgobrbajobdbcjodhr.supabase.co";
 const SUPABASE_KEY="sb_publishable_Y1qSvfxdjUUpIzH6USAl2g_di7FwICk";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+if(!window.supabase){document.getElementById("root").innerHTML='<div class="card notice bad"><b>App could not start.</b><div style="margin-top:6px">The Supabase client library did not load. Refresh the page and check that CDN scripts are not blocked.</div></div>';throw new Error("Supabase client library failed to load")}const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const state={user:null,profile:null,teams:[],team:null,members:[],playlists:[],videos:{},progress:new Set(),memberProgress:new Map(),view:"home",auth:"in",theme:"system",search:"",hideDone:false};
 const root=document.getElementById("root"), me=document.getElementById("me");
 const $=(s,p=document)=>p.querySelector(s), esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
@@ -57,7 +57,7 @@ async function loadTeam(){if(!state.team){state.playlists=[];state.members=[];re
 const {data:m,error:me}=await db.from("team_members").select("user_id,role,joined_at,profiles(id,display_name,avatar_url,bio,learning_goal,theme)").eq("team_id",state.team.id);if(me)throw me;state.members=m||[];
 const {data:p,error:pe}=await db.from("playlists").select("*").eq("team_id",state.team.id).order("created_at",{ascending:true});if(pe)throw pe;state.playlists=p||[];
 const ids=state.playlists.map(x=>x.id);state.videos={};if(ids.length){const {data:v,error:ve}=await db.from("playlist_videos").select("*").in("playlist_id",ids).order("position");if(ve)throw ve;(v||[]).forEach(x=>(state.videos[x.playlist_id]??=[]).push(x))}
-const {data:pr,error:pre}=await db.from("video_progress").select("user_id,playlist_video_id").in("playlist_video_id",ids.length?ids:["00000000-0000-0000-0000-000000000000"]);if(pre)throw pre;state.progress=new Set();state.memberProgress=new Map();(pr||[]).forEach(x=>{if(x.user_id===state.user.id)state.progress.add(x.playlist_video_id);if(!state.memberProgress.has(x.user_id))state.memberProgress.set(x.user_id,new Set());state.memberProgress.get(x.user_id).add(x.playlist_video_id)})}
+const videoIds=Object.values(state.videos).flat().map(x=>x.id);const {data:pr,error:pre}=videoIds.length?await db.from("video_progress").select("user_id,playlist_video_id").in("playlist_video_id",videoIds):{data:[],error:null};if(pre)throw pre;state.progress=new Set();state.memberProgress=new Map();(pr||[]).forEach(x=>{if(x.user_id===state.user.id)state.progress.add(x.playlist_video_id);if(!state.memberProgress.has(x.user_id))state.memberProgress.set(x.user_id,new Set());state.memberProgress.get(x.user_id).add(x.playlist_video_id)})}
 async function load(){if(!state.user)return;await loadProfile();await loadTeams();await loadTeam();render()}
 function admin(){return ["owner","admin"].includes(state.team?.role)}
 function owner(){return state.team?.role==="owner"}
