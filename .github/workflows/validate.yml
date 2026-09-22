@@ -1,0 +1,28 @@
+name: Validate
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  html:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate inline JavaScript syntax
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const html = fs.readFileSync("index.html", "utf8");
+          const scripts = [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)].map(m => m[1]).filter(Boolean);
+          if (!scripts.length) throw new Error("No inline JavaScript found");
+          for (const [i, code] of scripts.entries()) {
+            try { new Function(code); }
+            catch (e) { console.error("Script", i + 1, e.message); process.exit(1); }
+          }
+          console.log("JavaScript syntax OK");
+          NODE
