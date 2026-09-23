@@ -1,0 +1,1 @@
+export default function Placeholder({title}){return <div className="page"><header><div><p className="eyebrow">LEARNING BEYOND</p><h1>{title}</h1></div></header><section className="section"><h2>Module migration in progress</h2><p className="muted">The legacy implementation remains preserved while this area is moved into reusable React components.</p></section></div>}
