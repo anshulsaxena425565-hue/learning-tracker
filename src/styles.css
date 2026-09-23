@@ -55,10 +55,12 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 @media(max-width:850px){.kpi-grid{grid-template-columns:1fr 1fr}.kpi-card:first-child{grid-column:1/-1}.course-hero{align-items:flex-start}.course-hero .hero-ring{display:none}.profile-body{grid-template-columns:1fr}.profile-side{border-left:0;border-top:1px solid var(--line)}}
 @media(max-width:600px){.kpi-grid{grid-template-columns:1fr 1fr}.dashboard-hero{padding:20px}.hero-number{font-size:38px}.course-hero h1{font-size:27px}.profile-hero{align-items:flex-start}.profile-actions{padding:14px;flex-direction:column-reverse}.profile-actions button{width:100%}.leader-row{gap:8px}}
 
-/* Layout correction: the fixed sidebar already has its own grid column. */
-.content{margin:0;width:100%;max-width:none;min-width:0}
+/* Final desktop shell fix: sidebar is fixed, so content must reserve its 245px column. */
+.app{display:block;min-height:100vh}
+.content{margin-left:245px;width:calc(100% - 245px);max-width:none;min-width:0}
 .page{width:min(1180px,100%);max-width:1180px;margin:0 auto}
 .team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .kpi-grid{width:100%}
 .dashboard-hero,.course-hero,.section,.profile-shell,.form-grid{width:100%;min-width:0}
 @media(max-width:900px){.team-grid{grid-template-columns:1fr}.page{max-width:none}}
+@media(max-width:800px){.content{margin-left:0;width:100%}}
