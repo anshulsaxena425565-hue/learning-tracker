@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -20,16 +20,43 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
       - name: Install dependencies
         run: npm install
+
       - name: Build
         run: npm run build
+
+      # GitHub Pages is currently configured to deploy the main branch.
+      # Publish the compiled Vite output into the branch so that branch-based
+      # Pages serves the production bundle instead of raw JSX source files.
+      - name: Publish compiled site to main
+        run: |
+          rm -rf _site_publish
+          mkdir -p _site_publish
+          cp -R dist/. _site_publish/
+          rm -rf assets
+          mkdir -p assets
+          cp -R _site_publish/assets/. assets/
+          cp _site_publish/index.html ./index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets
+          if git diff --cached --quiet; then
+            echo "Compiled site is already up to date."
+          else
+            git commit -m "chore: publish compiled site [skip ci]"
+            git push origin HEAD:main
+          fi
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
