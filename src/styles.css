@@ -102,3 +102,25 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .section .section-head{align-items:center}
 @media(max-width:900px){.team-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.team-card{padding:16px}.team-code{margin:15px 0 12px}.actions{width:100%}.form-card .actions input,.form-card .actions button{width:100%;min-width:0}.team-member{align-items:flex-start;flex-wrap:wrap}.team-member .role-select{margin-left:42px}}
+
+/* Course library UI — balanced, clean form layout */
+.form-grid{grid-template-columns:1fr 1fr;align-items:stretch;gap:18px}
+.form-card{padding:24px;min-width:0}
+.form-card .section-head{align-items:flex-start;margin-bottom:22px}
+.form-card .section-head>div:first-child{min-width:0}
+.form-card h2{font-size:22px;line-height:1.2;margin-bottom:7px}
+.form-card .muted{line-height:1.5}
+.form-stack{display:grid;gap:16px}
+.form-stack>label{display:grid;gap:7px;font-size:13px;font-weight:700;color:var(--text)}
+.form-stack>label .muted{font-weight:500}
+.form-stack input,.form-stack textarea{width:100%;min-width:0;font:inherit}
+.form-stack input{height:44px}
+.form-stack textarea{min-height:150px;resize:vertical}
+.form-stack .notice{margin-top:0;line-height:1.5}
+.form-actions{display:flex;justify-content:flex-end;align-items:center;gap:9px;margin-top:2px}
+.form-actions button{min-height:42px}
+.admin-hero{min-height:150px;padding:28px 30px}
+.admin-hero h1{font-size:38px}
+.import-icon{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 8%,transparent)}
+@media(max-width:900px){.form-grid{grid-template-columns:1fr}.admin-hero h1{font-size:32px}}
+@media(max-width:600px){.form-card{padding:18px}.admin-hero{padding:20px}.admin-hero h1{font-size:28px}.form-actions{flex-direction:column-reverse}.form-actions button{width:100%}}
