@@ -478,3 +478,12 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .modal-empty{text-align:center;padding:45px 15px;display:grid;gap:5px;color:var(--muted)}.modal-empty span{font-size:34px}.modal-empty b{color:var(--text)}.modal-empty small{font-size:11px}
 @keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 @media(max-width:800px){.test-modal-backdrop{padding:12px}.test-leaderboard-modal{border-radius:18px;padding:17px}.modal-leader-row{grid-template-columns:30px 36px minmax(0,1fr) auto}.modal-avatar{width:34px;height:34px}.question-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
+/* Bilingual assessments */
+.test-builder-grid select{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;padding:11px;font:inherit}
+.test-language-switch{display:flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--line);background:var(--surface);border-radius:12px;box-shadow:var(--shadow);margin-left:auto}
+.test-language-switch span{font-size:10px;color:var(--muted);font-weight:700;padding:0 6px}
+.test-language-switch button{border:0;background:transparent;color:var(--muted);border-radius:8px;padding:7px 10px;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.test-language-switch button.active{background:var(--accent);color:#fff;box-shadow:0 4px 10px color-mix(in srgb,var(--accent) 20%,transparent)}
+.test-builder-grid label .muted{font-size:10px;font-weight:500}
+@media(max-width:800px){.test-language-switch{order:3;margin-left:0}.test-runner-head{flex-wrap:wrap}.test-language-switch span{display:none}}
