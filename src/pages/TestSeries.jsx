@@ -1,13 +1,28 @@
 import{useEffect,useState}from'react';import{supabase}from'../lib/supabase';import{useAuth}from'../context/AuthContext';import{useTeam}from'../context/TeamContext';
 
 function parseQuestions(raw){
- const blocks=raw.replace(/\r/g,'').split(/\n\s*\n+/).map(x=>x.trim()).filter(Boolean),out=[];
+ const text=String(raw||'').replace(/\\r/g,'').trim();if(!text)return[];
+ const lines=text.split('\\n').map(x=>x.trim()).filter(Boolean),blocks=[];let current=[];
+ const isQuestion=x=>/^(?:Q(?:uestion|uestion)?\\s*\\d*|प्रश्न\\s*\\d*)[.):-]?\\s+/i.test(x);
+ for(const line of lines){
+  if(isQuestion(line)&&current.length){blocks.push(current);current=[line]}else current.push(line);
+ }
+ if(current.length)blocks.push(current);
+ const out=[];
  for(const block of blocks){
-  const lines=block.split('\n').map(x=>x.trim()).filter(Boolean);
-  const opts=lines.map(line=>{const m=line.match(/^\(?([A-D])\)?[.)\-:]\s*(.+)$/i);return m?{letter:m[1].toUpperCase(),text:m[2].trim()}:null}).filter(Boolean);
-  const answer=(block.match(/(?:answer|correct\s*answer)\s*[:\-]?\s*\(?([A-D])\)?/i)||[])[1]?.toUpperCase();
-  const qLine=lines.find(x=>!/^\(?[A-D]\)?[.)\-:]/i.test(x)&&!/^answer\s*:/i.test(x));
-  if(qLine&&opts.length>=2&&answer)out.push({question:qLine.replace(/^Q(?:uestion)?\s*\d*[.:)\-]?\s*/i,'').trim(),options:opts.map((o,i)=>({position:i,option_text:o.text,is_correct:o.letter===answer}))});
+  const options=[],answers=[];
+  let question='';
+  for(const line of block){
+   const om=line.match(/^\\(?([A-D])\\)?[.)\\-:]\\s*(.+)$/i)||line.match(/^\\(?([1-4])\\)?[.)\\-:]\\s*(.+)$/);
+   const am=line.match(/^(?:answer|correct\\s*answer|उत्तर|सही\\s*उत्तर)\\s*[:\\-]?\\s*\\(?([A-D1-4])\\)?/i);
+   if(am){answers.push(am[1].toUpperCase());continue}
+   if(om){const letter=om[1].toUpperCase();const normalized=letter>='1'&&letter<='4'?String.fromCharCode(64+Number(letter)):letter;options.push({letter:normalized,text:om[2].trim()});continue}
+   if(!question&&!/^(?:answer|correct\\s*answer|उत्तर|सही\\s*उत्तर)\\b/i.test(line))question=line.replace(/^Q(?:uestion)?\\s*\\d*[.):-]?\\s*/i,'').replace(/^प्रश्न\\s*\\d*[.):-]?\\s*/i,'').trim();
+  }
+  const answer=answers[0];const validAnswer=answer>='1'&&answer<='4'?String.fromCharCode(64+Number(answer)):answer;
+  if(question&&options.length>=2&&validAnswer&&options.some(o=>o.letter===validAnswer)){
+   out.push({question,options:options.map((o,i)=>({position:i,option_text:o.text,is_correct:o.letter===validAnswer}))});
+  }
  }
  return out;
 }
