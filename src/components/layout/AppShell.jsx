@@ -9,14 +9,12 @@ const items=[
 
 function Icon({name,size=18}){
  const p={
-  grid:<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,
-  book:<><path d="M5 4.5h12a2 2 0 0 1 2 2V20H7a2 2 0 0 1-2-2z"/><path d="M7 4.5v15.5"/><path d="M9.5 8h6"/></>,
+  grid:<><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></>,
+  book:<><rect x="6" y="4" width="13" height="16" rx="2"/><path d="M6 7H4v13h11"/><path d="M10 8h5"/></>,
   users:<><circle cx="9" cy="9" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.5a3 3 0 0 1 0 6"/><path d="M17 14.5a5 5 0 0 1 4 5.5"/></>,
   trend:<><path d="M4 17l6-6 4 4 6-8"/><path d="M15 7h5v5"/></>,
   user:<><circle cx="12" cy="8" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/></>,
-  plus:<><path d="M12 5v14M5 12h14"/></>,
-  chevron:<path d="m9 18 6-6-6-6"/>,
-  panel:<><path d="M4 5h16v14H4z"/><path d="M9 5v14"/></>
+  plus:<><path d="M12 5v14M5 12h14"/></>
  }[name];
  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p}</svg>
 }
@@ -31,12 +29,12 @@ export default function AppShell({children,view,setView}){
  return <div className={'app '+(collapsed?'sidebar-collapsed':'')}>
   <aside className="sidebar">
    <div className="sidebar-brand">
-    <div className="brand">Learning<span>Beyond</span></div>
-    <button className="collapse-btn" onClick={toggle} title={collapsed?'Expand sidebar':'Collapse sidebar'}><Icon name="panel" size={17}/></button>
+    <div className="brand"><span className="brand-full">Learning<span>Beyond</span></span><span className="brand-mark">LB</span></div>
    </div>
+   <button className="collapse-btn" onClick={toggle} title={collapsed?'Expand sidebar':'Collapse sidebar'} aria-label={collapsed?'Expand sidebar':'Collapse sidebar'}>{collapsed?'›':'‹'}</button>
    <div className="workspace-picker">
-    <div className="workspace-avatar">{(team?.name||'T').slice(0,2).toUpperCase()}</div>
-    {!collapsed&&<div className="workspace-copy"><strong>{team?.name||'Your team'}</strong><select aria-label="Switch team" value={team?.id||''} onChange={e=>switchTeam(e.target.value)}>{teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></div>}
+    <div className="workspace-avatar">{(team?.name||'T').slice(0,1).toUpperCase()}</div>
+    {!collapsed&&<select aria-label="Switch team" value={team?.id||''} onChange={e=>switchTeam(e.target.value)}>{teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>}
    </div>
    <nav className="nav">
     {items.map(([id,label,icon])=><button title={collapsed?label:undefined} className={view===id?'active':''} onClick={()=>nav(id)} key={id}><span className="nav-icon"><Icon name={icon}/></span><span className="nav-label">{label}</span></button>)}
