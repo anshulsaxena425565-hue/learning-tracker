@@ -411,3 +411,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .leaderboard-page .trophy-art svg{width:18px!important;height:18px!important;max-width:18px!important;max-height:18px!important;display:block!important}
 .leaderboard-page .trophy-art{width:82px!important;height:82px!important;display:grid!important;place-items:center!important;font-size:0!important;right:5%!important;top:-5px!important;color:var(--accent)!important}
 .leaderboard-page .trophy-art svg{width:58px!important;height:58px!important;max-width:58px!important;max-height:58px!important;stroke-width:1.4!important}
+
+/* Leaderboard final polish */
+.row-status{font-size:9px;font-weight:800;color:#25a67b;text-align:right;min-width:42px}
+.mini-ranking{display:grid;gap:12px;padding-top:18px}.mini-rank-row{display:grid;grid-template-columns:24px 100px 1fr 40px;align-items:center;gap:10px;font-size:11px}.mini-rank-row>span{width:24px;height:24px;border-radius:7px;background:var(--surface2);display:grid;place-items:center;color:var(--muted);font-weight:800}.mini-rank-row b{font-size:11px}.mini-rank-row>div{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}.mini-rank-row i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),#8b80f4);transition:width .7s cubic-bezier(.22,1,.36,1)}.mini-rank-row strong{text-align:right;font-size:11px}
+.leaderboard-panel .row-status{display:block}
+@media(max-width:750px){.row-status{display:none}.mini-rank-row{grid-template-columns:24px 90px 1fr 35px}}
