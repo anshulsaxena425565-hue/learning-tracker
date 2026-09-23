@@ -124,3 +124,38 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .import-icon{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 8%,transparent)}
 @media(max-width:900px){.form-grid{grid-template-columns:1fr}.admin-hero h1{font-size:32px}}
 @media(max-width:600px){.form-card{padding:18px}.admin-hero{padding:20px}.admin-hero h1{font-size:28px}.form-actions{flex-direction:column-reverse}.form-actions button{width:100%}}
+
+/* Course player visual overhaul */
+.page>.back{width:max-content!important;display:inline-flex!important;align-items:center;gap:6px;background:transparent!important;color:var(--text)!important;padding:8px 2px!important;border-radius:8px!important;font-weight:700!important;box-shadow:none!important}
+.page>.back:hover{color:var(--accent)!important;transform:none!important;background:transparent!important}
+.player-layout{grid-template-columns:minmax(0,1fr) 310px;gap:18px;align-items:start}
+.player-card{border-radius:20px;box-shadow:var(--shadow);background:var(--surface)}
+.player-frame{aspect-ratio:16/9;min-height:0;background:#0b0d12}
+.player-frame>div{width:100%;height:100%}
+.watch-track{height:3px;background:var(--surface2)}
+.watch-track i{background:var(--accent);border-radius:0 3px 3px 0}
+.player-info{padding:22px 24px 24px}
+.player-info .eyebrow{margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-info h1{font-size:28px;line-height:1.2;letter-spacing:-.035em;margin-bottom:7px}
+.player-info>.muted{font-size:12px}
+.player-actions{padding-top:14px;border-top:1px solid var(--line);margin-top:16px}
+.player-actions>button{background:var(--surface2)!important;color:var(--text)!important;border:1px solid var(--line)!important;font-size:12px;font-weight:700}
+.course-tabs{display:flex;gap:4px;margin-left:auto;background:var(--surface2);padding:4px;border-radius:11px}
+.course-tabs button{border:0!important;background:transparent!important;color:var(--muted)!important;border-radius:8px!important;padding:7px 11px!important;font-size:12px;font-weight:700}
+.course-tabs button:hover{transform:none!important;background:var(--surface)!important;color:var(--text)!important}
+.course-tabs button.active{background:var(--surface)!important;color:var(--accent)!important;box-shadow:0 1px 3px rgba(20,24,50,.08)}
+.player-info>.section{margin-top:18px;padding:18px;border-radius:14px;box-shadow:none}
+.course-sidebar{position:sticky;top:28px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;max-height:calc(100vh - 56px);box-shadow:var(--shadow)}
+.course-sidebar .eyebrow{padding:0 4px 10px}
+.side-video{display:grid;grid-template-columns:30px minmax(0,1fr);align-items:start;gap:9px;border:0!important;border-bottom:1px solid var(--line)!important;background:transparent!important;color:var(--text)!important;border-radius:0!important;padding:12px 5px!important}
+.side-video:last-child{border-bottom:0!important}
+.side-video>span{width:27px;height:27px;border-radius:8px;background:var(--surface2);display:grid;place-items:center;color:var(--muted);font-size:11px;font-weight:800}
+.side-video b{font-size:12px;line-height:1.4;font-weight:650}
+.side-video:hover{background:var(--surface2)!important}
+.side-video.active{background:color-mix(in srgb,var(--accent) 7%,var(--surface))!important;border-radius:11px!important;border:0!important;margin:3px 0;padding:11px 7px!important}
+.side-video.active>span{background:var(--accent);color:#fff}
+.chapter-row{padding:12px 4px!important;color:var(--text)!important}
+.note-card{border:1px solid var(--line)!important;border-radius:10px!important;padding:11px!important;color:var(--text)!important}
+.transcript-list button{padding:11px 4px!important;color:var(--text)!important}
+@media(max-width:1000px){.player-layout{grid-template-columns:1fr}.course-sidebar{position:static;max-height:360px}.course-tabs{margin-left:0;overflow:auto}}
+@media(max-width:600px){.player-info{padding:18px}.player-info h1{font-size:23px}.player-actions{align-items:stretch}.course-tabs{width:100%;overflow:auto}.course-tabs button{white-space:nowrap}.player-actions>button{width:100%}}
