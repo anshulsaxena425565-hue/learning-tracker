@@ -401,3 +401,13 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 @media(max-width:1050px){.leader-kpis{grid-template-columns:repeat(2,1fr)}.leader-table-head,.leaderboard-row-modern{grid-template-columns:40px minmax(180px,1fr) minmax(130px,1fr) 100px 30px}}
 @media(max-width:750px){.leaderboard-hero{min-height:100px}.leaderboard-hero h1{font-size:29px}.trophy-art{display:none}.leaderboard-date{margin-top:0}.leaderboard-panel{padding:15px}.leaderboard-panel-head{align-items:flex-start;gap:12px;flex-direction:column}.leader-table-head{display:none}.leaderboard-row-modern{grid-template-columns:36px 1fr 80px 30px}.lesson-cell{display:none}.leader-bottom{grid-template-columns:1fr}.invite-strip{align-items:flex-start;gap:12px;flex-direction:column}.invite-strip button{width:100%}}
 @media(max-width:480px){.leader-kpis{grid-template-columns:1fr}.leaderboard-row-modern{grid-template-columns:32px 1fr 65px 28px}.completion-cell{justify-content:flex-end}.mini-ring{display:none}}
+
+/* Leaderboard SVG sizing hardening */
+.leaderboard-page .title-icon svg,
+.leaderboard-page .panel-icon svg,
+.leaderboard-page .stat-icon svg,
+.leaderboard-page .row-menu svg,
+.leaderboard-page .leaderboard-date svg,
+.leaderboard-page .trophy-art svg{width:18px!important;height:18px!important;max-width:18px!important;max-height:18px!important;display:block!important}
+.leaderboard-page .trophy-art{width:82px!important;height:82px!important;display:grid!important;place-items:center!important;font-size:0!important;right:5%!important;top:-5px!important;color:var(--accent)!important}
+.leaderboard-page .trophy-art svg{width:58px!important;height:58px!important;max-width:58px!important;max-height:58px!important;stroke-width:1.4!important}
