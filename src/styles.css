@@ -332,3 +332,34 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 @media(max-width:1000px){.milestone-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.modern-hero{padding:28px!important}.hero-orbit{margin-right:0}}
 @media(max-width:700px){.dashboard-header{align-items:flex-start!important;flex-direction:column}.dashboard-header h1{font-size:30px!important}.modern-hero{min-height:240px;padding:24px!important}.modern-hero h2{font-size:29px}.hero-orbit{display:none}.milestone-grid{grid-template-columns:1fr 1fr}.milestones-section{padding:18px 0}.modern-kpis{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.milestone-grid{grid-template-columns:1fr}.modern-kpis{grid-template-columns:1fr 1fr}.modern-kpi{min-height:110px}}
+
+/* Final dashboard art direction: calm, premium, compact */
+.dashboard-page{gap:18px}
+.dashboard-header{margin-bottom:2px!important}
+.dashboard-header h1{font-size:32px!important;font-weight:750!important}
+.modern-hero{min-height:238px!important;padding:30px 34px!important;border-radius:24px!important;background:linear-gradient(115deg,var(--surface) 0%,color-mix(in srgb,var(--accent) 5%,var(--surface)) 58%,color-mix(in srgb,var(--accent2) 10%,var(--surface)) 100%)!important;border-color:color-mix(in srgb,var(--accent) 12%,var(--line))!important;box-shadow:0 14px 38px rgba(27,31,65,.06)!important}
+.hero-pattern{position:absolute;inset:0;opacity:.35;background-image:radial-gradient(circle at 82% 45%,color-mix(in srgb,var(--accent) 13%,transparent) 0 2px,transparent 3px),radial-gradient(circle at 90% 25%,color-mix(in srgb,var(--accent2) 13%,transparent) 0 1px,transparent 2px);background-size:38px 38px,26px 26px;mask-image:linear-gradient(90deg,transparent 25%,#000 65%)}
+.modern-hero-copy{max-width:700px}
+.hero-kicker{font-size:10px}
+.modern-hero h2{font-size:34px!important;margin:12px 0 8px!important}
+.modern-hero p{font-size:14px!important;margin-bottom:15px!important}
+.hero-actions{display:flex;align-items:center;gap:14px}
+.hero-actions button{margin:0!important}
+.hero-caption{font-size:11px;color:var(--muted)}
+.hero-progress{position:relative;width:170px;height:170px;display:grid;place-items:center;flex:none;margin-right:8px}
+.hero-progress .hero-ring{width:128px;height:128px;animation:none}
+.hero-progress-label{position:absolute;bottom:-4px;right:0;font-size:8px;line-height:1.3;letter-spacing:.12em;font-weight:800;color:var(--muted);text-align:right}
+.modern-kpis{gap:12px!important}
+.modern-kpi{min-height:112px!important;border-radius:15px!important;padding:16px!important;box-shadow:0 5px 18px rgba(20,24,50,.045)!important}
+.modern-kpi strong{font-size:25px!important}
+.milestones-section{padding:6px 2px 4px!important}
+.milestones-section .section-head{padding:0 2px;margin-bottom:13px!important}
+.milestones-section h2{font-size:23px;letter-spacing:-.035em}
+.milestone-grid{gap:11px}
+.milestone-card{min-height:178px!important;border-radius:15px!important;padding:15px!important;box-shadow:0 5px 18px rgba(20,24,50,.045)!important}
+.milestone-card:hover{transform:translateY(-3px)}
+.milestone-ring{width:42px;height:42px}
+.milestone-card h3{font-size:14px}
+.dashboard-courses{border-radius:18px!important}
+@media(max-width:900px){.hero-progress{width:135px;height:135px}.hero-progress .hero-ring{width:108px;height:108px}}
+@media(max-width:650px){.modern-hero{min-height:220px!important;padding:22px!important}.modern-hero h2{font-size:27px!important}.hero-progress{display:none}.hero-actions{flex-direction:column;align-items:flex-start;gap:8px}.milestone-grid{grid-template-columns:1fr 1fr}}
