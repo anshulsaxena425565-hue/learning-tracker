@@ -243,3 +243,22 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 @media(max-width:800px){
  .sidebar-collapsed .content{margin-left:0;width:100%}
 }
+
+/* Sidebar final polish */
+.sidebar-brand{height:46px;padding:0 8px!important;display:flex;align-items:center!important}
+.sidebar-brand .brand{padding:0!important}
+.brand-full{display:inline}.brand-mark{display:none}
+.collapse-btn{position:absolute;top:68px;right:-13px!important;width:26px!important;height:26px!important;border-radius:50%!important;background:var(--surface)!important;border:1px solid var(--line)!important;box-shadow:0 2px 8px rgba(20,24,50,.1);z-index:25;font-size:18px;line-height:1;color:var(--muted)!important}
+.workspace-picker{margin-top:18px!important}
+.workspace-picker .workspace-avatar{width:36px;height:36px;min-width:36px}
+.workspace-picker>select{flex:1;width:100%;min-width:0;border:0!important;background:transparent!important;padding:4px 2px!important;font-size:12px;font-weight:650;color:var(--text)!important}
+.sidebar-collapsed .sidebar-brand{justify-content:center}
+.sidebar-collapsed .brand-full{display:none}.sidebar-collapsed .brand-mark{display:inline;font-size:17px;font-weight:800;color:var(--text)}
+.sidebar-collapsed .collapse-btn{right:-13px!important;top:68px}
+.sidebar-collapsed .workspace-picker{margin-top:18px!important}
+.sidebar-collapsed .workspace-picker .workspace-avatar{width:38px;height:38px}
+.sidebar-collapsed .nav{margin-top:4px}
+.sidebar-collapsed .sidebar-bottom{align-items:center}
+.sidebar-collapsed .signout{width:44px!important;height:42px;padding:0!important}
+.sidebar-collapsed .signout-icon{font-size:18px}
+@media(max-width:800px){.collapse-btn{display:none}}
