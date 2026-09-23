@@ -209,3 +209,37 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 }
 .course-grid .course-card .progress{height:5px;margin-top:10px}
 .course-grid .course-card h3{font-size:16px;line-height:1.35;margin-bottom:5px}
+
+/* Collapsible sidebar — LearningBeyond */
+.sidebar{transition:width .22s ease,padding .22s ease;overflow:hidden}
+.sidebar-brand{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 18px}
+.sidebar-brand .brand{padding:0;white-space:nowrap}
+.collapse-btn{width:30px!important;height:30px!important;min-width:30px;border:1px solid var(--line)!important;background:var(--surface2)!important;color:var(--muted)!important;border-radius:9px!important;display:grid!important;place-items:center!important;padding:0!important;cursor:pointer}
+.collapse-btn:hover{color:var(--text)!important;border-color:var(--accent)!important;transform:none!important}
+.workspace-picker{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);background:var(--surface2);border-radius:13px;margin-bottom:16px;min-width:0}
+.workspace-avatar{width:38px;height:38px;min-width:38px;border-radius:11px;background:linear-gradient(145deg,var(--accent),var(--accent2));color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;letter-spacing:.02em}
+.workspace-copy{min-width:0;flex:1}
+.workspace-copy strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px}
+.workspace-copy select{width:100%;border:0;background:transparent;padding:0;color:var(--muted);font-size:11px;min-width:0}
+.nav-icon{width:20px!important;height:20px;display:grid!important;place-items:center;flex:none}
+.nav-icon svg{display:block}
+.nav-label{white-space:nowrap}
+.profile-mini{min-width:0}
+.profile-email{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.signout{display:flex!important;align-items:center;justify-content:center;gap:8px;width:100%}
+.signout-icon{font-size:15px;transform:rotate(180deg);display:inline-block}
+.sidebar-collapsed .sidebar{width:78px;padding-left:12px;padding-right:12px}
+.sidebar-collapsed .content{margin-left:78px;width:calc(100% - 78px)}
+.sidebar-collapsed .sidebar-brand{justify-content:center;padding-left:0;padding-right:0}
+.sidebar-collapsed .sidebar-brand .brand{font-size:0}
+.sidebar-collapsed .sidebar-brand .brand span{display:none}
+.sidebar-collapsed .collapse-btn{position:absolute;right:9px;top:48px}
+.sidebar-collapsed .workspace-picker{justify-content:center;padding:8px}
+.sidebar-collapsed .workspace-copy,.sidebar-collapsed .nav-label,.sidebar-collapsed .profile-email,.sidebar-collapsed .signout>span:not(.signout-icon){display:none}
+.sidebar-collapsed .nav button{justify-content:center;padding:11px 8px}
+.sidebar-collapsed .profile-mini{justify-content:center;padding:8px}
+.sidebar-collapsed .signout{padding:10px}
+.sidebar-collapsed .signout-icon{margin:0}
+@media(max-width:800px){
+ .sidebar-collapsed .content{margin-left:0;width:100%}
+}
