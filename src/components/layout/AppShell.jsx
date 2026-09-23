@@ -19,22 +19,22 @@ function Icon({name,size=18}){
  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p}</svg>
 }
 
-export default function AppShell({children,view,setView}){
+export default function AppShell({children,view,setView,locked=false}){
  const{user}=useAuth(),{team,teams,switchTeam}=useTeam();const[profileName,setProfileName]=useState('');
  const[collapsed,setCollapsed]=useState(()=>localStorage.getItem('lb-sidebar-collapsed')==='1');
  const[open,setOpen]=useState(false);useEffect(()=>{if(!user){setProfileName('');return}supabase.from('profiles').select('display_name').eq('id',user.id).maybeSingle().then(({data})=>setProfileName(data?.display_name||''))},[user]);
  const isAdmin=['owner','admin'].includes(team?.role);
  function toggle(){setCollapsed(v=>{localStorage.setItem('lb-sidebar-collapsed',String(!v));return!v})}
- function nav(id){setView(id);setOpen(false)}
+ function nav(id){if(locked)return;setView(id);setOpen(false)}
  return <div className={'app '+(collapsed?'sidebar-collapsed':'')}>
-  <aside className="sidebar">
+  <aside className={'sidebar '+(locked?'test-nav-locked':'')}>
    <div className="sidebar-brand">
     <div className="brand"><span className="brand-full">Learning<span>Beyond</span></span><span className="brand-mark">LB</span></div>
    </div>
-   <button className="collapse-btn" onClick={toggle} title={collapsed?'Expand sidebar':'Collapse sidebar'} aria-label={collapsed?'Expand sidebar':'Collapse sidebar'}>{collapsed?'›':'‹'}</button>
-   <div className="workspace-picker">
+   <button className="collapse-btn" disabled={locked} onClick={toggle} title={collapsed?'Expand sidebar':'Collapse sidebar'} aria-label={collapsed?'Expand sidebar':'Collapse sidebar'}>{collapsed?'›':'‹'}</button>
+   <div className={'workspace-picker '+(locked?'disabled':'')}>
     <div className="workspace-avatar">{(team?.name||'T').slice(0,1).toUpperCase()}</div>
-    {!collapsed&&<select aria-label="Switch team" value={team?.id||''} onChange={e=>switchTeam(e.target.value)}>{teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>}
+    {!collapsed&&<select aria-label="Switch team" value={team?.id||''} disabled={locked} onChange={e=>switchTeam(e.target.value)}>{teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>}
    </div>
    <nav className="nav">
     {items.map(([id,label,icon])=><button title={collapsed?label:undefined} className={view===id?'active':''} onClick={()=>nav(id)} key={id}><span className="nav-icon"><Icon name={icon}/></span><span className="nav-label">{label}</span></button>)}
@@ -42,7 +42,7 @@ export default function AppShell({children,view,setView}){
    </nav>
    <div className="sidebar-bottom">
     <button className="profile-mini" onClick={()=>nav('profile')} title={collapsed?(profileName||user?.user_metadata?.full_name||'Learner'):undefined}><span className="avatar-dot">{(user?.email||'L')[0].toUpperCase()}</span><span className="profile-email">{profileName||user?.user_metadata?.full_name||'Learner'}</span></button>
-    <button className="signout" onClick={()=>supabase.auth.signOut()}><span className="signout-icon">↗</span><span>Sign out</span></button>
+    <button className="signout" disabled={locked} onClick={()=>supabase.auth.signOut()}><span className="signout-icon">↗</span><span>Sign out</span></button>
    </div>
   </aside>
   <header className="mobile-head"><div className="brand">Learning<span>Beyond</span></div><button onClick={()=>setOpen(!open)} aria-label="Open navigation">☰</button></header>
