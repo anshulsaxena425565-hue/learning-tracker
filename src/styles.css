@@ -188,3 +188,24 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .lesson-check.checked{background:var(--accent)!important;border-color:var(--accent)!important}
 @media(max-width:900px){.kpi-grid{grid-template-columns:1fr 1fr}.library-course-head{align-items:flex-start}.library-course-head button{margin-left:auto}}
 @media(max-width:600px){.kpi-grid{grid-template-columns:1fr 1fr}.course-manage-bar{align-items:flex-start;flex-direction:column}.library-course-head{flex-wrap:wrap}.library-course-head button{width:100%}}
+
+/* Dashboard course cards must read as separate cards */
+.course-grid .course-card{
+ display:flex!important;
+ align-items:center!important;
+ gap:16px!important;
+ min-height:120px;
+ padding:18px!important;
+ background:var(--surface)!important;
+ border:1px solid var(--line)!important;
+ border-radius:16px!important;
+ box-shadow:var(--shadow)!important;
+}
+.course-grid .course-card:hover{
+ border-color:color-mix(in srgb,var(--accent) 35%,var(--line))!important;
+}
+.course-grid .course-card .course-ring{
+ width:58px;height:58px;min-width:58px;
+}
+.course-grid .course-card .progress{height:5px;margin-top:10px}
+.course-grid .course-card h3{font-size:16px;line-height:1.35;margin-bottom:5px}
