@@ -64,3 +64,15 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .dashboard-hero,.course-hero,.section,.profile-shell,.form-grid{width:100%;min-width:0}
 @media(max-width:900px){.team-grid{grid-template-columns:1fr}.page{max-width:none}}
 @media(max-width:800px){.content{margin-left:0;width:100%}}
+
+/* Profile UI polish */
+.profile-body{grid-template-columns:minmax(0,1fr) minmax(320px,.75fr)}
+.profile-body>section,.profile-side{min-width:0}
+.profile-field{max-width:620px}
+.profile-field input,.profile-field textarea,.profile-side input,.profile-side select{display:block;width:100%;max-width:100%}
+.profile-side{display:flex;flex-direction:column;justify-content:flex-start;gap:0}
+.profile-side .profile-preview{width:100%;margin:10px 0 24px}
+.profile-side>label{width:100%;margin-top:14px}
+.profile-side>label input,.profile-side>label select{margin-top:6px}
+.profile-actions{background:var(--surface)}
+@media(max-width:850px){.profile-body{grid-template-columns:1fr}.profile-field{max-width:none}}
