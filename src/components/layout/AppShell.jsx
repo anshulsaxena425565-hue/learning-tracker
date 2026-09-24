@@ -4,7 +4,7 @@ import{useTeam}from'../../context/TeamContext';
 import{supabase}from'../../lib/supabase';
 
 const items=[
- ['dashboard','Dashboard','grid'],['courses','Courses','book'],['teams','Teams','users'],['chat','Team Chat','chat'],['leaderboard','Leaderboard','trend'],['profile','Profile','user']
+ ['dashboard','Dashboard','grid'],['courses','Courses','book'],['quizzes','Quizzes','quiz'],['teams','Teams','users'],['chat','Team Chat','chat'],['leaderboard','Leaderboard','trend'],['profile','Profile','user']
 ];
 
 function Icon({name,size=18}){
@@ -14,6 +14,7 @@ function Icon({name,size=18}){
   users:<><circle cx="9" cy="9" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.5a3 3 0 0 1 0 6"/><path d="M17 14.5a5 5 0 0 1 4 5.5"/></>,
   trend:<><path d="M4 17l6-6 4 4 6-8"/><path d="M15 7h5v5"/></>,
   user:<><circle cx="12" cy="8" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/></>,
+  quiz:<><path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 8h8M8 12h5M8 16h7"/></>,
   chat:<><path d="M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-4 3v-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M8 11h8M8 14h5"/></>,
   plus:<><path d="M12 5v14M5 12h14"/></>,
   shield:<><path d="M12 3l8 3v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-3z"/><path d="M9 12l2 2 4-4"/></>
