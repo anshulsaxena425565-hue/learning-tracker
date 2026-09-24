@@ -510,9 +510,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .chat-messages::-webkit-scrollbar{width:9px}.chat-messages::-webkit-scrollbar-track{background:transparent}.chat-messages::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--muted) 22%,transparent);border:3px solid transparent;background-clip:padding-box;border-radius:99px}
 @media(max-width:700px){.chat-shell{height:calc(100dvh - 128px);min-height:520px;max-height:none;border-radius:18px}.chat-top{padding:13px}.chat-tools input{width:auto;min-width:0}.chat-messages{padding:16px 12px 20px}.chat-message{max-width:92%}.chat-composer{padding:10px}.chat-message-actions{opacity:1;pointer-events:auto;position:static;transform:none;box-shadow:none;border:0;background:transparent;padding:0;margin-top:4px}.chat-message.mine .chat-message-actions{display:flex;justify-content:flex-end}.reaction-popover{top:34px}.chat-new{bottom:105px}}
 
-/* Chat viewport lock: only the message pane scrolls */
-.chat-page{height:calc(100vh - 90px);min-height:0;overflow:hidden}.chat-page>header{flex:none}.chat-page .chat-shell{height:auto;min-height:0;max-height:none;flex:1}
-@media(max-width:800px){.chat-page{height:calc(100dvh - 92px)}}
+/* Chat viewport lock: page stays fixed, only the message pane scrolls */
+.chat-page{height:calc(100vh - 88px);min-height:0;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr);align-content:stretch}.chat-page>header{min-height:0;margin-bottom:14px}.chat-page .chat-shell{height:auto;min-height:0;max-height:none;overflow:hidden;flex:none;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto}.chat-page .chat-messages{min-height:0;height:auto;overflow-y:auto;overflow-x:hidden}.chat-page .chat-composer{min-height:104px;flex:none}
+@media(max-width:800px){.chat-page{height:calc(100dvh - 92px);grid-template-rows:auto minmax(0,1fr)}.chat-page>header{margin-bottom:10px}.chat-page .chat-composer{min-height:96px}}
 
 /* Leaderboard Arena — gamified analytics */
 .leader-tabs{display:flex;gap:6px;padding:5px;background:var(--surface2);border:1px solid var(--line);border-radius:14px;width:max-content;max-width:100%;overflow:auto}.leader-tabs button{border:0;background:transparent;color:var(--muted);padding:9px 14px;border-radius:10px;font:inherit;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;transition:.18s}.leader-tabs button:hover{color:var(--text);transform:translateY(-1px)}.leader-tabs button.active{background:var(--surface);color:var(--accent);box-shadow:0 5px 16px rgba(20,24,50,.08)}
