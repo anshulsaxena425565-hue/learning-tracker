@@ -48,6 +48,8 @@ export default function Admin(){
  const editRecord=(type,x)=>{let patch={};if(type==='user')patch={display_name:x.display_name||'',learning_goal:x.learning_goal||'',bio:x.bio||'',theme:x.theme||'system'};if(type==='team')patch={name:x.name,code:x.code,description:x.description||'',category:x.category||'',visibility:x.visibility||'private'};setEdit({type,id:x.id,patch})};
  const save=async()=>{const table=edit.type==='user'?'profiles':'teams';setBusy(true);const{error}=await supabase.from(table).update(edit.patch).eq('id',edit.id);setBusy(false);if(error)setMsg(error.message);else{setMsg('Saved successfully.');setEdit(null);load()}};
  const teamData=detail?.type==='team'?detail.data:null,userData=detail?.type==='user'?detail.data:null;
+ const teamCtl=teamData?(d.teamControls.find(x=>x.team_id===teamData.id)||{}):{};
+ const userCtl=userData?(d.userControls.find(x=>x.user_id===userData.id)||{}):{};
  const teamCourses=teamData?d.courses.filter(x=>x.team_id===teamData.id):[],teamTests=teamData?d.tests.filter(x=>x.team_id===teamData.id):[],teamMembers=teamData?(membersByTeam[teamData.id]||[]):[];
  const teamVideoIds=new Set(teamCourses.flatMap(c=>d.videos.filter(v=>v.playlist_id===c.id).map(v=>v.id)));
  const teamProgress=teamData?d.progress.filter(x=>teamVideoIds.has(x.playlist_video_id)) :[],teamAttempts=teamData?d.attempts.filter(a=>teamTests.some(t=>t.id===a.test_id)):[];
