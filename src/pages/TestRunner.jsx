@@ -11,8 +11,8 @@ export default function TestRunner({testId,onBack}){
  useEffect(()=>{if(!locked)return;const visibility=()=>{if(document.hidden)setAway(true)};document.addEventListener('visibilitychange',visibility);return()=>document.removeEventListener('visibilitychange',visibility)},[locked]);
 
  const count=data?.questions?.length||0,q=data?.questions?.[index],answered=Object.keys(answers).length;
- const displayQuestion=language==='hi'&&q?.question_hi?q.question_hi:q?.question;
- const displayOption=o=>language==='hi'&&o?.option_text_hi?o.option_text_hi:o?.option_text;
+ const displayQuestion=language==='hi'?(q?.question_hi||q?.question):q?.question;
+ const displayOption=o=>language==='hi'?(o?.option_text_hi||o?.option_text):o?.option_text;
  const formatted=useMemo(()=>{if(secondsLeft==null)return'∞';const m=Math.floor(secondsLeft/60),s=secondsLeft%60;return m+':'+String(s).padStart(2,'0')},[secondsLeft]);
 
  function flushTime(){if(!q)return;const elapsed=Math.max(0,Math.round((Date.now()-questionStarted.current)/1000));if(elapsed){const next={...timesRef.current,[q.id]:(timesRef.current[q.id]||0)+elapsed};timesRef.current=next;setTimes(next)}questionStarted.current=Date.now()}
