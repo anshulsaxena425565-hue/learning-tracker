@@ -1,4 +1,4 @@
-import{useEffect,useMemo,useState}from'react';import{supabase}from'../lib/supabase';import{useTeam}from'../context/TeamContext';
+import{useEffect,useMemo,useState}from'react';import{supabase}from'../lib/supabase';import{useTeam}from'../context/TeamContext';import{useAuth}from'../context/AuthContext';
 
 function Icon({type}){const paths={users:<><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5a3 3 0 0 1 0 6"/><path d="M17 14a5 5 0 0 1 4 6"/></>,book:<><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M9 7h6"/></>,trend:<><path d="M4 17l5-5 4 3 7-9"/><path d="M15 6h5v5"/></>,flame:<><path d="M12 21c4.4 0 7-2.8 7-6.5 0-3.4-2.2-5.5-4.8-8.5.1 2.4-.8 3.7-2 4.7.2-3.7-1.8-6.4-4.2-8.7.2 4.2-3 6.4-3 10.2C5 17.5 7.9 21 12 21z"/></>,chart:<><path d="M5 20V10M12 20V5M19 20v-8"/></>,calendar:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></>,trophy:<><path d="M8 4h8v4a4 4 0 0 1-8 0z"/><path d="M8 5H5v2a4 4 0 0 0 4 4M16 5h3v2a4 4 0 0 1-4 4"/><path d="M12 12v4M8 20h8M9 16h6"/></>,quiz:<><path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 8h8M8 12h5M8 16h7"/></>,bolt:<path d="M13 2L4 14h7l-1 8 10-13h-7z"/>,target:<><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></>,medal:<><circle cx="12" cy="15" r="6"/><path d="M8 9l-2-6h4l2 5 2-5h4l-2 6"/></>};return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[type]}</svg>}
 
@@ -7,13 +7,13 @@ function streak(activity){const days=[...new Set((activity?.completed||[]).map(x
 function initials(name){return String(name||'Member').split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase()}
 
 export default function Leaderboard(){
- const{team,members,memberProgress,memberActivity,videos}=useTeam(),[tab,setTab]=useState('personal'),[period,setPeriod]=useState('all'),[quizAttempts,setQuizAttempts]=useState([]),[selected,setSelected]=useState(null);
+ const{user}=useAuth(),{team,members,memberProgress,memberActivity,videos}=useTeam(),[tab,setTab]=useState('personal'),[period,setPeriod]=useState('all'),[quizAttempts,setQuizAttempts]=useState([]),[selected,setSelected]=useState(null);
  const totalLessons=Object.values(videos).flat().length;
  const admin=['owner','admin'].includes(team?.role);
  useEffect(()=>{(async()=>{if(!team?.id)return;const tests=(await supabase.from('test_series').select('id').eq('team_id',team.id)).data||[];const chunks=await Promise.all(tests.map(t=>supabase.rpc('get_test_attempt_history',{p_test_id:t.id})));setQuizAttempts(chunks.flatMap(x=>x.data||[]))})()},[team?.id]);
  const cutoff=period==='week'?Date.now()-7*864e5:period==='month'?Date.now()-30*864e5:0;
  const rows=useMemo(()=>members.map(m=>{const a=memberActivity[m.user_id]||{completed:[],inProgress:[],timeSeconds:0},done=(a.completed||[]).filter(x=>!cutoff||new Date(x.completedAt).getTime()>=cutoff).length,all=memberProgress[m.user_id]?.size||0,q=quizAttempts.filter(x=>x.user_id===m.user_id),avg=q.length?Math.round(q.reduce((n,x)=>n+Number(x.percentage||0),0)/q.length):0,time=Number(a.timeSeconds||0),xp=all*50+Math.floor(time/300)*5+q.reduce((n,x)=>n+Math.round(Number(x.percentage||0)/10),0);return{m,a,done,all,quiz:q.length,avg,time,xp,streak:streak(a),percent:Math.round(all/(totalLessons||1)*100)}}),[members,memberActivity,memberProgress,quizAttempts,totalLessons,cutoff]);
- const personal=rows[0]||{done:0,all:0,quiz:0,avg:0,time:0,xp:0,streak:0,percent:0,m:{profiles:{display_name:'You'}}};
+ const personal=rows.find(r=>r.m.user_id===user?.id)||{done:0,all:0,quiz:0,avg:0,time:0,xp:0,streak:0,percent:0,m:{profiles:{display_name:'You'}}};
  const totalXp=rows.reduce((n,r)=>n+r.xp,0),teamTime=rows.reduce((n,r)=>n+r.time,0),teamDone=rows.reduce((n,r)=>n+r.all,0),teamQuiz=rows.reduce((n,r)=>n+r.quiz,0);
  const fmt=s=>{s=Math.max(0,Math.floor(s||0));const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?(h+'h '+m+'m'):(m+'m')};
  const sorted=[...rows].sort((a,b)=>b.xp-a.xp);
