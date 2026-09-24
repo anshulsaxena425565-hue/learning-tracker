@@ -24,7 +24,7 @@ export default function AppShell({children,view,setView,locked=false}){
  const{user}=useAuth(),{team,teams,switchTeam}=useTeam();const[profileName,setProfileName]=useState('');
  const[collapsed,setCollapsed]=useState(()=>localStorage.getItem('lb-sidebar-collapsed')==='1');
  const[open,setOpen]=useState(false);useEffect(()=>{if(!user){setProfileName('');return}supabase.from('profiles').select('display_name').eq('id',user.id).maybeSingle().then(({data})=>setProfileName(data?.display_name||''))},[user]);
- const isAdmin=['owner','admin'].includes(team?.role);const[platformAdmin,setPlatformAdmin]=useState(false);useEffect(()=>{if(user)supabase.rpc('is_platform_admin').then(({data})=>setPlatformAdmin(!!data))},[user]);
+ const isAdmin=['owner','admin'].includes(team?.role);const[platformAdmin,setPlatformAdmin]=useState(false);useEffect(()=>{let alive=true;async function check(){if(!user){setPlatformAdmin(false);return}const rpc=await supabase.rpc('is_platform_admin');if(alive&&rpc.data===true){setPlatformAdmin(true);return}const direct=await supabase.from('platform_admins').select('user_id').eq('user_id',user.id).maybeSingle();if(alive)setPlatformAdmin(!direct.error&&!!direct.data)}check();return()=>{alive=false}},[user?.id]);
  function toggle(){setCollapsed(v=>{localStorage.setItem('lb-sidebar-collapsed',String(!v));return!v})}
  function nav(id){if(locked)return;setView(id);setOpen(false)}
  return <div className={'app '+(collapsed?'sidebar-collapsed':'')}>
@@ -48,7 +48,7 @@ export default function AppShell({children,view,setView,locked=false}){
    </div>
   </aside>
   <header className="mobile-head"><div className="brand">Learning<span>Beyond</span></div><button onClick={()=>setOpen(!open)} aria-label="Open navigation">☰</button></header>
-  {open&&<div className="mobile-nav">{items.map(([id,label,icon])=><button onClick={()=>nav(id)} key={id}><Icon name={icon}/>{label}</button>)}{isAdmin&&<button onClick={()=>nav('add')}><Icon name="plus"/>Add course</button>}</div>}
+  {open&&<div className="mobile-nav">{items.map(([id,label,icon])=><button onClick={()=>nav(id)} key={id}><Icon name={icon}/>{label}</button>)}{platformAdmin&&<button onClick={()=>nav('admin')}><Icon name="shield"/>Admin</button>}{isAdmin&&<button onClick={()=>nav('add')}><Icon name="plus"/>Add course</button>}</div>}
   <main className="content">{children}</main>
  </div>
 }
