@@ -14,7 +14,8 @@ function Icon({name,size=18}){
   users:<><circle cx="9" cy="9" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.5a3 3 0 0 1 0 6"/><path d="M17 14.5a5 5 0 0 1 4 5.5"/></>,
   trend:<><path d="M4 17l6-6 4 4 6-8"/><path d="M15 7h5v5"/></>,
   user:<><circle cx="12" cy="8" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/></>,
-  plus:<><path d="M12 5v14M5 12h14"/></>
+  plus:<><path d="M12 5v14M5 12h14"/></>,
+  shield:<><path d="M12 3l8 3v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-3z"/><path d="M9 12l2 2 4-4"/></>
  }[name];
  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p}</svg>
 }
@@ -23,7 +24,7 @@ export default function AppShell({children,view,setView,locked=false}){
  const{user}=useAuth(),{team,teams,switchTeam}=useTeam();const[profileName,setProfileName]=useState('');
  const[collapsed,setCollapsed]=useState(()=>localStorage.getItem('lb-sidebar-collapsed')==='1');
  const[open,setOpen]=useState(false);useEffect(()=>{if(!user){setProfileName('');return}supabase.from('profiles').select('display_name').eq('id',user.id).maybeSingle().then(({data})=>setProfileName(data?.display_name||''))},[user]);
- const isAdmin=['owner','admin'].includes(team?.role);
+ const isAdmin=['owner','admin'].includes(team?.role);const[platformAdmin,setPlatformAdmin]=useState(false);useEffect(()=>{if(user)supabase.rpc('is_platform_admin').then(({data})=>setPlatformAdmin(!!data))},[user]);
  function toggle(){setCollapsed(v=>{localStorage.setItem('lb-sidebar-collapsed',String(!v));return!v})}
  function nav(id){if(locked)return;setView(id);setOpen(false)}
  return <div className={'app '+(collapsed?'sidebar-collapsed':'')}>
@@ -38,6 +39,7 @@ export default function AppShell({children,view,setView,locked=false}){
    </div>
    <nav className="nav">
     {items.map(([id,label,icon])=><button title={collapsed?label:undefined} className={view===id?'active':''} onClick={()=>nav(id)} key={id}><span className="nav-icon"><Icon name={icon}/></span><span className="nav-label">{label}</span></button>)}
+    {platformAdmin&&<button title={collapsed?'Admin':undefined} className={view==='admin'?'active':''} onClick={()=>nav('admin')}><span className="nav-icon"><Icon name="shield"/></span><span className="nav-label">Admin</span></button>}
     {isAdmin&&<button title={collapsed?'Add course':undefined} className={view==='add'?'active':''} onClick={()=>nav('add')}><span className="nav-icon"><Icon name="plus"/></span><span className="nav-label">Add course</span></button>}
    </nav>
    <div className="sidebar-bottom">
