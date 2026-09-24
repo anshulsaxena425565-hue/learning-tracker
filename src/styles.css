@@ -651,3 +651,5 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .public-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:14px}.public-card-footer small{color:var(--muted);font-size:9px;line-height:1.35}.public-card-footer button{white-space:nowrap!important;padding:8px 11px!important;font-size:10px!important}
 @media(max-width:1000px){.public-explorer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.public-explorer{padding:16px}.public-explorer-head{display:block}.public-explorer-head .pill{display:inline-block;margin-top:8px}.public-explorer-grid{grid-template-columns:1fr}.public-card-footer{align-items:flex-end}}
+
+.joined-public-badge{display:inline-flex;align-items:center;margin-left:6px;padding:3px 7px;border-radius:999px;background:color-mix(in srgb,var(--accent) 9%,var(--surface));color:var(--accent);font-size:8px;font-weight:800;letter-spacing:.06em;vertical-align:middle}
