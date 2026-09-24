@@ -6,6 +6,7 @@ function since(period){const now=Date.now();if(period==='week')return now-7*864e
 function streak(activity){const days=[...new Set((activity?.completed||[]).map(x=>new Date(x.completedAt).toISOString().slice(0,10)))].sort().reverse();if(!days.length)return 0;let count=0,d=new Date(days[0]+'T00:00:00');for(const day of days){const cur=new Date(day+'T00:00:00');if(Math.round((d-cur)/864e5)===0){count++;d=new Date(cur.getTime()-864e5)}else break}return count}
 function initials(name){return String(name||'Member').split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase()}
 function fmt(seconds){const total=Math.max(0,Math.round(Number(seconds)||0));const h=Math.floor(total/3600),m=Math.floor((total%3600)/60);return h?`${h}h ${m}m`:`${m}m`}
+function MetricCard({icon,value,label,sub}){return <article className="arena-metric-card"><span className="metric-icon"><Icon type={icon}/></span><div className="metric-value">{value}</div><div className="metric-label">{label}</div><small>{sub}</small></article>}
 
 export default function Leaderboard(){
  const{user}=useAuth();
