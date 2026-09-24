@@ -1,4 +1,4 @@
-import{useState}from'react';import{useTeam}from'../context/TeamContext';import{supabase}from'../lib/supabase';
+import{useState}from'react';import{toast}from'../lib/toast';import{useTeam}from'../context/TeamContext';import{supabase}from'../lib/supabase';
 
 export default function AddCourse(){
  const{team,reload}=useTeam();
@@ -8,7 +8,7 @@ export default function AddCourse(){
   if(!url.trim())return setError('Paste a YouTube playlist URL first.');
   setBusy(true);setError('');setMsg('Importing videos and available chapters…');
   const{data,error}=await supabase.functions.invoke('import-youtube-playlist',{body:{team_id:team.id,playlist_url:url.trim()}});
-  if(error){setError(error.message);setMsg('')}else if(data?.error){setError(data.error);setMsg('')}else{setMsg((data?.videos_imported||0)+' videos imported successfully.');await reload()}
+  if(error){setError(error.message);setMsg('')}else if(data?.error){setError(data.error);setMsg('')}else{setMsg((data?.videos_imported||0)+' videos imported successfully.');toast((data?.videos_imported||0)+' videos are now available in your course.','success','Course imported');await reload()}
   setBusy(false);
  }
  async function create(){
@@ -18,7 +18,7 @@ export default function AddCourse(){
   if(error){setError(error.message);setBusy(false);return}
   const rows=items.split(/\n/).map(x=>x.trim()).filter(Boolean).map((x,i)=>({playlist_id:data.id,position:i,title:x}));
   if(rows.length){const{error:videoError}=await supabase.from('playlist_videos').insert(rows);if(videoError){setError(videoError.message);setBusy(false);return}}
-  setMsg('Course created successfully.');setTitle('');setChannel('');setItems('');setUrl('');await reload();setBusy(false);
+  setMsg('Course created successfully.');toast('Your course is ready in the team library.','success','Course created');setTitle('');setChannel('');setItems('');setUrl('');await reload();setBusy(false);
  }
  return <div className="page">
   <div className="admin-hero">
