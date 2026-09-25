@@ -44,7 +44,7 @@ export default function CoursePlayer({courseId,videoId,back}){
      <div className="player-panel">{tab==='outline'&&<Outline chapters={ch} player={player}/>}
       {tab==='notes'&&<div className="section player-section"><div className="panel-heading"><div><b>Timestamped notes</b><span>Capture what matters while you learn.</span></div></div><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="What do you want to remember from this moment?"/><button onClick={saveNote}>＋ Post note at current time</button>{notes.map(n=><button className="note-card" key={n.id} onClick={()=>player.current?.seekTo(n.position_seconds||0,true)}><b>{time(n.position_seconds)}</b> · {n.content}</button>)}</div>}
       {tab==='transcript'&&<div className="section player-section">{!transcript&&<><div className="panel-heading"><div><b>Video transcript</b><span>Jump directly to any spoken section.</span></div></div><button onClick={generate}>Generate transcript ✦</button></>}{transcript?.status==='processing'&&<p className="muted">Generating transcript…</p>}{transcript?.status==='error'&&<><p className="error">{transcript.error}</p><button onClick={generate}>Retry</button></>}{transcript?.status==='ready'&&<div className="transcript-list">{(transcript.segments||[]).map((s,i)=><button key={i} onClick={()=>player.current?.seekTo(Number(s.start||0),true)}><span>{time(s.start)}</span>{s.text}</button>)}</div>}</div>}
-      {tab==='ai'&&<div className="section player-section">
+      {tab==='ai'&&(<div className="section player-section">
  <div className="panel-heading"><div><b>AI Learning</b><span>AI uses only this video's transcript.</span></div></div>
  {!transcript||transcript.status!=='ready'?<div className="ai-empty"><p className="muted">Generate the transcript first to unlock AI Notes, Summary and Quiz for this video.</p><button onClick={()=>{setTab('transcript');generate()}}>Generate transcript ✦</button></div>:
  <>
@@ -59,7 +59,7 @@ export default function CoursePlayer({courseId,videoId,back}){
   {aiContent?.quiz?.length>0&&<div className="ai-result"><h3>AI Quiz</h3>{aiContent.quiz.map((q,i)=><div className="ai-quiz-card" key={i}><b>{i+1}. {q.question}</b>{(q.options||[]).map((o,j)=><button className="ai-option" key={j} onClick={e=>e.currentTarget.classList.toggle('selected')}>{o}</button>)}</div>)}</div>}
   {!aiContent&&<p className="muted">Choose an AI tool above for the current video.</p>}
  </>
- </div>}{tab==='bookmarks'&&<div className="section player-section"><div className="panel-heading"><div><b>Saved moments</b><span>Your personal highlights from this lesson.</span></div></div>{bookmarks.length?bookmarks.map(b=><button className="note-card" key={b.id} onClick={()=>player.current?.seekTo(b.position_seconds,true)}>🔖 {time(b.position_seconds)} · {b.label||'Saved moment'}</button>):<p className="muted">No bookmarks in this video yet.</p>}</div>}
+ </div>)}{tab==='bookmarks'&&<div className="section player-section"><div className="panel-heading"><div><b>Saved moments</b><span>Your personal highlights from this lesson.</span></div></div>{bookmarks.length?bookmarks.map(b=><button className="note-card" key={b.id} onClick={()=>player.current?.seekTo(b.position_seconds,true)}>🔖 {time(b.position_seconds)} · {b.label||'Saved moment'}</button>):<p className="muted">No bookmarks in this video yet.</p>}</div>}
      </div>
     </div>
    </main>
