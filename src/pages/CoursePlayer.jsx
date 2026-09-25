@@ -55,7 +55,26 @@ export default function CoursePlayer({courseId,videoId,back}){
  {aiError&&<p className="error">{aiError}</p>}
  {aiContent?.notes&&<div className="ai-result"><h3>AI Notes</h3><p>{aiContent.notes.overview}</p><h4>Key concepts</h4><ul>{(aiContent.notes.key_concepts||[]).map((x,i)=><li key={i}>{x}</li>)}</ul><h4>Important points</h4><ul>{(aiContent.notes.important_points||[]).map((x,i)=><li key={i}>{x}</li>)}</ul>{aiContent.notes.examples?.length>0&&<><h4>Examples</h4><ul>{aiContent.notes.examples.map((x,i)=><li key={i}>{x}</li>)}</ul></>}<h4>Quick revision</h4><ul>{(aiContent.notes.quick_revision||[]).map((x,i)=><li key={i}>{x}</li>)}</ul><h4>Key terms</h4><p>{(aiContent.notes.key_terms||[]).join(' • ')}</p></div>}
  {aiContent?.summary&&<div className="ai-result"><h3>AI Summary</h3><div className="ai-summary-list">{String(aiContent.summary).split(/\n+/).filter(Boolean).map((x,i)=><div key={i}><span>{String(i+1).padStart(2,'0')}</span><p>{x.replace(/^[-•]\s*/,'')}</p></div>)}</div></div>}
- {aiContent?.quiz?.length>0&&<div className="ai-result"><h3>AI Quiz</h3>{aiContent.quiz.map((q,i)=><div className="ai-quiz-card" key={i}><b>{i+1}. {q.question}</b>{(q.options||[]).map((o,j)=><button className="ai-option" key={j} onClick={e=>e.currentTarget.classList.toggle('selected')}>{o}</button>)}</div>)}</div>}
+ {aiContent?.quiz?.length>0&&<div className="ai-result ai-quiz-result">
+  <div className="ai-quiz-head"><div><h3>AI Quiz</h3><p>Choose an answer — you'll see the result instantly.</p></div><div className="ai-quiz-score"><b>{aiContent.quiz.reduce((n,q,i)=>n+(quizAnswers[i]!==undefined&&Number(quizAnswers[i])===Number(q.answer)?1:0),0)}</b><span>/ {aiContent.quiz.length}</span></div></div>
+  {aiContent.quiz.map((q,i)=>{
+    const chosen=quizAnswers[i];
+    const answered=chosen!==undefined;
+    const correct=Number(q.answer);
+    return <div className={"ai-quiz-card "+(answered?(Number(chosen)===correct?"quiz-correct":"quiz-wrong"):"")} key={i}>
+      <div className="ai-question-top"><span>Q{i+1}</span><b>{q.question}</b></div>
+      <div className="ai-options">{(q.options||[]).map((o,j)=>{
+        const isCorrect=j===correct,isChosen=Number(chosen)===j;
+        return <button className={"ai-option "+(answered?(isCorrect?"answer-correct":isChosen?"answer-wrong":"answer-muted"):"")} key={j} disabled={answered} onClick={()=>setQuizAnswers(prev=>({...prev,[i]:j}))}>
+          <span className="ai-option-letter">{String.fromCharCode(65+j)}</span><span>{o}</span>
+          {answered&&isCorrect&&<span className="ai-result-icon">✓</span>}
+          {answered&&isChosen&&!isCorrect&&<span className="ai-result-icon">×</span>}
+        </button>
+      })}</div>
+      {answered&&<div className={"ai-feedback "+(Number(chosen)===correct?"good":"bad")}><b>{Number(chosen)===correct?"Correct! 🎉":"Not quite."}</b>{Number(chosen)!==correct&&<span> Correct answer: <strong>{q.options?.[correct]}</strong></span>}<p>{q.explanation}</p></div>}
+    </div>
+  })}
+</div>}
  {!aiContent&&!aiLoading&&<div className="ai-empty"><div className="ai-empty-icon">✦</div><b>Your video, turned into study material.</b><p className="muted">Notes are simplified, the summary is bite-sized, and the quiz helps you check what you understood.</p></div>}
  </div>}{tab==='bookmarks'&&<div className="section player-section"><div className="panel-heading"><div><b>Saved moments</b><span>Your personal highlights from this lesson.</span></div></div>{bookmarks.length?bookmarks.map(b=><button className="note-card" key={b.id} onClick={()=>player.current?.seekTo(b.position_seconds,true)}>🔖 {time(b.position_seconds)} · {b.label||'Saved moment'}</button>):<p className="muted">No bookmarks in this video yet.</p>}</div>}
      </div>
