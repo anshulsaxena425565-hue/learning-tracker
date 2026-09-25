@@ -27,6 +27,22 @@ function playlistIdFromUrl(input: string) {
   return m?.[1] || null;
 }
 
+function videoIdFromUrl(input: string) {
+  const s = input.trim();
+  try {
+    const u = new URL(s);
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+    if (host === "youtu.be") return u.pathname.split("/").filter(Boolean)[0] || null;
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (u.searchParams.get("v")) return u.searchParams.get("v");
+      const parts = u.pathname.split("/").filter(Boolean);
+      if (["shorts", "embed", "live"].includes(parts[0])) return parts[1] || null;
+    }
+  } catch {}
+  const m = s.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{6,})/i);
+  return m?.[1] || null;
+}
+
 function parseTimestamp(s: string) {
   const parts = s.trim().split(":").map(Number);
   if (parts.some(Number.isNaN)) return null;
@@ -88,7 +104,10 @@ Deno.serve(async (req) => {
     if (!teamId || !playlistUrl) return json({ error: "team_id and playlist_url are required." }, 400);
 
     const playlistId = playlistIdFromUrl(playlistUrl);
-    if (!playlistId) return json({ error: "Please paste a valid YouTube playlist URL containing a list=... parameter." }, 400);
+    const singleVideoId = playlistId ? null : videoIdFromUrl(playlistUrl);
+    if (!playlistId && !singleVideoId) {
+      return json({ error: "Paste a YouTube playlist URL or a YouTube video URL." }, 400);
+    }
 
     const { data: membership, error: membershipError } = await admin
       .from("team_members")
@@ -98,56 +117,83 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (membershipError) throw membershipError;
     if (!membership || !["owner", "admin"].includes(membership.role)) {
-      return json({ error: "Only team owners and admins can import playlists." }, 403);
+      return json({ error: "Only team owners and admins can import courses." }, 403);
     }
 
-    const existing = await admin.from("playlists").select("id,title").eq("team_id", teamId).eq("youtube_playlist_id", playlistId).maybeSingle();
-    if (existing.error) throw existing.error;
-    if (existing.data) return json({ error: "This YouTube playlist is already imported into this team.", playlist_id: existing.data.id }, 409);
-
-    const pData = await yt("playlists", { part: "snippet,contentDetails", id: playlistId });
-    const p = pData.items?.[0];
-    if (!p) return json({ error: "YouTube playlist not found or is not publicly accessible." }, 404);
+    if (playlistId) {
+      const existing = await admin.from("playlists").select("id,title").eq("team_id", teamId).eq("youtube_playlist_id", playlistId).maybeSingle();
+      if (existing.error) throw existing.error;
+      if (existing.data) return json({ error: "This YouTube playlist is already imported into this team.", playlist_id: existing.data.id }, 409);
+    }
 
     const items: any[] = [];
+    let playlistTitle = "";
+    let playlistChannel = "";
     let pageToken = "";
-    do {
-      const params: Record<string, string> = { part: "snippet,contentDetails", playlistId, maxResults: "50" };
-      if (pageToken) params.pageToken = pageToken;
-      const page = await yt("playlistItems", params);
-      items.push(...(page.items || []));
-      pageToken = page.nextPageToken || "";
-    } while (pageToken);
-
-    const valid = items
-      .filter(x => x?.snippet?.resourceId?.videoId)
-      .map((x, i) => ({
-        position: Number.isInteger(x.snippet.position) ? x.snippet.position : i,
-        youtube_video_id: x.snippet.resourceId.videoId,
-        title: x.snippet.title || "Untitled video",
-      }))
-      .sort((a, b) => a.position - b.position);
-
     const details = new Map<string, any>();
-    for (let i = 0; i < valid.length; i += 50) {
-      const ids = valid.slice(i, i + 50).map(x => x.youtube_video_id).join(",");
-      const page = await yt("videos", { part: "snippet,contentDetails", id: ids, maxResults: "50" });
-      for (const v of page.items || []) details.set(v.id, v);
+
+    if (playlistId) {
+      const pData = await yt("playlists", { part: "snippet,contentDetails", id: playlistId });
+      const p = pData.items?.[0];
+      if (!p) return json({ error: "YouTube playlist not found or is not publicly accessible." }, 404);
+      playlistTitle = p.snippet?.title || "YouTube Playlist";
+      playlistChannel = p.snippet?.channelTitle || "";
+
+      do {
+        const params: Record<string, string> = { part: "snippet,contentDetails", playlistId, maxResults: "50" };
+        if (pageToken) params.pageToken = pageToken;
+        const page = await yt("playlistItems", params);
+        items.push(...(page.items || []));
+        pageToken = page.nextPageToken || "";
+      } while (pageToken);
+
+      const valid = items
+        .filter(x => x?.snippet?.resourceId?.videoId)
+        .map((x, i) => ({
+          position: Number.isInteger(x.snippet.position) ? x.snippet.position : i,
+          youtube_video_id: x.snippet.resourceId.videoId,
+          title: x.snippet.title || "Untitled video",
+        }))
+        .sort((a, b) => a.position - b.position);
+
+      for (let i = 0; i < valid.length; i += 50) {
+        const ids = valid.slice(i, i + 50).map(x => x.youtube_video_id).join(",");
+        const page = await yt("videos", { part: "snippet,contentDetails", id: ids, maxResults: "50" });
+        for (const v of page.items || []) details.set(v.id, v);
+      }
+
+      items.length = 0;
+      items.push(...valid);
+    } else {
+      const data = await yt("videos", { part: "snippet,contentDetails", id: singleVideoId! });
+      const video = data.items?.[0];
+      if (!video) return json({ error: "YouTube video not found or is not publicly accessible." }, 404);
+      playlistTitle = video.snippet?.title || "YouTube Video";
+      playlistChannel = video.snippet?.channelTitle || "";
+      details.set(video.id, video);
+      items.push({
+        position: 0,
+        youtube_video_id: video.id,
+        title: playlistTitle,
+      });
     }
+
+    if (!items.length) return json({ error: "No playable videos were found in this YouTube source." }, 400);
 
     const playlistRow = {
       team_id: teamId,
-      title: p.snippet?.title || "YouTube Playlist",
-      channel: p.snippet?.channelTitle || "",
+      title: playlistTitle,
+      channel: playlistChannel,
       url: playlistUrl,
       youtube_playlist_id: playlistId,
       created_by: userId,
     };
-    const inserted = await admin.from("playlists").insert(playlistRow).select().single();
+
+        const inserted = await admin.from("playlists").insert(playlistRow).select().single();
     if (inserted.error) throw inserted.error;
     const newPlaylist = inserted.data;
 
-    const videoRows = valid.map((v, i) => ({
+    const videoRows = items.map((v, i) => ({
       playlist_id: newPlaylist.id,
       position: i,
       title: details.get(v.youtube_video_id)?.snippet?.title || v.title,
