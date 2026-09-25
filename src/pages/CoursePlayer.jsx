@@ -4,7 +4,7 @@ let ytApiPromise=null;function ensureYouTubeApi(){if(window.YT?.Player)return Pr
 
 export default function CoursePlayer({courseId,videoId,back}){
  const{user}=useAuth(),{courses,videos,progress,chapters,team}=useTeam();
- const[tab,setTab]=useState('outline'),[notes,setNotes]=useState([]),[transcript,setTranscript]=useState(null),[bookmarks,setBookmarks]=useState([]),[note,setNote]=useState(''),[playing,setPlaying]=useState(false),[globalXp,setGlobalXp]=useState(0),[aiContent,setAiContent]=useState(null),[aiLoading,setAiLoading]=useState(''),[aiError,setAiError]=useState('');
+ const[tab,setTab]=useState('outline'),[notes,setNotes]=useState([]),[transcript,setTranscript]=useState(null),[bookmarks,setBookmarks]=useState([]),[note,setNote]=useState(''),[playing,setPlaying]=useState(false),[globalXp,setGlobalXp]=useState(0),[aiContent,setAiContent]=useState(null),[aiLoading,setAiLoading]=useState(''),[aiError,setAiError]=useState(''),[quizAnswers,setQuizAnswers]=useState({});
  const p=courses.find(x=>x.id===courseId),vs=videos[courseId]||[],v=vs.find(x=>x.id===videoId)||vs[0],ch=chapters[v?.id]||[];
  const playerHost=useRef(null),[watched,setWatched]=useState(progress[videoId]?.watched_seconds||0),[quizXp,setQuizXp]=useState(0),player=useRef(null),timer=useRef(null),last=useRef(null),lastWall=useRef(null),watchedRef=useRef(progress[videoId]?.watched_seconds||0),xpWatchedRef=useRef(progress[videoId]?.watched_seconds||0);
  useEffect(()=>{const next=progress[videoId]?.watched_seconds||0;watchedRef.current=next;xpWatchedRef.current=next;setWatched(next);setTab('outline');setNotes([]);setTranscript(null);setBookmarks([]);setNote('');setAiContent(null);setAiLoading('');setAiError('');setQuizAnswers({})},[videoId]);
