@@ -782,3 +782,25 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .arena-metric-card small{display:block;margin-top:5px;color:var(--muted);font-size:11px;line-height:1.4;}
 @media(max-width:1050px){.arena-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:600px){.arena-metrics{grid-template-columns:1fr;}.leader-table-head,.leaderboard-row-modern{min-width:760px!important;}}
+
+/* AI Learn v2 — clean study workspace */
+.ai-source-banner{display:flex;align-items:center;gap:12px;padding:13px 15px;margin:16px 0;border:1px solid color-mix(in srgb,var(--accent) 16%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 7%,var(--surface)),var(--surface));border-radius:14px}
+.ai-source-banner>span{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--accent);font-size:17px}
+.ai-source-banner b{display:block;font-size:12px}.ai-source-banner small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.ai-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:16px 0}
+.ai-action-copy{grid-column:1/-1;display:flex;align-items:baseline;gap:9px;margin-bottom:1px}
+.ai-action-copy span{font-size:9px;letter-spacing:.12em;color:var(--accent);font-weight:900}.ai-action-copy b{font-size:15px}
+.ai-actions>button{min-height:58px!important;padding:13px 14px!important;border:1px solid var(--line)!important;border-radius:14px!important;background:var(--surface)!important;color:var(--text)!important;text-align:left!important;box-shadow:0 5px 18px rgba(20,24,50,.05);transition:.18s}
+.ai-actions>button:hover:not(:disabled){transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 35%,var(--line))!important;background:color-mix(in srgb,var(--accent) 4%,var(--surface))!important}
+.ai-actions>button:disabled{opacity:.65;cursor:wait}
+.ai-result{margin-top:14px;padding:22px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--surface),color-mix(in srgb,var(--accent) 2%,var(--surface)));box-shadow:0 10px 30px rgba(20,24,50,.045);animation:aiIn .25s ease}
+.ai-result h3{font-size:21px;letter-spacing:-.035em;margin:0 0 14px}.ai-result h4{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:20px 0 8px}
+.ai-result>p{font-size:14px;line-height:1.7}
+.ai-result ul{margin:0;padding:0;list-style:none;display:grid;gap:7px}.ai-result li{padding:10px 12px;border-radius:11px;background:var(--surface2);font-size:13px;line-height:1.55}.ai-result li:before{content:'•';color:var(--accent);font-weight:900;margin-right:8px}
+.ai-summary-list{display:grid;gap:8px}.ai-summary-list>div{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;padding:11px 12px;border-radius:11px;background:var(--surface2)}.ai-summary-list span{font-size:10px;font-weight:900;color:var(--accent);padding-top:2px}.ai-summary-list p{margin:0;font-size:13px;line-height:1.55}
+.ai-quiz-card{padding:16px 0;border-top:1px solid var(--line)}.ai-quiz-card:first-of-type{border-top:0;padding-top:0}.ai-quiz-card>b{display:block;font-size:14px;line-height:1.5;margin-bottom:10px}
+.ai-option{width:100%;display:block!important;text-align:left!important;background:var(--surface)!important;color:var(--text)!important;border:1px solid var(--line)!important;border-radius:11px!important;margin:7px 0!important;padding:11px 13px!important;font-size:12px!important;transition:.15s}
+.ai-option:hover{background:var(--surface2)!important;transform:none!important}.ai-option.selected{border-color:var(--accent)!important;background:color-mix(in srgb,var(--accent) 9%,var(--surface))!important;color:var(--accent)!important}
+.ai-empty{text-align:center;padding:30px 18px;border:1px dashed var(--line);border-radius:16px;background:var(--surface2)}.ai-empty-icon{width:42px;height:42px;border-radius:13px;margin:0 auto 10px;display:grid;place-items:center;background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}.ai-empty>b{font-size:14px}.ai-empty p{max-width:520px;margin:5px auto 0;font-size:12px}
+@keyframes aiIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(max-width:700px){.ai-actions{grid-template-columns:1fr}.ai-action-copy{grid-column:1}.ai-result{padding:17px}}
