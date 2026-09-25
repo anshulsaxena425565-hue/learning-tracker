@@ -4,7 +4,7 @@ import{useTeam}from'../../context/TeamContext';
 import{supabase}from'../../lib/supabase';
 
 const items=[
- ['dashboard','Dashboard','grid'],['courses','Courses','book'],['quizzes','Quizzes','quiz'],['teams','Teams','users'],['chat','Team Chat','chat'],['leaderboard','Leaderboard','trend'],['profile','Profile','user']
+ ['dashboard','Dashboard','grid'],['courses','Courses','book'],['teams','Teams','users'],['chat','Team Chat','chat'],['leaderboard','Leaderboard','trend'],['profile','Profile','user']
 ];
 
 function Icon({name,size=18}){
