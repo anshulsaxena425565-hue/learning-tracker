@@ -832,3 +832,14 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none;
 .ai-quiz-card.quiz-correct{border-left:3px solid #20a77a;padding-left:13px}
 .ai-quiz-card.quiz-wrong{border-left:3px solid #e05252;padding-left:13px}
 @media(max-width:600px){.ai-quiz-head{align-items:flex-start}.ai-quiz-score{min-width:55px;height:55px}.ai-question-top>b{font-size:13px}}
+
+/* Courses hierarchy: course creation belongs inside Courses */
+.courses-page-header{align-items:center!important}
+.add-course-cta{display:flex!important;align-items:center!important;gap:11px!important;padding:10px 13px!important;min-width:210px!important;text-align:left!important;background:linear-gradient(135deg,var(--accent),var(--accent2))!important;border:0!important;border-radius:15px!important;box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 22%,transparent)!important;transition:transform .18s ease,box-shadow .18s ease!important}
+.add-course-cta:hover{transform:translateY(-2px)!important;box-shadow:0 14px 30px color-mix(in srgb,var(--accent) 28%,transparent)!important;filter:none!important}
+.add-course-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:rgba(255,255,255,.18);font-size:22px;line-height:1;font-weight:500}
+.add-course-cta>span:nth-child(2){display:grid;gap:1px;flex:1}
+.add-course-cta b{font-size:12px;letter-spacing:.01em}
+.add-course-cta small{font-size:9px;font-weight:600;opacity:.78}
+.add-course-cta strong{font-size:18px;font-weight:500;opacity:.85}
+@media(max-width:650px){.courses-page-header{align-items:stretch!important;flex-direction:column}.add-course-cta{width:100%;justify-content:flex-start}}
