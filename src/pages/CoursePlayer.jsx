@@ -46,17 +46,17 @@ export default function CoursePlayer({courseId,videoId,back}){
       {tab==='transcript'&&<div className="section player-section">{!transcript&&<><div className="panel-heading"><div><b>Video transcript</b><span>Jump directly to any spoken section.</span></div></div><button onClick={generate}>Generate transcript ✦</button></>}{transcript?.status==='processing'&&<p className="muted">Generating transcript…</p>}{transcript?.status==='error'&&<><p className="error">{transcript.error}</p><button onClick={generate}>Retry</button></>}{transcript?.status==='ready'&&<div className="transcript-list">{(transcript.segments||[]).map((s,i)=><button key={i} onClick={()=>player.current?.seekTo(Number(s.start||0),true)}><span>{time(s.start)}</span>{s.text}</button>)}</div>}</div>}
       {tab==='ai'&&<div className="section player-section">
  <div className="panel-heading"><div><b>AI Learning</b><span>Notes, summary and quiz for this video only.</span></div></div>
- <div className="ai-source-banner"><span>✦</span><div><b>{transcript?.status==='ready'?'Using video transcript':'Transcript unavailable — AI will analyze the YouTube video directly'}</b><small>{transcript?.status==='ready'?'Faster and focused on the current lesson.':'You can still use AI Notes, Summary and Quiz without captions.'}</small></div></div>
- <div className="ai-actions">
+ <div className="ai-source-banner"><span>✦</span><div><b>{transcript?.status==='ready'?'Transcript ready':'No captions? No problem.'}</b><small>{transcript?.status==='ready'?'AI is using the current video transcript.':'AI can analyze this YouTube video directly.'}</small></div></div>
+ <div className="ai-actions"><div className="ai-action-copy"><span>LEARN WITH AI</span><b>Pick a study mode</b></div>
   <button onClick={()=>generateAi('notes')} disabled={!!aiLoading}>{aiLoading==='notes'?'Generating…':'✦ AI Notes'}</button>
   <button onClick={()=>generateAi('summary')} disabled={!!aiLoading}>{aiLoading==='summary'?'Generating…':'▤ AI Summary'}</button>
   <button onClick={()=>generateAi('quiz')} disabled={!!aiLoading}>{aiLoading==='quiz'?'Generating…':'? AI Quiz'}</button>
  </div>
  {aiError&&<p className="error">{aiError}</p>}
  {aiContent?.notes&&<div className="ai-result"><h3>AI Notes</h3><p>{aiContent.notes.overview}</p><h4>Key concepts</h4><ul>{(aiContent.notes.key_concepts||[]).map((x,i)=><li key={i}>{x}</li>)}</ul><h4>Important points</h4><ul>{(aiContent.notes.important_points||[]).map((x,i)=><li key={i}>{x}</li>)}</ul>{aiContent.notes.examples?.length>0&&<><h4>Examples</h4><ul>{aiContent.notes.examples.map((x,i)=><li key={i}>{x}</li>)}</ul></>}<h4>Quick revision</h4><ul>{(aiContent.notes.quick_revision||[]).map((x,i)=><li key={i}>{x}</li>)}</ul><h4>Key terms</h4><p>{(aiContent.notes.key_terms||[]).join(' • ')}</p></div>}
- {aiContent?.summary&&<div className="ai-result"><h3>AI Summary</h3><p>{aiContent.summary}</p></div>}
+ {aiContent?.summary&&<div className="ai-result"><h3>AI Summary</h3><div className="ai-summary-list">{String(aiContent.summary).split(/\n+/).filter(Boolean).map((x,i)=><div key={i}><span>{String(i+1).padStart(2,'0')}</span><p>{x.replace(/^[-•]\s*/,'')}</p></div>)}</div></div>}
  {aiContent?.quiz?.length>0&&<div className="ai-result"><h3>AI Quiz</h3>{aiContent.quiz.map((q,i)=><div className="ai-quiz-card" key={i}><b>{i+1}. {q.question}</b>{(q.options||[]).map((o,j)=><button className="ai-option" key={j} onClick={e=>e.currentTarget.classList.toggle('selected')}>{o}</button>)}</div>)}</div>}
- {!aiContent&&!aiLoading&&<p className="muted">Choose an AI tool above for the current video.</p>}
+ {!aiContent&&!aiLoading&&<div className="ai-empty"><div className="ai-empty-icon">✦</div><b>Your video, turned into study material.</b><p className="muted">Notes are simplified, the summary is bite-sized, and the quiz helps you check what you understood.</p></div>}
  </div>}{tab==='bookmarks'&&<div className="section player-section"><div className="panel-heading"><div><b>Saved moments</b><span>Your personal highlights from this lesson.</span></div></div>{bookmarks.length?bookmarks.map(b=><button className="note-card" key={b.id} onClick={()=>player.current?.seekTo(b.position_seconds,true)}>🔖 {time(b.position_seconds)} · {b.label||'Saved moment'}</button>):<p className="muted">No bookmarks in this video yet.</p>}</div>}
      </div>
     </div>
