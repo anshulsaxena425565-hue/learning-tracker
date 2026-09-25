@@ -42,7 +42,7 @@ export default function AppShell({children,view,setView,locked=false}){
    <nav className="nav">
     {items.map(([id,label,icon])=><button title={collapsed?label:undefined} className={view===id?'active':''} onClick={()=>nav(id)} key={id}><span className="nav-icon"><Icon name={icon}/></span><span className="nav-label">{label}</span></button>)}
     {platformAdmin&&<button title={collapsed?'Admin':undefined} className={view==='admin'?'active':''} onClick={()=>nav('admin')}><span className="nav-icon"><Icon name="shield"/></span><span className="nav-label">Admin</span></button>}
-    {isAdmin&&<button title={collapsed?'Add course':undefined} className={view==='add'?'active':''} onClick={()=>nav('add')}><span className="nav-icon"><Icon name="plus"/></span><span className="nav-label">Add course</span></button>}
+    
    </nav>
    <div className="sidebar-bottom">
     <button className="profile-mini" onClick={()=>nav('profile')} title={collapsed?(profileName||user?.user_metadata?.full_name||'Learner'):undefined}><span className="avatar-dot">{(user?.email||'L')[0].toUpperCase()}</span><span className="profile-email">{profileName||user?.user_metadata?.full_name||'Learner'}</span></button>
@@ -50,7 +50,7 @@ export default function AppShell({children,view,setView,locked=false}){
    </div>
   </aside>
   <header className="mobile-head"><div className="brand">Learning<span>Beyond</span></div><button onClick={()=>setOpen(!open)} aria-label="Open navigation">☰</button></header>
-  {open&&<div className="mobile-nav">{items.map(([id,label,icon])=><button onClick={()=>nav(id)} key={id}><Icon name={icon}/>{label}</button>)}{platformAdmin&&<button onClick={()=>nav('admin')}><Icon name="shield"/>Admin</button>}{isAdmin&&<button onClick={()=>nav('add')}><Icon name="plus"/>Add course</button>}</div>}
+  {open&&<div className="mobile-nav">{items.map(([id,label,icon])=><button onClick={()=>nav(id)} key={id}><Icon name={icon}/>{label}</button>)}{platformAdmin&&<button onClick={()=>nav('admin')}><Icon name="shield"/>Admin</button>}</div>}
   <main className="content">{children}</main>
  </div>
 }
