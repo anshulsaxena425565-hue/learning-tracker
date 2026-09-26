@@ -21,6 +21,7 @@ export default function AppShell({children,view,setView,locked=false}){
   <aside className={'sidebar '+(locked?'test-nav-locked':'')}>
    <div className="sidebar-brand">
     <div className="brand"><span className="brand-full">Learning<span>Beyond</span></span><span className="brand-mark">LB</span></div>
+    <div className="brand-subtitle">LEARNING WORKSPACE</div>
    </div>
    <button className="collapse-btn" disabled={locked} onClick={toggle} title={collapsed?'Expand sidebar':'Collapse sidebar'} aria-label={collapsed?'Expand sidebar':'Collapse sidebar'}>{collapsed?<Icon name="right" size={17}/>:<Icon name="left" size={17}/>}</button>
    <div className={'workspace-picker '+(locked?'disabled':'')}>
@@ -28,9 +29,15 @@ export default function AppShell({children,view,setView,locked=false}){
     {!collapsed&&<select aria-label="Switch team" value={team?.id||''} disabled={locked} onChange={e=>switchTeam(e.target.value)}>{teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>}
    </div>
    <nav className="nav">
-    {items.map(([id,label,icon])=><button title={collapsed?label:undefined} className={view===id?'active':''} onClick={()=>nav(id)} key={id}><span className="nav-icon"><Icon name={icon}/></span><span className="nav-label">{label}</span></button>)}
-    {platformAdmin&&<button title={collapsed?'Admin':undefined} className={view==='admin'?'active':''} onClick={()=>nav('admin')}><span className="nav-icon"><Icon name="shield"/></span><span className="nav-label">Admin</span></button>}
-    
+    {!collapsed&&<div className="nav-section-label">MAIN</div>}
+    <div className="nav-group">
+      {items.slice(0,4).map(([id,label,icon])=><button title={collapsed?label:undefined} className={view===id?'active':''} onClick={()=>nav(id)} key={id}><span className="nav-icon"><Icon name={icon}/></span><span className="nav-label">{label}</span>{view===id&&<span className="nav-active-dot"/>}</button>)}
+    </div>
+    {!collapsed&&<div className="nav-section-label secondary">YOUR PROGRESS</div>}
+    <div className="nav-group">
+      {items.slice(4).map(([id,label,icon])=><button title={collapsed?label:undefined} className={view===id?'active':''} onClick={()=>nav(id)} key={id}><span className="nav-icon"><Icon name={icon}/></span><span className="nav-label">{label}</span>{view===id&&<span className="nav-active-dot"/>}</button>)}
+    </div>
+    {platformAdmin&&<><div className="nav-section-label admin-label">{!collapsed&&'MANAGE'}</div><div className="nav-group"><button title={collapsed?'Admin':undefined} className={view==='admin'?'active':''} onClick={()=>nav('admin')}><span className="nav-icon"><Icon name="shield"/></span><span className="nav-label">Admin</span>{view==='admin'&&<span className="nav-active-dot"/>}</button></div></>}
    </nav>
    <div className="sidebar-bottom">
     <button className="profile-mini" onClick={()=>nav('profile')} title={collapsed?(profileName||user?.user_metadata?.full_name||'Learner'):undefined}><span className="avatar-dot">{(user?.email||'L')[0].toUpperCase()}</span><span className="profile-email">{profileName||user?.user_metadata?.full_name||'Learner'}</span></button>
