@@ -85,7 +85,7 @@ export default function CoursePlayer({courseId,videoId,back}){
     <div className="quest-bar"><i style={{width:coursePercent+'%'}}/></div>
     <div className="up-next-label"><span>LESSONS</span><b>{nextIndex+1} / {totalCount}</b></div>
     <div className="lesson-list">{vs.map((x,i)=>{const done=!!progress[x.id]?.completed_at,isActive=x.id===v.id,wp=Math.min(100,Math.round((progress[x.id]?.watched_seconds||0)/Math.max(progress[x.id]?.duration_seconds||1,1)*100));return <button className={'side-video '+(isActive?'active ':'')+(done?'done':'')} key={x.id} onClick={()=>window.dispatchEvent(new CustomEvent('learning:open-video',{detail:x.id}))}><span className="lesson-number">{done?'✓':i+1}</span><div className="side-video-copy"><b>{x.title}</b><small>{done?'Completed':isActive?'Currently learning':wp?wp+'% watched':'Not started'}</small>{!done&&<i><em style={{width:wp+'%'}}/></i>}</div>{isActive&&<span className="playing-dot"><i/></span>}</button>})}</div>
-    <div className="next-lesson-card">{nextIndex<totalCount-1?<><span>UP NEXT</span><b>{vs[nextIndex+1]?.title}</b><small>Continue your quest →</small></>:<><span>QUEST COMPLETE</span><b>You've reached the end of this course.</b><small>🎉 Take a victory lap.</small></>}</div>
+    <div className="next-lesson-card">{completedCount===totalCount?<><span>QUEST COMPLETE</span><b>Course completed.</b><small>🎉 Nice work. You finished every lesson.</small></>:nextIndex<totalCount-1?<><span>UP NEXT</span><b>{vs[nextIndex+1]?.title}</b><small>Continue your quest →</small></>:<><span>FINISH THIS LESSON</span><b>You're on the final lesson.</b><small>Keep watching to complete the course.</small></>}</div>
    </aside>
   </section>
  </div>
