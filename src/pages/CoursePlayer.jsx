@@ -81,11 +81,18 @@ export default function CoursePlayer({courseId,videoId,back}){
     </div>
    </main>
    <aside className="course-sidebar">
-    <div className="sidebar-course-head"><div><p className="eyebrow">YOUR LEARNING QUEST</p><h2>{p.title}</h2><span>{completedCount} of {totalCount} lessons complete</span></div><div className="quest-ring" style={{'--quest-progress':coursePercent+'%'}}><b>{coursePercent}</b><small>%</small></div></div>
-    <div className="quest-bar"><i style={{width:coursePercent+'%'}}/></div>
-    <div className="up-next-label"><span>LESSONS</span><b>{nextIndex+1} / {totalCount}</b></div>
-    <div className="lesson-list">{vs.map((x,i)=>{const done=!!progress[x.id]?.completed_at,isActive=x.id===v.id,wp=Math.min(100,Math.round((progress[x.id]?.watched_seconds||0)/Math.max(progress[x.id]?.duration_seconds||1,1)*100));return <button className={'side-video '+(isActive?'active ':'')+(done?'done':'')} key={x.id} onClick={()=>window.dispatchEvent(new CustomEvent('learning:open-video',{detail:x.id}))}><span className="lesson-number">{done?'✓':i+1}</span><div className="side-video-copy"><b>{x.title}</b><small>{done?'Completed':isActive?'Currently learning':wp?wp+'% watched':'Not started'}</small>{!done&&<i><em style={{width:wp+'%'}}/></i>}</div>{isActive&&<span className="playing-dot"><i/></span>}</button>})}</div>
-    <div className="next-lesson-card">{completedCount===totalCount?<><span>QUEST COMPLETE</span><b>Course completed.</b><small>🎉 Nice work. You finished every lesson.</small></>:nextIndex<totalCount-1?<><span>UP NEXT</span><b>{vs[nextIndex+1]?.title}</b><small>Continue your quest →</small></>:<><span>FINISH THIS LESSON</span><b>You're on the final lesson.</b><small>Keep watching to complete the course.</small></>}</div>
+    <div className="course-content-head">
+      <div className="course-content-title">
+        <p className="eyebrow">COURSE CONTENT</p>
+        <h2>{p.title}</h2>
+        <span>{totalCount} {totalCount===1?'lesson':'lessons'} · {completedCount} completed</span>
+      </div>
+      <div className="course-percent-badge"><b>{coursePercent}%</b><span>done</span></div>
+    </div>
+    <div className="course-progress-line"><div><span>Overall progress</span><b>{completedCount}/{totalCount}</b></div><i><em style={{width:coursePercent+'%'}}/></i></div>
+    <div className="lesson-list-heading"><span>Lessons</span><b>{completedCount}/{totalCount}</b></div>
+    <div className="lesson-list">{vs.map((x,i)=>{const done=!!progress[x.id]?.completed_at,isActive=x.id===v.id,wp=Math.min(100,Math.round((progress[x.id]?.watched_seconds||0)/Math.max(progress[x.id]?.duration_seconds||1,1)*100));return <button className={'side-video '+(isActive?'active ':'')+(done?'done ':'')+(wp>0&&!done?'started':'')} key={x.id} onClick={()=>window.dispatchEvent(new CustomEvent('learning:open-video',{detail:x.id}))}><span className="lesson-index">{done?'✓':String(i+1).padStart(2,'0')}</span><div className="side-video-copy"><b>{x.title}</b><small>{done?'Completed':isActive?(wp?wp+'% watched · Currently learning':'Currently learning'):wp?wp+'% watched':'Not started'}</small>{!done&&wp>0&&<i><em style={{width:wp+'%'}}/></i>}</div><span className="lesson-state">{done?'✓':isActive?'●':''}</span></button>})}</div>
+    {completedCount===totalCount&&totalCount>0?<div className="course-complete-footer"><span>✓</span><div><b>Course completed</b><small>You finished every lesson.</small></div></div>:null}
    </aside>
   </section>
  </div>
