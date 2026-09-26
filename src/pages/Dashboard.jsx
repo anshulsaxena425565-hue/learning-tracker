@@ -17,7 +17,7 @@ export default function Dashboard({openCourse}){
     <div className="hero-actions"><button onClick={continueCourse} disabled={!stats.next}>{stats.next?'Continue learning':'Library complete'} <ArrowRight weight="bold"/></button><span><TrendUp weight="bold"/> Every lesson counts.</span></div>
    </div>
    <div className="hero-visual">
-    <div className="hero-orbit-ring"><div className="hero-orbit-core"><strong>{stats.p}%</strong><span>COMPLETE</span></div></div>
+    <div className="hero-orbit-ring" style={{'--hero-pct':stats.p+'%'}}><div className="hero-orbit-core"><strong>{stats.p}%</strong><span>COMPLETE</span></div></div>
     <div className="hero-float-chip chip-a"><CheckCircle weight="fill"/><span>{stats.done} done</span></div>
     <div className="hero-float-chip chip-b"><Fire weight="fill"/><span>Keep going</span></div>
    </div>
@@ -29,7 +29,7 @@ export default function Dashboard({openCourse}){
     <div className="focus-copy"><span className="focus-kicker">PICK UP WHERE YOU LEFT OFF</span><h3>{stats.next?.title||'Your learning library is complete'}</h3><p>{nextCourse?.title||'Explore your courses and keep learning.'}</p>{stats.next&&<div className="focus-progress"><i style={{width:Math.min(100,Math.round((progress[stats.next.id]?.watched_seconds||0)/Math.max(progress[stats.next.id]?.duration_seconds||1,1)*100))+'%'}}/></div>}</div>
     <ArrowRight className="focus-arrow" weight="bold"/>
    </article>
-   <article className="focus-card focus-stats"><div className="focus-stat-icon"><ChartLineUp weight="fill"/></div><div><span className="focus-kicker">YOUR LIBRARY</span><strong>{courses.length}</strong><p>courses ready to explore</p></div><div className="focus-mini-ring"><span>{stats.p}%</span></div></article>
+   <article className="focus-card focus-stats"><div className="focus-stat-icon"><ChartLineUp weight="fill"/></div><div><span className="focus-kicker">YOUR LIBRARY</span><strong>{courses.length}</strong><p>courses ready to explore</p></div><div className="focus-mini-ring" style={{'--p':stats.p}}><span>{stats.p}%</span></div></article>
   </section>
 
   <section className="kpi-grid modern-kpis dashboard-punch-kpis">
