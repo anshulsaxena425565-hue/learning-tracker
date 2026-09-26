@@ -973,3 +973,40 @@ input,textarea,select{font-size:13px;border-radius:11px;background:var(--surface
 @media(max-width:1050px){.learning-player-page .player-layout{grid-template-columns:minmax(0,1fr) 310px!important}.lesson-stats{grid-template-columns:1fr 1fr}.lesson-stats>div:last-child{grid-column:1/-1}}
 @media(max-width:900px){.learning-player-topbar{align-items:stretch;flex-direction:column;gap:9px}.player-top-progress{width:100%}.learning-player-page .player-layout{grid-template-columns:1fr!important}.learning-player-page .course-sidebar{position:static;max-height:none!important;order:2}.learning-player-page .lesson-list{max-height:360px}.learning-player-page .player-info{padding:20px!important}}
 @media(max-width:600px){.player-back span{display:none}.learning-player-page .player-info{padding:16px!important}.lesson-heading h1{font-size:22px!important}.xp-orb{width:54px;height:54px}.lesson-stats{grid-template-columns:1fr}.lesson-stats>div:last-child{grid-column:auto}.lesson-stats small{font-size:8px}.learning-player-page .player-actions{align-items:stretch!important;flex-direction:column!important}.bookmark-btn{width:100%;justify-content:center}.learning-player-page .course-tabs{width:100%}.learning-player-page .course-tabs button{flex:0 0 auto}.player-live-pill,.player-focus-pill{top:9px;padding:6px 8px}.player-focus-pill{display:none}.sidebar-course-head{padding:17px 15px 12px}.learning-player-page .lesson-list{padding:0 6px}.next-lesson-card{margin:8px}}
+
+/* Course sidebar refinement — compact, clean, mobile-safe */
+.learning-player-page .course-sidebar{width:100%;min-width:0}
+.learning-player-page .sidebar-course-head{min-width:0;padding:18px 18px 14px}
+.learning-player-page .sidebar-course-head>div:first-child{min-width:0;flex:1}
+.learning-player-page .sidebar-course-head h2{font-size:16px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.learning-player-page .sidebar-course-head span{display:block;margin-top:6px}
+.learning-player-page .quest-ring{width:56px;height:56px}
+.learning-player-page .quest-bar{margin:0 18px 16px}
+.learning-player-page .up-next-label{padding:0 18px 9px}
+.learning-player-page .lesson-list{padding:0 12px;min-width:0}
+.learning-player-page .side-video{width:100%;max-width:100%;min-width:0;padding:11px 10px!important;overflow:hidden}
+.learning-player-page .side-video-copy{min-width:0;width:0;flex:1}
+.learning-player-page .side-video-copy b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.learning-player-page .side-video-copy small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.learning-player-page .side-video-copy i{width:100%}
+.learning-player-page .playing-dot{flex:0 0 20px}
+.learning-player-page .next-lesson-card{margin:12px;padding:14px!important}
+.learning-player-page .next-lesson-card b{font-size:11px}
+@media(max-width:900px){
+ .learning-player-page .course-sidebar{width:100%;border-radius:20px!important}
+ .learning-player-page .sidebar-course-head{padding:18px 18px 14px}
+ .learning-player-page .lesson-list{max-height:none;overflow:visible}
+}
+@media(max-width:600px){
+ .learning-player-page .sidebar-course-head{padding:16px 15px 13px}
+ .learning-player-page .sidebar-course-head h2{font-size:15px;-webkit-line-clamp:2}
+ .learning-player-page .sidebar-course-head span{font-size:8px}
+ .learning-player-page .quest-ring{width:48px;height:48px}
+ .learning-player-page .quest-ring:after{inset:5px}
+ .learning-player-page .quest-ring b{font-size:11px}
+ .learning-player-page .lesson-list{padding:0 8px}
+ .learning-player-page .side-video{padding:10px 8px!important;margin:1px 0}
+ .learning-player-page .side-video .lesson-number{width:28px;height:28px}
+ .learning-player-page .side-video-copy b{font-size:10px}
+ .learning-player-page .next-lesson-card{margin:9px;padding:12px!important}
+}
