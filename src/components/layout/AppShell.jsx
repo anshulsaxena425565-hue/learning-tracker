@@ -2,25 +2,13 @@ import{useEffect,useState}from'react';
 import{useAuth}from'../../context/AuthContext';
 import{useTeam}from'../../context/TeamContext';
 import{supabase}from'../../lib/supabase';
+import{SquaresFour,BookOpenText,UsersThree,ChatsCircle,TrendUp,UserCircle,ShieldCheck,CaretLeft,CaretRight,Plus,SignOut,List, X}from'@phosphor-icons/react';
 
 const items=[
  ['dashboard','Dashboard','grid'],['courses','Courses','book'],['teams','Teams','users'],['chat','Team Chat','chat'],['leaderboard','Leaderboard','trend'],['profile','Profile','user']
 ];
 
-function Icon({name,size=18}){
- const p={
-  grid:<><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></>,
-  book:<><rect x="6" y="4" width="13" height="16" rx="2"/><path d="M6 7H4v13h11"/><path d="M10 8h5"/></>,
-  users:<><circle cx="9" cy="9" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.5a3 3 0 0 1 0 6"/><path d="M17 14.5a5 5 0 0 1 4 5.5"/></>,
-  trend:<><path d="M4 17l6-6 4 4 6-8"/><path d="M15 7h5v5"/></>,
-  user:<><circle cx="12" cy="8" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0"/></>,
-  quiz:<><path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 8h8M8 12h5M8 16h7"/></>,
-  chat:<><path d="M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-4 3v-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M8 11h8M8 14h5"/></>,
-  plus:<><path d="M12 5v14M5 12h14"/></>,
-  shield:<><path d="M12 3l8 3v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-3z"/><path d="M9 12l2 2 4-4"/></>
- }[name];
- return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p}</svg>
-}
+function Icon({name,size=18,weight="regular"}){const icons={grid:SquaresFour,book:BookOpenText,users:UsersThree,chat:ChatsCircle,trend:TrendUp,user:UserCircle,shield:ShieldCheck,plus:Plus,left:CaretLeft,right:CaretRight,signout:SignOut,list:List,close:X};const C=icons[name]||SquaresFour;return <C size={size} weight={weight} aria-hidden/>}
 
 export default function AppShell({children,view,setView,locked=false}){
  const{user}=useAuth(),{team,teams,switchTeam}=useTeam();const[profileName,setProfileName]=useState('');
@@ -34,7 +22,7 @@ export default function AppShell({children,view,setView,locked=false}){
    <div className="sidebar-brand">
     <div className="brand"><span className="brand-full">Learning<span>Beyond</span></span><span className="brand-mark">LB</span></div>
    </div>
-   <button className="collapse-btn" disabled={locked} onClick={toggle} title={collapsed?'Expand sidebar':'Collapse sidebar'} aria-label={collapsed?'Expand sidebar':'Collapse sidebar'}>{collapsed?'›':'‹'}</button>
+   <button className="collapse-btn" disabled={locked} onClick={toggle} title={collapsed?'Expand sidebar':'Collapse sidebar'} aria-label={collapsed?'Expand sidebar':'Collapse sidebar'}>{collapsed?<Icon name="right" size={17}/>:<Icon name="left" size={17}/>}</button>
    <div className={'workspace-picker '+(locked?'disabled':'')}>
     <div className="workspace-avatar">{(team?.name||'T').slice(0,1).toUpperCase()}</div>
     {!collapsed&&<select aria-label="Switch team" value={team?.id||''} disabled={locked} onChange={e=>switchTeam(e.target.value)}>{teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>}
@@ -46,10 +34,10 @@ export default function AppShell({children,view,setView,locked=false}){
    </nav>
    <div className="sidebar-bottom">
     <button className="profile-mini" onClick={()=>nav('profile')} title={collapsed?(profileName||user?.user_metadata?.full_name||'Learner'):undefined}><span className="avatar-dot">{(user?.email||'L')[0].toUpperCase()}</span><span className="profile-email">{profileName||user?.user_metadata?.full_name||'Learner'}</span></button>
-    <button className="signout" disabled={locked} onClick={()=>supabase.auth.signOut()}><span className="signout-icon">↗</span><span>Sign out</span></button>
+    <button className="signout" disabled={locked} onClick={()=>supabase.auth.signOut()}><span className="signout-icon"><Icon name="signout" size={17}/></span><span>Sign out</span></button>
    </div>
   </aside>
-  <header className="mobile-head"><div className="brand">Learning<span>Beyond</span></div><button onClick={()=>setOpen(!open)} aria-label="Open navigation">☰</button></header>
+  <header className="mobile-head"><div className="brand">Learning<span>Beyond</span></div><button onClick={()=>setOpen(!open)} aria-label={open?"Close navigation":"Open navigation"}><Icon name={open?"close":"list"} size={22}/></button></header>
   {open&&<div className="mobile-nav">{items.map(([id,label,icon])=><button onClick={()=>nav(id)} key={id}><Icon name={icon}/>{label}</button>)}{platformAdmin&&<button onClick={()=>nav('admin')}><Icon name="shield"/>Admin</button>}</div>}
   <main className="content">{children}</main>
  </div>
