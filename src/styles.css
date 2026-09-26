@@ -1050,3 +1050,36 @@ input,textarea,select{font-size:13px;border-radius:11px;background:var(--surface
 .app.sidebar-collapsed .sidebar{width:76px!important;padding-left:10px!important;padding-right:10px!important}.app.sidebar-collapsed .sidebar-brand{padding-left:3px!important;padding-right:3px!important}.app.sidebar-collapsed .brand-full,.app.sidebar-collapsed .brand-subtitle{display:none}.app.sidebar-collapsed .brand-mark{display:block!important;font-size:16px}.app.sidebar-collapsed .workspace-picker{justify-content:center;margin-left:0!important;margin-right:0!important;padding:8px}.app.sidebar-collapsed .workspace-picker select{display:none}.app.sidebar-collapsed .nav-section-label{display:none}.app.sidebar-collapsed .nav button{justify-content:center;padding:9px!important}.app.sidebar-collapsed .nav-label,.app.sidebar-collapsed .nav-active-dot{display:none}.app.sidebar-collapsed .nav-icon{width:22px!important}.app.sidebar-collapsed .profile-mini{justify-content:center;padding:8px 0}.app.sidebar-collapsed .profile-email{display:none}.app.sidebar-collapsed .signout{justify-content:center;padding:8px}.app.sidebar-collapsed .signout>span:last-child{display:none}
 .content{margin-left:252px!important;padding:30px 42px 60px!important}
 @media(max-width:800px){.sidebar{display:none!important}.content{margin-left:0!important;padding:16px 12px 70px!important}}
+
+/* Navigation refinement v2 — keep the strong dark active state, add motion */
+.nav button.active{
+  background:#171927!important;
+  color:#fff!important;
+  border-color:#171927!important;
+  box-shadow:0 8px 24px rgba(23,25,39,.16),inset 0 1px 0 rgba(255,255,255,.06)!important;
+  transform:translateX(2px)!important;
+  overflow:hidden!important;
+}
+.nav button.active::before{
+  content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 5px 5px 0;
+  background:linear-gradient(180deg,#9b8cff,#625bff,#9b8cff);
+  box-shadow:0 0 10px rgba(120,110,255,.9),0 0 20px rgba(120,110,255,.35);
+  animation:navGlow 2.2s ease-in-out infinite;
+}
+.nav button.active::after{
+  content:"";position:absolute;inset:-30%;pointer-events:none;
+  background:radial-gradient(circle at 10% 50%,rgba(116,105,255,.18),transparent 35%);
+  animation:navSheen 3s ease-in-out infinite;
+}
+.nav button.active .nav-icon{color:#fff!important;filter:drop-shadow(0 0 5px rgba(145,135,255,.35))}
+.nav button.active .nav-active-dot{background:#a79cff;box-shadow:0 0 0 3px rgba(133,121,255,.13),0 0 12px rgba(133,121,255,.8);animation:navDot 1.8s ease-in-out infinite}
+.nav button:hover:not(.active){background:var(--surface2)!important;color:var(--text)!important;transform:translateX(1px)!important}
+@keyframes navGlow{0%,100%{opacity:.65;box-shadow:0 0 7px rgba(120,110,255,.65),0 0 15px rgba(120,110,255,.2)}50%{opacity:1;box-shadow:0 0 12px rgba(120,110,255,1),0 0 25px rgba(120,110,255,.4)}}
+@keyframes navSheen{0%,100%{transform:translateX(-8%);opacity:.45}50%{transform:translateX(8%);opacity:.8}}
+@keyframes navDot{0%,100%{transform:scale(.9);opacity:.75}50%{transform:scale(1.15);opacity:1}}
+.nav-section-label.admin-label+.nav-group{margin-bottom:24px}
+.sidebar-bottom{padding:18px 4px 0!important;margin-top:auto!important;border-top:1px solid var(--line)!important;gap:8px!important}
+.profile-mini{margin-bottom:2px!important}
+@media(prefers-reduced-motion:reduce){
+ .nav button,.nav button.active,.nav button.active::before,.nav button.active::after,.nav button.active .nav-active-dot{animation:none!important;transition:none!important}
+}
