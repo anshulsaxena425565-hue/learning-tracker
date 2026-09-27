@@ -1375,3 +1375,36 @@ select:not([multiple]):not([size]) optgroup{font-family:Manrope,sans-serif;font-
  .chat-message{margin-bottom:50px!important}
  .chat-message-actions{max-width:calc(100vw - 100px)!important}
 }
+
+/* Critical global overflow containment — page width must never escape viewport */
+html,body,#root{width:100%;max-width:100%;min-width:0}
+html,body{overflow-x:hidden}
+.app{width:100%;max-width:100%;min-width:0;overflow-x:clip}
+.content{max-width:100%;min-width:0;overflow-x:clip}
+.page{max-width:1180px;width:100%;min-width:0;box-sizing:border-box;overflow-x:clip}
+.page>*{min-width:0;max-width:100%;box-sizing:border-box}
+/* Dashboard-specific min-content containment */
+.dashboard-page{width:100%!important;min-width:0!important;max-width:1180px!important;overflow-x:clip!important}
+.dashboard-page>*{min-width:0!important;max-width:100%!important}
+.dashboard-hero-punch{min-width:0!important;max-width:100%!important}
+.dashboard-hero-punch .dashboard-hero-main{min-width:0!important;max-width:690px!important;flex:1 1 auto}
+.dashboard-hero-punch .hero-actions{min-width:0!important;max-width:100%!important;flex-wrap:wrap!important}
+.dashboard-focus-grid{width:100%!important;min-width:0!important;max-width:100%!important}
+.dashboard-focus-grid>*{min-width:0!important;max-width:100%!important}
+.focus-copy{min-width:0!important}
+.focus-stats{min-width:0!important}
+.dashboard-punch-kpis{min-width:0!important;max-width:100%!important}
+.dashboard-punch-kpis>*{min-width:0!important}
+.dashboard-milestones-v2,.milestone-journey,.milestone-step{min-width:0!important;max-width:100%!important}
+.dashboard-courses-punch{min-width:0!important;max-width:100%!important}
+.dashboard-courses-punch .course-grid{min-width:0!important;max-width:100%!important}
+.dashboard-courses-punch .course-card{min-width:0!important;max-width:100%!important}
+@media(max-width:800px){
+ .content{width:100%!important;margin-left:0!important}
+ .dashboard-page{width:100%!important}
+ .dashboard-hero-punch{width:100%!important}
+ .dashboard-hero-punch .dashboard-hero-main{max-width:100%!important}
+}
+@media(max-width:600px){
+ .dashboard-courses-punch .course-grid{grid-template-columns:minmax(0,1fr)!important}
+}
