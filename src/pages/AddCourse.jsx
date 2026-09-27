@@ -6,7 +6,7 @@ export default function AddCourse(){
  if(!['owner','admin'].includes(team?.role))return <section className="section"><b>Admin access required.</b></section>;
  async function importList(){
   if(!url.trim())return setError('Paste a YouTube playlist URL first.');
-  setBusy(true);setError('');setMsg('Importing videos and available chapters…');
+  const credit=await charge('playlist_creation','Imported playlist: '+url.trim(),{playlist_url:url.trim()});if(credit.error||!credit.data?.ok)return setError(credit.error?.message||credit.data?.error||'Not enough credits.');setBusy(true);setError('');setMsg('Importing videos and available chapters…');
   const{data,error}=await supabase.functions.invoke('import-youtube-playlist',{body:{team_id:team.id,playlist_url:url.trim()}});
   if(error){setError(error.message);setMsg('')}else if(data?.error){setError(data.error);setMsg('')}else{setMsg((data?.videos_imported||0)+' videos imported successfully.');toast((data?.videos_imported||0)+' videos are now available in your course.','success','Course imported');await reload()}
   setBusy(false);
