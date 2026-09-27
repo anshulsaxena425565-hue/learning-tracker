@@ -54,4 +54,5 @@ export default function Dashboard({openCourse}){
       </article>
      </div>})}
    </div>
-  </section>}
+  </section>\n\n  <section className="section dashboard-courses dashboard-courses-punch"><div className="section-head"><div><p className="eyebrow">YOUR COURSES</p><h2>Keep the momentum going.</h2></div><span className="muted">{courses.length} courses</span></div><div className="course-grid">{courses.map((c,i)=>{const vs=videos[c.id]||[],d=vs.filter(v=>progress[v.id]?.completed_at).length,p=Math.round(d/(vs.length||1)*100);return <article className="course-card item click modern-course-card" key={c.id} style={{'--delay':i*60+'ms'}} onClick={()=>openCourse(c.id)}><div className="course-ring" style={{'--pct':p+'%'}}><b>{p}%</b></div><div className="grow"><span className="course-index">COURSE {String(i+1).padStart(2,'0')}</span><h3>{c.title}</h3><p className="course-meta">{c.channel||'Course'} · {d}/{vs.length} completed</p><div className="progress mini"><i style={{width:p+'%'}}/></div></div><span className="arrow"><CaretRight weight="bold"/></span></article>})}</div>{!courses.length&&<div className="empty">No courses found for this team.</div>}</section>
+ </div>\n}
