@@ -39,8 +39,19 @@ export default function Dashboard({openCourse}){
    <div className="kpi-card modern-kpi"><span className="kpi-icon purple"><BookOpenText weight="fill"/></span><span className="kpi-label">Your library</span><strong>{courses.length}</strong><small>courses available</small></div>
   </section>
 
-  <section className="milestones-section dashboard-milestones-punch"><div className="section-head"><div><p className="eyebrow">MILESTONES</p><h2>Turn progress into wins.</h2><p className="muted">Small checkpoints. Real momentum.</p></div><span className="milestone-summary"><Trophy weight="fill"/> {stats.done}/{stats.all.length}</span></div><div className="milestone-grid">{milestones.map((m,i)=>{const value=Math.min(stats.done,m.target),pct=Math.round(value/m.target*100),reached=stats.done>=m.target;return <article className={'milestone-card '+(reached?'reached':'')} key={m.label} style={{'--delay':i*70+'ms'}}><div className="milestone-top"><div className="milestone-ring" style={{'--pct':pct+'%'}}><span>{reached?<CheckCircle weight="fill"/>:m.icon}</span></div><span className={reached?'status-pill done':'status-pill'}>{reached?'Unlocked':pct+'%'}</span></div><div><h3>{m.label}</h3><p>{m.copy}</p></div><div className="milestone-track"><i style={{width:pct+'%'}}/></div><small>{value} / {m.target} lessons</small></article>})}</div></section>
-
-  <section className="section dashboard-courses dashboard-courses-punch"><div className="section-head"><div><p className="eyebrow">YOUR COURSES</p><h2>Keep the momentum going.</h2></div><span className="muted">{courses.length} courses</span></div><div className="course-grid">{courses.map((c,i)=>{const vs=videos[c.id]||[],d=vs.filter(v=>progress[v.id]?.completed_at).length,p=Math.round(d/(vs.length||1)*100);return <article className="course-card item click modern-course-card" key={c.id} style={{'--delay':i*60+'ms'}} onClick={()=>openCourse(c.id)}><div className="course-ring" style={{'--pct':p+'%'}}><b>{p}%</b></div><div className="grow"><span className="course-index">COURSE {String(i+1).padStart(2,'0')}</span><h3>{c.title}</h3><p className="course-meta">{c.channel||'Course'} · {d}/{vs.length} completed</p><div className="progress mini"><i style={{width:p+'%'}}/></div></div><span className="arrow"><CaretRight weight="bold"/></span></article>})}</div>{!courses.length&&<div className="empty">No courses found for this team.</div>}</section>
- </div>
-}
+  <section className="milestones-section dashboard-milestones-v2">
+   <div className="milestone-journey-head">
+    <div><p className="eyebrow">YOUR LEARNING JOURNEY</p><h2>Milestones that keep you moving.</h2><p className="muted">Every checkpoint unlocks a new reason to keep going.</p></div>
+    <div className="milestone-total"><Trophy weight="fill"/><div><b>{stats.done}/{stats.all.length}</b><span>lessons complete</span></div></div>
+   </div>
+   <div className="milestone-journey">
+    {milestones.map((m,i)=>{const value=Math.min(stats.done,m.target),pct=Math.round(value/m.target*100),reached=stats.done>=m.target,next=!reached&&milestones.slice(0,i).every(x=>stats.done>=x.target);return <div className={'milestone-step '+(reached?'reached ':'')+(next?'current ':'')} key={m.label}>
+      <div className="milestone-connector">{i<milestones.length-1&&<i className={reached?'filled':''}/>}</div>
+      <article className="milestone-v2-card">
+       <div className="milestone-v2-icon">{reached?<CheckCircle weight="fill"/>:m.icon}</div>
+       <div className="milestone-v2-body"><div className="milestone-v2-top"><span>{reached?'UNLOCKED':next?'NEXT MILESTONE':'UPCOMING'}</span><b>{pct}%</b></div><h3>{m.label}</h3><p>{m.copy}</p><div className="milestone-v2-track"><i style={{width:pct+'%'}}/></div><small>{value} / {m.target} lessons</small></div>
+       {next&&<div className="milestone-next-glow"/>}
+      </article>
+     </div>})}
+   </div>
+  </section>}
