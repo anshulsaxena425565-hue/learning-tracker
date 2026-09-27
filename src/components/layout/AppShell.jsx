@@ -1,8 +1,8 @@
 import{useEffect,useState}from'react';
 import{useAuth}from'../../context/AuthContext';
 import{useTeam}from'../../context/TeamContext';
-import{supabase}from'../../lib/supabase';
-import{SquaresFour,BookOpenText,UsersThree,ChatsCircle,TrendUp,UserCircle,ShieldCheck,CaretLeft,CaretRight,Plus,SignOut,List, X}from'@phosphor-icons/react';
+import{supabase}from'../../lib/supabase';import{useCredits}from'../../context/CreditsContext';
+import{Coins, MagnifyingGlass, Plus, SquaresFour,BookOpenText,UsersThree,ChatsCircle,TrendUp,UserCircle,ShieldCheck,CaretLeft,CaretRight,Plus,SignOut,List, X}from'@phosphor-icons/react';
 
 const items=[
  ['dashboard','Dashboard','grid'],['courses','Courses','book'],['teams','Teams','users'],['chat','Team Chat','chat'],['leaderboard','Leaderboard','trend'],['profile','Profile','user']
@@ -11,7 +11,7 @@ const items=[
 function Icon({name,size=18,weight="regular"}){const icons={grid:SquaresFour,book:BookOpenText,users:UsersThree,chat:ChatsCircle,trend:TrendUp,user:UserCircle,shield:ShieldCheck,plus:Plus,left:CaretLeft,right:CaretRight,signout:SignOut,list:List,close:X};const C=icons[name]||SquaresFour;return <C size={size} weight={weight} aria-hidden/>}
 
 export default function AppShell({children,view,setView,locked=false}){
- const{user}=useAuth(),{team,teams,switchTeam}=useTeam();const[profileName,setProfileName]=useState('');
+ const{user}=useAuth(),{team,teams,switchTeam}=useTeam(),{credits}=useCredits();const[profileName,setProfileName]=useState('');
  const[collapsed,setCollapsed]=useState(()=>localStorage.getItem('lb-sidebar-collapsed')==='1');
  const[open,setOpen]=useState(false);useEffect(()=>{if(!user){setProfileName('');return}supabase.from('profiles').select('display_name').eq('id',user.id).maybeSingle().then(({data})=>setProfileName(data?.display_name||''))},[user]);
  const isAdmin=['owner','admin'].includes(team?.role);const[platformAdmin,setPlatformAdmin]=useState(false);useEffect(()=>{let alive=true;async function check(){if(!user){setPlatformAdmin(false);return}const rpc=await supabase.rpc('is_platform_admin');if(alive&&rpc.data===true){setPlatformAdmin(true);return}const direct=await supabase.from('platform_admins').select('user_id').eq('user_id',user.id).maybeSingle();if(alive)setPlatformAdmin(!direct.error&&!!direct.data)}check();return()=>{alive=false}},[user?.id]);
@@ -46,6 +46,6 @@ export default function AppShell({children,view,setView,locked=false}){
   </aside>
   <header className="mobile-head"><div className="brand">Learning<span>Beyond</span></div><button onClick={()=>setOpen(!open)} aria-label={open?"Close navigation":"Open navigation"}><Icon name={open?"close":"list"} size={22}/></button></header>
   {open&&<div className="mobile-nav">{items.map(([id,label,icon])=><button onClick={()=>nav(id)} key={id}><Icon name={icon}/>{label}</button>)}{platformAdmin&&<button onClick={()=>nav('admin')}><Icon name="shield"/>Admin</button>}</div>}
-  <main className="content">{children}</main>
+  <main className="content"><div className="global-topbar"><div className="global-search"><MagnifyingGlass size={18}/><input placeholder="Search LearningBeyond…"/></div><div className="global-topbar-actions"><button className="credit-wallet" onClick={()=>nav("credits")}><Coins size={18} weight="fill"/><span><small>CREDITS</small><b>{credits.toLocaleString()}</b></span></button><button className="add-credit-btn" onClick={()=>nav("credits")}><Plus size={16} weight="bold"/> Add Credits</button></div></div>{children}</main>
  </div>
 }
