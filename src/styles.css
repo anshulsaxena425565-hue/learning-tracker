@@ -1295,3 +1295,30 @@ select:not([multiple]):not([size]) optgroup{font-family:Manrope,sans-serif;font-
 .custom-select-trigger.open .custom-select-chevron{transform:rotate(180deg)}
 /* Keep the hero's decorative glow clipped without clipping interactive dropdowns */
 .leaderboard-hero:before,.leaderboard-hero:after{pointer-events:none}
+
+/* Dropdown menu states — calm base, purple interaction */
+.custom-select-menu{
+  background:#ffffff!important;
+  border:1px solid #e7e4f3!important;
+  box-shadow:0 20px 45px rgba(36,27,98,.16),0 4px 12px rgba(20,24,50,.07)!important;
+}
+.custom-select-option{
+  background:transparent!important;
+  color:#3e4054!important;
+  font-weight:700!important;
+}
+.custom-select-option:hover{
+  background:#f0edff!important;
+  color:#5749d4!important;
+  transform:none!important;
+}
+.custom-select-option.selected{
+  background:linear-gradient(135deg,#6558e8,#7768ef)!important;
+  color:#ffffff!important;
+  box-shadow:0 5px 13px rgba(99,85,225,.18)!important;
+}
+.custom-select-option.selected:hover{
+  background:linear-gradient(135deg,#6558e8,#7768ef)!important;
+  color:#ffffff!important;
+}
+.custom-select-check{color:#fff!important}
