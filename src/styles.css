@@ -1734,3 +1734,21 @@ html,body{overflow-x:hidden}
 @keyframes creditFloat{0%,100%{transform:translateY(0) rotate(5deg)}50%{transform:translateY(-6px) rotate(7deg)}}@keyframes creditSpark{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.18) rotate(12deg)}}
 @media(max-width:1000px){.admin-credit-layout{grid-template-columns:1fr}.admin-credit-metrics{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.admin-credit-hero{padding:23px;min-height:0}.admin-credit-hero h2{font-size:24px}.admin-credit-hero-orb{display:none}.admin-credit-metrics{grid-template-columns:1fr 1fr}.admin-credit-row-v2{grid-template-columns:34px minmax(0,1fr)}.admin-credit-cost-editor{grid-column:2;justify-content:flex-start}.admin-credit-cost-editor button{flex:1}.admin-plan-fields{grid-template-columns:1fr}.admin-plan-footer{align-items:flex-start;flex-direction:column}.admin-plan-footer button{width:100%;justify-content:center}}
+
+/* Credits CTA contrast + interaction polish — must override global Admin button tokens */
+.admin-page .admin-credit-cost-editor button,
+.admin-page .admin-plan-footer button{color:#fff!important;background:linear-gradient(135deg,#7654e8 0%,#5d46d8 100%)!important;border:1px solid rgba(118,84,232,.35)!important;box-shadow:0 6px 16px rgba(101,76,211,.18);position:relative;overflow:hidden;white-space:nowrap}
+.admin-page .admin-credit-cost-editor button:before,
+.admin-page .admin-plan-footer button:before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.28) 48%,transparent 72%);transform:translateX(-120%);transition:transform .45s ease}
+.admin-page .admin-credit-cost-editor button:hover,
+.admin-page .admin-plan-footer button:hover{color:#fff!important;background:linear-gradient(135deg,#8565f3 0%,#6248e0 100%)!important;border-color:#7654e8!important;transform:translateY(-2px);box-shadow:0 10px 24px rgba(101,76,211,.30)}
+.admin-page .admin-credit-cost-editor button:hover:before,
+.admin-page .admin-plan-footer button:hover:before{transform:translateX(120%)}
+.admin-page .admin-credit-cost-editor button:active,
+.admin-page .admin-plan-footer button:active{transform:translateY(0) scale(.98);box-shadow:0 4px 10px rgba(101,76,211,.20)}
+.admin-page .admin-credit-cost-editor button:focus-visible,
+.admin-page .admin-plan-footer button:focus-visible{outline:3px solid rgba(118,84,232,.22);outline-offset:2px}
+.admin-page .admin-credit-cost-editor button svg,
+.admin-page .admin-plan-footer button svg{color:#fff!important;flex:none}
+.admin-page .admin-credit-cost-editor button{min-width:88px;justify-content:center}
+.admin-page .admin-plan-footer button{min-width:116px;justify-content:center}
