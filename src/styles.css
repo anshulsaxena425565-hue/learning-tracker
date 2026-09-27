@@ -1460,3 +1460,16 @@ html,body{overflow-x:hidden}
 .chat-pinned-item>button{width:22px!important;height:22px!important;min-width:22px!important;border:0!important;border-radius:6px!important;background:#f1efff!important;color:#5c50d5!important;display:grid!important;place-items:center!important;font:900 12px/1 Manrope,sans-serif!important;flex:none!important}
 .chat-pinned-item>button:hover{background:#e7e3ff!important}
 @media(max-width:600px){.chat-pinned{height:54px!important;min-height:54px!important;padding:7px 10px!important}.chat-pinned-heading{display:none!important}.chat-pinned-list{min-width:0!important}.chat-pinned-item{max-width:calc(100vw - 115px)!important;flex-basis:calc(100vw - 115px)!important}}
+
+/* Pinned row final sizing */
+.chat-pinned{height:52px!important;min-height:52px!important;padding:7px 14px!important}
+.chat-pinned-bar{height:100%!important;gap:6px!important}
+.chat-pinned-icon{width:28px!important;height:28px!important}
+.chat-pinned-heading{font-size:8px!important}
+.chat-pinned-count{min-width:20px!important;height:20px!important}
+.chat-pinned-list{height:36px!important;overflow:hidden!important;gap:6px!important}
+.chat-pinned-item{height:32px!important;max-width:min(420px,calc(100% - 4px))!important;flex:0 1 420px!important;padding:4px 6px!important;box-sizing:border-box!important}
+.chat-pinned-label{gap:5px!important}
+.chat-pinned-label b{font-size:8px!important}
+.chat-pinned-label em{font-size:8px!important}
+.chat-pinned-item>button{width:20px!important;height:20px!important;min-width:20px!important;font-size:11px!important}
