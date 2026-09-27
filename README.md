@@ -32,3 +32,6 @@ The browser uses the project's publishable key. No service-role key is included.
 - Team membership is enforced through RLS and security-definer RPCs.
 
 Never commit service-role keys, passwords, or private credentials.
+
+## Deployment
+Production deployment is managed by GitHub Pages from `main`.
