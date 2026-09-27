@@ -13,7 +13,7 @@ export default function AddCourse(){
  }
  async function create(){
   if(!title.trim())return setError('Course title is required.');
-  setBusy(true);setError('');setMsg('');
+  const credit=await charge('playlist_creation','Created course: '+title.trim(),{title:title.trim()});if(credit.error||!credit.data?.ok)return setError(credit.error?.message||credit.data?.error||'Not enough Credits.');setBusy(true);setError('');setMsg('');
   const{data,error}=await supabase.from('playlists').insert({team_id:team.id,title:title.trim(),channel:channel.trim(),url:url.trim(),created_by:(await supabase.auth.getUser()).data.user.id}).select().single();
   if(error){setError(error.message);setBusy(false);return}
   const rows=items.split(/\n/).map(x=>x.trim()).filter(Boolean).map((x,i)=>({playlist_id:data.id,position:i,title:x}));
@@ -32,7 +32,7 @@ export default function AddCourse(){
     <div className="form-stack">
      <label>Playlist URL<input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://www.youtube.com/playlist?list=…"/></label>
      <div className="notice">The importer runs securely through the existing Supabase Edge Function. Your API key stays off the browser.</div>
-     <div className="form-actions"><button onClick={importList} disabled={busy}>{busy?'Importing…':'Import playlist'}</button></div>
+     <div className="form-actions"><button onClick={importList} disabled={busy}>{busy?'Importing…':<>Import playlist · {cost('playlist_creation')} Credits</>}</button></div>
     </div>
    </section>
    <section className="form-card">
@@ -42,7 +42,7 @@ export default function AddCourse(){
      <label>Channel / instructor<input value={channel} onChange={e=>setChannel(e.target.value)} placeholder="Channel name"/></label>
      <label>Playlist URL<input value={url} onChange={e=>setUrl(e.target.value)} placeholder="Optional YouTube URL"/></label>
      <label>Lessons <span className="muted">· one title per line</span><textarea value={items} onChange={e=>setItems(e.target.value)} placeholder={'Introduction\nVariables & data types\nFunctions\n…'}/></label>
-     <div className="form-actions"><button className="ghost" onClick={()=>{setTitle('');setChannel('');setUrl('');setItems('');setMsg('');setError('')}}>Clear</button><button onClick={create} disabled={busy}>{busy?'Creating…':'Create course'}</button></div>
+     <div className="form-actions"><button className="ghost" onClick={()=>{setTitle('');setChannel('');setUrl('');setItems('');setMsg('');setError('')}}>Clear</button><button onClick={create} disabled={busy}>{busy?'Creating…':<>Create course · {cost('playlist_creation')} Credits</>}</button></div>
     </div>
    </section>
   </div>
