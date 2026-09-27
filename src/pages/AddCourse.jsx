@@ -1,7 +1,7 @@
-import{useState}from'react';import{toast}from'../lib/toast';import{useTeam}from'../context/TeamContext';import{supabase}from'../lib/supabase';
+import{useState}from'react';import{toast}from'../lib/toast';import{useCredits}from'../context/CreditsContext';import{useTeam}from'../context/TeamContext';import{supabase}from'../lib/supabase';
 
 export default function AddCourse(){
- const{team,reload}=useTeam();
+ const{team,reload}=useTeam();const{cost,charge}=useCredits();
  const[url,setUrl]=useState(''),[title,setTitle]=useState(''),[channel,setChannel]=useState(''),[items,setItems]=useState(''),[busy,setBusy]=useState(false),[msg,setMsg]=useState(''),[error,setError]=useState('');
  if(!['owner','admin'].includes(team?.role))return <section className="section"><b>Admin access required.</b></section>;
  async function importList(){
