@@ -1281,3 +1281,17 @@ select:not([multiple]):not([size]) optgroup{font-family:Manrope,sans-serif;font-
 /* Light-surface reusable custom selects for future migrations */
 .custom-select-wrap.light .custom-select-trigger{background:var(--surface)!important;color:var(--text)!important;border-color:var(--line)!important;backdrop-filter:none}.custom-select-wrap.light .custom-select-icon{color:var(--accent)}.custom-select-wrap.light .custom-select-chevron{color:var(--muted)}
 @media(max-width:620px){.leaderboard-filters{width:100%}.leaderboard-filters .custom-select-wrap{width:100%;min-width:0}.custom-select-menu{min-width:0}}
+
+/* Dropdown popover polish: allow menus to escape the hero, contain long lists */
+.leaderboard-hero{overflow:visible!important;z-index:20!important}
+.leaderboard-page{overflow:visible!important}
+.leaderboard-filters{position:relative;z-index:50!important}
+.leaderboard-filters .custom-select-wrap{z-index:60!important}
+.custom-select-wrap{position:relative;z-index:1}
+.custom-select-menu{max-height:290px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#c8c1f3 transparent}
+.custom-select-menu::-webkit-scrollbar{width:5px}.custom-select-menu::-webkit-scrollbar-track{background:transparent}.custom-select-menu::-webkit-scrollbar-thumb{background:#c8c1f3;border-radius:99px}
+.custom-select-option{min-height:38px;padding:9px 10px!important;line-height:1.25!important}
+.custom-select-option span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.custom-select-trigger.open .custom-select-chevron{transform:rotate(180deg)}
+/* Keep the hero's decorative glow clipped without clipping interactive dropdowns */
+.leaderboard-hero:before,.leaderboard-hero:after{pointer-events:none}
