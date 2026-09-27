@@ -1353,3 +1353,25 @@ select:not([multiple]):not([size]) optgroup{font-family:Manrope,sans-serif;font-
 .chat-message-actions button{height:29px!important;min-width:29px!important;padding:0 7px!important;border:0!important;border-radius:7px!important;background:transparent!important;color:#76778a!important;font:800 7px Manrope,sans-serif!important}.chat-message-actions button:hover{background:#f0edff!important;color:#5749d4!important}
 .chat-message-actions button:first-child{font-size:10px!important}
 @media(max-width:600px){.chat-pinned-item{min-width:230px!important}.chat-message-actions{max-width:calc(100vw - 90px)!important}.chat-message-actions button{padding:0 6px!important}}
+
+/* Final Team Chat geometry fix */
+.chat-shell{grid-template-rows:auto max-content minmax(0,1fr) auto!important}
+.chat-pinned{min-height:78px!important;box-sizing:border-box!important;overflow:hidden!important;padding:10px 16px!important}
+.chat-pinned-list{min-height:34px!important;align-items:center!important}
+.chat-messages{padding-top:28px!important;padding-bottom:44px!important}
+.chat-message{overflow:visible!important;margin-bottom:52px!important}
+.chat-message:first-child{margin-top:4px!important}
+.chat-message-actions{
+  top:calc(100% + 7px)!important;
+  bottom:auto!important;
+  transform:translateY(-2px)!important;
+  max-width:min(360px,calc(100% - 8px))!important;
+}
+.chat-message:hover .chat-message-actions,.chat-message-actions:focus-within{transform:none!important}
+.chat-message.mine .chat-message-actions{right:0!important;left:auto!important}
+.chat-message:not(.mine) .chat-message-actions{left:0!important;right:auto!important}
+@media(max-width:600px){
+ .chat-pinned{min-height:76px!important}
+ .chat-message{margin-bottom:50px!important}
+ .chat-message-actions{max-width:calc(100vw - 100px)!important}
+}
