@@ -1664,3 +1664,29 @@ html,body{overflow-x:hidden}
 .admin-credit-console{display:grid;gap:18px}.admin-credit-settings,.admin-credit-plans{display:grid;gap:8px;padding:18px}.admin-credit-row{display:grid;grid-template-columns:1fr 180px 80px;align-items:center;gap:14px;padding:12px;border:1px solid #eeeaf4;border-radius:14px}.admin-credit-row small{display:block;color:#928c9d;font-size:10px;margin-top:3px}.admin-credit-row label{display:flex;align-items:center;gap:7px}.admin-credit-row input,.admin-credit-plan input{width:100%;border:1px solid #e4e0eb;border-radius:10px;padding:9px;background:white}.admin-credit-row button,.admin-credit-plan button,.admin-credit-adjust button{border:0;border-radius:9px;padding:9px 11px;background:#171323;color:white;font-weight:800;cursor:pointer}.admin-credit-plan{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 90px;gap:9px;align-items:end;padding:12px;border:1px solid #eeeaf4;border-radius:14px}.admin-credit-plan label{font-size:10px;font-weight:800;color:#777080}.admin-credit-adjust{display:flex;gap:7px;margin-top:10px}.admin-credit-adjust button{background:#f0ecfa;color:#5d36bc}
 @media(max-width:900px){.credit-plan-grid{grid-template-columns:repeat(2,1fr)}.credits-how{grid-template-columns:1fr}.credits-hero{flex-direction:column;align-items:flex-start}.admin-credit-plan{grid-template-columns:1fr 1fr}.global-topbar{padding:10px 14px}.global-search{min-width:0}.add-credit-btn{display:none}}
 @media(max-width:600px){.credit-plan-grid{grid-template-columns:1fr}.global-topbar{height:62px}.global-search{height:38px}.credit-wallet{padding:6px 9px}.credits-hero{padding:24px}.credits-hero h1{font-size:32px}}
+
+/* Super Admin Credits — clear CTAs + user wallet */
+.admin-credit-row button,
+.admin-credit-plan button,
+.admin-credit-adjust button{
+  color:#fff!important;
+  background:#171323!important;
+  border:0!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}
+.admin-credit-row button:hover,
+.admin-credit-plan button:hover{background:#34245d!important;color:#fff!important}
+.admin-user-credit-box{margin-top:18px;padding:16px;border:1px solid #e7e1f2;border-radius:16px;background:linear-gradient(135deg,#faf8ff,#fff)}
+.admin-user-credit-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+.admin-user-credit-head>div{display:flex;flex-direction:column;gap:3px}
+.admin-user-credit-head>b{font-size:14px}
+.admin-user-credit-head small{color:#8a8394;font-size:10px}
+.admin-user-credit-head>strong{font-size:25px;color:#5c3ab5;white-space:nowrap}
+.admin-user-credit-head>strong em{font-style:normal;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8a8394}
+.admin-user-credit-box .admin-credit-adjust{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:12px}
+.admin-user-credit-box .admin-credit-adjust button{height:34px;min-width:48px;padding:0 11px;border-radius:9px}
+.admin-user-credit-box .admin-credit-adjust button.remove{background:#fff!important;color:#a33d4b!important;border:1px solid #efd9de!important}
+.admin-user-credit-box .admin-credit-adjust input{height:34px;width:92px;border:1px solid #ded8ea;border-radius:9px;background:#fff;padding:0 10px;font:700 12px Manrope,sans-serif;outline:none}
+.admin-user-credit-box .admin-credit-adjust input:focus{border-color:#8061d7;box-shadow:0 0 0 3px rgba(128,97,215,.1)}
+@media(max-width:700px){.admin-user-credit-head{align-items:flex-start;flex-direction:column}.admin-user-credit-head>strong{font-size:22px}}
