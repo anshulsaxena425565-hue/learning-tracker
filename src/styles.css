@@ -1408,3 +1408,6 @@ html,body{overflow-x:hidden}
 @media(max-width:600px){
  .dashboard-courses-punch .course-grid{grid-template-columns:minmax(0,1fr)!important}
 }
+
+/* Auth verification feedback */
+.auth-card .success{background:#ecfdf3;color:#087443;padding:10px;border-radius:9px;font-size:13px;border:1px solid #b7ebce}
