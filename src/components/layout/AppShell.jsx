@@ -2,7 +2,7 @@ import{useEffect,useState}from'react';
 import{useAuth}from'../../context/AuthContext';
 import{useTeam}from'../../context/TeamContext';
 import{supabase}from'../../lib/supabase';import{useCredits}from'../../context/CreditsContext';
-import{Coins, MagnifyingGlass, Plus, SquaresFour,BookOpenText,UsersThree,ChatsCircle,TrendUp,UserCircle,ShieldCheck,CaretLeft,CaretRight,Plus,SignOut,List, X}from'@phosphor-icons/react';
+import{Coins, MagnifyingGlass, SquaresFour,BookOpenText,UsersThree,ChatsCircle,TrendUp,UserCircle,ShieldCheck,CaretLeft,CaretRight,Plus,SignOut,List, X}from'@phosphor-icons/react';
 
 const items=[
  ['dashboard','Dashboard','grid'],['courses','Courses','book'],['teams','Teams','users'],['chat','Team Chat','chat'],['leaderboard','Leaderboard','trend'],['profile','Profile','user']
