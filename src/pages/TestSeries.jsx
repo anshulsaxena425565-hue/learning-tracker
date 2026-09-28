@@ -1,4 +1,9 @@
-import{useEffect,useState}from'react';import{toast}from'../lib/toast';import{supabase}from'../lib/supabase';import{useCredits}from'../context/CreditsContext';import{useAuth}from'../context/AuthContext';import{useTeam}from'../context/TeamContext';
+import { useEffect,useState } from 'react'
+import { toast } from '../lib/toast'
+import { supabase } from '../lib/supabase'
+import { useCredits } from '../context/CreditsContext'
+import { useAuth } from '../context/AuthContext'
+import { useTeam } from '../context/TeamContext'
 
 function parseQuestions(raw){
  const text=String(raw||'').replace(/\r/g,'').trim();if(!text)return[];
