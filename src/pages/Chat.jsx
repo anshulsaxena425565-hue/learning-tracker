@@ -1,4 +1,8 @@
-import{useEffect,useMemo,useRef,useState}from'react';import{supabase}from'../lib/supabase';import{useAuth}from'../context/AuthContext';import{useTeam}from'../context/TeamContext';
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+import { useTeam } from '../context/TeamContext'
+
 
 const EMOJIS=['👍','❤️','😂','🎉','🔥','👏','💯'];
 export default function Chat(){
