@@ -1,4 +1,5 @@
-import{useState}from'react';import{Coins,Lightning,ShoppingCart,ShieldCheck}from'@phosphor-icons/react';
+import { useState } from 'react'
+import { Coins,Lightning,ShoppingCart,ShieldCheck } from '@phosphor-icons/react'
 import{useCredits}from'../context/CreditsContext';import{supabase}from'../lib/supabase';import{toast}from'../lib/toast';
 
 export default function Credits(){
