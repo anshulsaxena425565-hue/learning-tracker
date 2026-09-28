@@ -54,14 +54,14 @@ function PasswordRecovery() {
 }
 
 function PublicRoutes() {
-  const { user, loading, passwordRecovery } = useAuth(); const location = useLocation()
+  const { user, loading, passwordRecovery } = useAuth(); const location = useLocation(); const navigate = useNavigate()
   if (loading) return <div className="splash">Learning<span>Beyond</span></div>
   if (passwordRecovery) return <PasswordRecovery />
   if (user) return <Navigate to="/app" replace />
   if (location.pathname === '/login') return <AuthPage mode="login" />
   if (location.pathname === '/signup') return <AuthPage mode="signup" />
   if (location.pathname === '/forgot-password') return <AuthPage mode="forgot" />
-  return <Landing onAuth={mode => window.history.pushState({}, '', mode === 'signup' ? '/signup' : '/login')} />
+  return <Landing onAuth={mode => navigate(mode === 'signup' ? '/signup' : '/login')} />
 }
 
 function App() {
