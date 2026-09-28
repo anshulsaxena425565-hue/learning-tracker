@@ -11,7 +11,7 @@ const items=[
 function Icon({name,size=18,weight="regular"}){const icons={grid:SquaresFour,book:BookOpenText,users:UsersThree,chat:ChatsCircle,trend:TrendUp,user:UserCircle,shield:ShieldCheck,plus:Plus,left:CaretLeft,right:CaretRight,signout:SignOut,list:List,close:X};const C=icons[name]||SquaresFour;return <C size={size} weight={weight} aria-hidden/>}
 
 export default function AppShell({children,view,setView,locked=false}){
- const{user}=useAuth(),{team,teams,switchTeam}=useTeam(),{credits}=useCredits();const[profileName,setProfileName]=useState('');
+ const{user,logout}=useAuth(),{team,teams,switchTeam}=useTeam(),{credits}=useCredits();const[profileName,setProfileName]=useState('');
  const[collapsed,setCollapsed]=useState(()=>localStorage.getItem('lb-sidebar-collapsed')==='1');
  const[open,setOpen]=useState(false);useEffect(()=>{if(!user){setProfileName('');return}supabase.from('profiles').select('display_name').eq('id',user.id).maybeSingle().then(({data})=>setProfileName(data?.display_name||''))},[user]);
  const isAdmin=['owner','admin'].includes(team?.role);const[platformAdmin,setPlatformAdmin]=useState(false);useEffect(()=>{let alive=true;async function check(){if(!user){setPlatformAdmin(false);return}const rpc=await supabase.rpc('is_platform_admin');if(alive&&rpc.data===true){setPlatformAdmin(true);return}const direct=await supabase.from('platform_admins').select('user_id').eq('user_id',user.id).maybeSingle();if(alive)setPlatformAdmin(!direct.error&&!!direct.data)}check();return()=>{alive=false}},[user?.id]);
@@ -41,7 +41,7 @@ export default function AppShell({children,view,setView,locked=false}){
    </nav>
    <div className="sidebar-bottom">
     <button className="profile-mini" onClick={()=>nav('profile')} title={collapsed?(profileName||user?.user_metadata?.full_name||'Learner'):undefined}><span className="avatar-dot">{(user?.email||'L')[0].toUpperCase()}</span><span className="profile-email">{profileName||user?.user_metadata?.full_name||'Learner'}</span></button>
-    <button className="signout" disabled={locked} onClick={()=>supabase.auth.signOut()}><span className="signout-icon"><Icon name="signout" size={17}/></span><span>Sign out</span></button>
+    <button className="signout" disabled={locked} onClick={logout}><span className="signout-icon"><Icon name="signout" size={17}/></span><span>Sign out</span></button>
    </div>
   </aside>
   <header className="mobile-head"><div className="brand">Learning<span>Beyond</span></div><button onClick={()=>setOpen(!open)} aria-label={open?"Close navigation":"Open navigation"}><Icon name={open?"close":"list"} size={22}/></button></header>
