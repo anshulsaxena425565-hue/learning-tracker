@@ -1832,3 +1832,274 @@ html,body{overflow-x:hidden}
 .mobile-nav a,.mobile-nav a:visited,.mobile-nav a:hover,.mobile-nav a:focus,.mobile-nav a:active{text-decoration:none!important;color:var(--text)!important;display:flex!important;align-items:center!important;gap:10px!important}
 .app.sidebar-collapsed .sidebar .nav a{justify-content:center!important;padding:9px!important}
 .app.sidebar-collapsed .sidebar .nav a .nav-label,.app.sidebar-collapsed .sidebar .nav a .nav-active-dot{display:none!important}
+
+
+/* Mobile UX audit — final pass across the authenticated workspace */
+.mobile-menu-btn{
+  display:none;
+  width:40px!important;
+  height:40px!important;
+  min-width:40px!important;
+  padding:0!important;
+  margin:0!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:1px solid var(--line)!important;
+  border-radius:11px!important;
+  background:var(--surface2)!important;
+  color:var(--text)!important;
+  box-shadow:none!important;
+  flex:none!important;
+}
+.mobile-menu-btn:hover{transform:none!important;filter:none!important}
+html,body,#root{max-width:100%;overflow-x:hidden}
+img,svg,video,iframe{max-width:100%}
+
+@media(max-width:800px){
+  /* One mobile header only: menu + search + credits. */
+  .mobile-head{display:none!important}
+  .mobile-menu-btn{display:inline-flex!important}
+  .global-topbar{
+    left:0!important;right:0!important;top:0!important;
+    height:60px!important;padding:0 12px!important;
+    gap:8px!important;
+  }
+  .global-search{
+    min-width:0!important;width:auto!important;max-width:none!important;
+    height:40px!important;flex:1 1 auto!important;
+  }
+  .global-search input{min-width:0!important}
+  .global-topbar-actions{gap:6px!important}
+  .credit-wallet{height:40px!important;min-width:44px!important;padding:0 9px!important;justify-content:center!important}
+  .credit-wallet span small{display:none!important}
+  .credit-wallet span b{font-size:14px!important}
+  .add-credit-btn{display:none!important}
+  .mobile-nav{
+    top:66px!important;
+    max-height:calc(100dvh - 82px)!important;
+    overflow:auto!important;
+    overscroll-behavior:contain!important;
+  }
+  .content{
+    margin-left:0!important;width:100%!important;
+    padding:76px 14px 76px!important;
+  }
+  .page{
+    width:100%!important;max-width:none!important;
+    min-width:0!important;gap:14px!important;
+  }
+  .page>header{
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    gap:10px!important;
+  }
+  .page>header h1{font-size:27px!important;line-height:1.12!important}
+  .page>header .muted{font-size:12px!important}
+  .section,.form-card{min-width:0!important}
+  .section-head{
+    align-items:flex-start!important;
+    flex-direction:column!important;
+    gap:9px!important;
+  }
+  .section-head>button,.section-head>.actions{width:100%!important}
+  .actions{max-width:100%!important}
+  .actions button{min-width:0!important}
+  button,input,textarea,select{max-width:100%}
+  button{touch-action:manipulation}
+
+  /* Dashboard */
+  .dashboard-header-punch{align-items:flex-start!important}
+  .dashboard-header-punch h1{font-size:28px!important}
+  .dashboard-header-punch .momentum-chip{align-self:flex-start!important}
+  .dashboard-hero-punch{
+    min-height:0!important;
+    padding:24px 20px!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+  }
+  .dashboard-hero-punch h2{font-size:31px!important}
+  .dashboard-hero-punch .hero-visual{display:none!important}
+  .dashboard-hero-punch .hero-actions{width:100%!important;flex-direction:column!important;align-items:stretch!important}
+  .dashboard-hero-punch .hero-actions button{width:100%!important}
+  .dashboard-focus-grid{grid-template-columns:1fr!important}
+  .dashboard-focus-grid>*{width:100%!important}
+  .dashboard-punch-kpis{grid-template-columns:1fr 1fr!important}
+  .dashboard-punch-kpis .kpi-card{min-width:0!important}
+  .dashboard-milestones-v2 .milestone-journey{grid-template-columns:1fr!important}
+  .dashboard-courses-punch .course-grid{grid-template-columns:1fr!important}
+
+  /* Courses / course overview */
+  .courses-page-header{align-items:stretch!important}
+  .courses-heading{min-width:0!important}
+  .courses-heading h1{font-size:28px!important}
+  .add-course-cta{width:100%!important;min-width:0!important}
+  .courses-summary{width:100%!important}
+  .modern-course-grid{grid-template-columns:1fr!important}
+  .library-course-card,.modern-course-card{min-width:0!important}
+  .course-card-footer{align-items:stretch!important}
+  .course-card-footer>*{min-width:0!important}
+  .course-open-btn{width:100%!important}
+  .course-hero-modern{padding:21px 17px!important}
+  .course-hero-modern h1{font-size:27px!important}
+  .course-progress-card{width:100%!important}
+  .course-progress-copy{min-width:0!important;flex:1 1 120px}
+  .course-progress-track-wrap{min-width:0!important}
+  .course-hero-actions{width:100%!important}
+  .course-hero-actions button{width:100%!important}
+  .course-stat-grid{grid-template-columns:1fr 1fr!important}
+  .course-stat{min-width:0!important;padding:13px!important}
+  .lesson-row{min-width:0!important}
+  .lesson-main{min-width:0!important}
+  .lesson-main .grow{min-width:0!important}
+
+  /* Learning player */
+  .learning-player-page{width:100%!important;max-width:none!important;gap:12px!important}
+  .learning-player-topbar{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
+  .learning-player-topbar .player-back{width:max-content!important}
+  .player-top-progress{width:100%!important}
+  .learning-player-page .player-layout{grid-template-columns:1fr!important;gap:12px!important}
+  .learning-player-page .player-card{border-radius:18px!important}
+  .learning-player-page .player-info{padding:15px!important}
+  .learning-player-page .player-frame-wrap,.learning-player-page .player-frame{width:100%!important}
+  .learning-player-page .player-actions{width:100%!important}
+  .learning-player-page .course-tabs{
+    width:100%!important;display:flex!important;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    scrollbar-width:none!important;white-space:nowrap!important;
+    padding-bottom:2px!important;
+  }
+  .learning-player-page .course-tabs::-webkit-scrollbar{display:none}
+  .learning-player-page .course-tabs button{flex:0 0 auto!important}
+  .learning-player-page .player-panel,.learning-player-page .player-section{min-width:0!important}
+  .learning-player-page .ai-actions{grid-template-columns:1fr!important}
+  .learning-player-page .ai-action-copy{min-width:0!important}
+  .learning-player-page .course-sidebar{order:2!important;max-height:none!important}
+  .learning-player-page .lesson-list{max-height:380px!important}
+  .learning-player-page .side-video{min-width:0!important}
+  .learning-player-page .side-video-copy{min-width:0!important;width:0!important}
+
+  /* Credits — keep every section in the normal document flow. */
+  .credits-page{width:100%!important;max-width:none!important}
+  .credits-hero{padding:22px 18px!important;gap:16px!important}
+  .credits-hero h1{font-size:31px!important;line-height:1.08!important}
+  .credits-balance-card{width:100%!important;min-width:0!important}
+  .credits-how{grid-template-columns:1fr!important}
+  .credit-plan-grid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    width:100%!important;
+    gap:12px!important;
+  }
+  .credit-plan{width:100%!important;min-width:0!important;padding:19px!important}
+  .credit-plan button{width:100%!important}
+
+  /* Teams */
+  .teams-page-header{align-items:flex-start!important}
+  .teams-title{width:100%!important;min-width:0!important}
+  .teams-title h1{font-size:28px!important}
+  .teams-header-actions{width:100%!important;display:grid!important;grid-template-columns:1fr 1fr!important}
+  .teams-header-cta{width:100%!important}
+  .team-overview{min-width:0!important}
+  .team-overview>span{margin-left:auto!important}
+  .modern-team-grid,.team-grid{grid-template-columns:1fr!important}
+  .team-card{min-width:0!important}
+  .team-code{min-width:0!important}
+  .public-teams-cta{min-width:0!important}
+  .team-action-modal{width:calc(100vw - 28px)!important;max-width:none!important}
+  .public-explorer{width:calc(100vw - 20px)!important;max-width:none!important}
+
+  /* Chat */
+  .chat-page{width:100%!important;max-width:none!important}
+  .chat-page>header{align-items:flex-start!important}
+  .chat-online{align-self:flex-start!important}
+  .chat-shell{
+    height:calc(100dvh - 150px)!important;
+    min-height:420px!important;
+    max-height:none!important;
+    border-radius:18px!important;
+  }
+  .chat-top{padding:12px!important;flex-wrap:wrap!important}
+  .chat-tools{width:100%!important;min-width:0!important}
+  .chat-tools input{width:100%!important;min-width:0!important}
+  .chat-messages{padding:16px 12px 20px!important}
+  .chat-message{max-width:92%!important}
+  .chat-bubble-wrap{max-width:calc(100% - 42px)!important}
+  .chat-composer{width:100%!important}
+  .chat-pinned-list{max-width:100%!important}
+
+  /* Leaderboard */
+  .leaderboard-page{width:100%!important}
+  .leaderboard-hero{padding:16px 0!important;min-height:0!important}
+  .leaderboard-hero h1{font-size:29px!important;max-width:75%!important}
+  .leader-kpis{grid-template-columns:1fr 1fr!important}
+  .leader-kpis article{min-width:0!important;padding:13px!important}
+  .leaderboard-filters{width:100%!important;flex-direction:column!important;align-items:stretch!important}
+  .leader-filter,.leader-filter select{width:100%!important;max-width:none!important}
+  .leaderboard-panel{min-width:0!important;overflow:hidden!important}
+  .leaderboard-panel-head{align-items:stretch!important}
+  .leader-table{width:100%!important;overflow-x:auto!important}
+  .leader-table-head,.leaderboard-row-modern{min-width:0!important}
+  .arena-two-col{grid-template-columns:1fr!important}
+  .arena-metrics{grid-template-columns:1fr 1fr!important}
+
+  /* Profile / settings */
+  .profile-shell{min-width:0!important}
+  .profile-hero{padding:17px!important;align-items:flex-start!important}
+  .profile-body{grid-template-columns:1fr!important}
+  .profile-body>section,.profile-side{padding:17px!important}
+  .profile-side{border-left:0!important;border-top:1px solid var(--line)!important}
+  .profile-actions{flex-direction:column-reverse!important}
+  .profile-actions button{width:100%!important}
+  .account-grid{grid-template-columns:1fr!important}
+
+  /* Add course / admin */
+  .form-grid{grid-template-columns:1fr!important}
+  .form-card{padding:17px!important}
+  .form-actions{flex-direction:column-reverse!important}
+  .form-actions button{width:100%!important}
+  .admin-hero-v3,.admin-hero{padding:20px!important}
+  .admin-two-col{grid-template-columns:1fr!important}
+  .admin-stat-grid,.admin-stat-grid-v3{grid-template-columns:1fr 1fr!important}
+  .admin-tabs{width:100%!important;overflow-x:auto!important}
+  .admin-tabs button{flex:1 0 auto!important}
+  .admin-records{min-width:0!important}
+  .admin-record{min-width:0!important}
+
+  /* Tests */
+  .test-runner-head{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}
+  .test-runner-head h1{font-size:23px!important}
+  .timer-badge{position:static!important;width:max-content!important;min-width:92px!important}
+  .question-layout{grid-template-columns:1fr!important}
+  .question-map{position:static!important}
+  .question-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+  .question-main{min-width:0!important}
+  .test-runner-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
+  .test-runner-actions>div{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+  .test-runner-actions>div button{width:100%!important}
+  .test-result-hero{padding:25px 17px!important}
+  .test-result-hero h1{font-size:52px!important}
+  .result-insight-grid{grid-template-columns:1fr 1fr!important}
+  .solution-q{min-width:0!important}
+  .solution-q>b{min-width:0!important;overflow-wrap:anywhere!important}
+  .solution-option{min-width:0!important}
+  .solution-option span{min-width:0!important;overflow-wrap:anywhere!important}
+  .test-leader-row{min-width:0!important}
+}
+
+@media(max-width:480px){
+  .content{padding-left:11px!important;padding-right:11px!important}
+  .global-topbar{padding:0 9px!important}
+  .global-search{height:38px!important}
+  .global-search input{font-size:11px!important}
+  .credit-wallet{min-width:42px!important;padding:0 8px!important}
+  .dashboard-punch-kpis,.leader-kpis,.course-stat-grid,.result-insight-grid,.admin-stat-grid,.admin-stat-grid-v3{grid-template-columns:1fr!important}
+  .dashboard-hero-punch h2{font-size:28px!important}
+  .course-stat{padding:12px!important}
+  .course-hero-modern h1{font-size:25px!important}
+  .teams-header-actions{grid-template-columns:1fr!important}
+  .chat-message{max-width:96%!important}
+  .question-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+  .test-runner-actions>div{grid-template-columns:1fr!important}
+  .result-insight-grid{grid-template-columns:1fr 1fr!important}
+  .result-insight-grid>div{min-width:0!important}
+}
