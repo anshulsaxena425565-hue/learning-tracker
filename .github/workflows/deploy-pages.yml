@@ -48,9 +48,10 @@ jobs:
           mkdir -p assets
           cp -R _site_publish/assets/. assets/
           cp _site_publish/index.html ./index.html
+          cp _site_publish/index.html ./404.html
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html assets
+          git add index.html 404.html assets
           if git diff --cached --quiet; then
             echo "Compiled site is already up to date."
           else
