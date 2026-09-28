@@ -24,7 +24,7 @@ function RequireAuth() {
 }
 
 function WorkspaceLayout() {
-  return <AppShell><Outlet /></AppShell>
+  return <RequireAuth><AppShell><Outlet /></AppShell></RequireAuth>
 }
 
 function CourseOverviewRoute() {
