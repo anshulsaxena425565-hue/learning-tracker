@@ -2106,3 +2106,175 @@ img,svg,video,iframe{max-width:100%}
 
 /* Build freshness marker: mobile audit 2026-09-29 */
 :root{--lb-mobile-audit-version:20260929}
+
+
+/* FINAL MOBILE SPACING PASS — restore consistent breathing room on every workspace surface */
+@media (max-width:800px){
+  .content{
+    padding:78px 16px 84px!important;
+  }
+  .page{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    gap:16px!important;
+  }
+  .page>header{
+    width:100%!important;
+    margin:0!important;
+    padding:0 2px!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Learning Arena — the hero and tabs must never touch the viewport edges */
+  .leaderboard-page{
+    padding:0!important;
+    gap:16px!important;
+  }
+  .leaderboard-page .leaderboard-hero{
+    width:100%!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:20px!important;
+    box-sizing:border-box!important;
+    border:1px solid var(--line)!important;
+    border-radius:20px!important;
+    background:linear-gradient(135deg,var(--surface),color-mix(in srgb,var(--accent) 7%,var(--surface)))!important;
+    box-shadow:var(--shadow)!important;
+  }
+  .leaderboard-page .leaderboard-hero>div:first-child{
+    width:100%!important;
+    min-width:0!important;
+  }
+  .leaderboard-page .leaderboard-hero h1{
+    margin:9px 0 6px!important;
+    max-width:100%!important;
+  }
+  .leaderboard-page .leaderboard-hero p{
+    max-width:100%!important;
+    margin:0!important;
+  }
+  .leaderboard-page .leaderboard-filters{
+    width:100%!important;
+    margin-top:4px!important;
+    gap:9px!important;
+  }
+  .leaderboard-page .leader-tabs{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:5px!important;
+    box-sizing:border-box!important;
+    border-radius:14px!important;
+  }
+  .leaderboard-page .leader-kpis{
+    width:100%!important;
+    margin:0!important;
+    gap:10px!important;
+  }
+  .leaderboard-page .leader-kpis article{
+    border-radius:16px!important;
+  }
+  .leaderboard-page .leaderboard-panel{
+    width:100%!important;
+    margin:0!important;
+    padding:18px!important;
+    border-radius:18px!important;
+  }
+  .leaderboard-page .arena-insights{
+    width:100%!important;
+    gap:12px!important;
+  }
+  .leaderboard-page .arena-insight-hero{
+    width:100%!important;
+    margin:0!important;
+    border-radius:18px!important;
+    padding:22px!important;
+    box-sizing:border-box!important;
+  }
+  .leaderboard-page .arena-metrics{
+    width:100%!important;
+    gap:10px!important;
+  }
+  .leaderboard-page .arena-metric-card{
+    border-radius:16px!important;
+    padding:16px!important;
+  }
+  .leaderboard-page .arena-two-col{
+    width:100%!important;
+    gap:12px!important;
+  }
+  .leaderboard-page .leader-info-card,
+  .leaderboard-page .team-pulse-card{
+    width:100%!important;
+    margin:0!important;
+    border-radius:18px!important;
+  }
+  .leaderboard-page .leader-info-card{
+    padding:17px!important;
+  }
+  .leaderboard-page .analytics-hero{
+    width:100%!important;
+    margin:0!important;
+    border-radius:18px!important;
+    padding:20px!important;
+  }
+  .leaderboard-page .analytics-cards,
+  .leaderboard-page .analytics-grid{
+    width:100%!important;
+    gap:10px!important;
+  }
+  .leaderboard-page .analytics-cards article{
+    border-radius:16px!important;
+    padding:15px!important;
+  }
+
+  /* Other major pages — keep cards inset instead of flush to the content edge */
+  .dashboard-page,.courses-page,.teams-page,.chat-page,.credits-page,.profile-page,.settings-page,.admin-page,.tests-page{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+  .dashboard-page>section,
+  .courses-page>section,
+  .teams-page>section,
+  .chat-page>.chat-shell,
+  .credits-page>section,
+  .profile-page>.profile-shell,
+  .settings-page>section,
+  .admin-page>section,
+  .tests-page>section{
+    width:100%!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    box-sizing:border-box!important;
+  }
+
+  .teams-page .modern-team-grid,
+  .teams-page .team-grid,
+  .courses-page .modern-course-grid,
+  .dashboard-page .dashboard-focus-grid{
+    width:100%!important;
+    gap:12px!important;
+  }
+}
+
+@media (max-width:480px){
+  .content{
+    padding-left:14px!important;
+    padding-right:14px!important;
+  }
+  .leaderboard-page .leaderboard-hero{
+    padding:18px!important;
+    border-radius:18px!important;
+  }
+  .leaderboard-page .leaderboard-panel{
+    padding:15px!important;
+  }
+  .leaderboard-page .arena-insight-hero{
+    padding:19px!important;
+  }
+  .leaderboard-page .leader-info-card{
+    padding:15px!important;
+  }
+}
