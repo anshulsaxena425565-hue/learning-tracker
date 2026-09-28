@@ -15,12 +15,12 @@ import Chat from './pages/Chat'
 import Credits from './pages/Credits'
 import AppShell from './components/layout/AppShell'
 
-function RequireAuth() {
+function RequireAuth({ children }) {
   const { user, loading } = useAuth()
   const location = useLocation()
   if (loading) return <div className="splash">Learning<span>Beyond</span></div>
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
-  return <Outlet />
+  return children ?? <Outlet />
 }
 
 function WorkspaceLayout() {
