@@ -1,4 +1,5 @@
-import{useEffect,useMemo,useRef,useState}from'react';import{supabase}from'../lib/supabase';
+import { useEffect,useMemo,useRef,useState } from 'react'
+import { supabase } from '../lib/supabase'
 
 export default function TestRunner({testId,onBack}){
  const[data,setData]=useState(null),[language,setLanguage]=useState('en'),[answers,setAnswers]=useState({}),[times,setTimes]=useState({}),[index,setIndex]=useState(0),[result,setResult]=useState(null),[solutions,setSolutions]=useState([]),[leaderboard,setLeaderboard]=useState([]),[busy,setBusy]=useState(true),[error,setError]=useState(''),[secondsLeft,setSecondsLeft]=useState(null),[started,setStarted]=useState(false),[away,setAway]=useState(false),[submitting,setSubmitting]=useState(false);
