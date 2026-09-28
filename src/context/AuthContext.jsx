@@ -1,4 +1,8 @@
-import{createContext,useContext,useEffect,useRef,useState}from'react';import{onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,updateProfile,updateEmail,updatePassword,sendEmailVerification,sendPasswordResetEmail,verifyPasswordResetCode,confirmPasswordReset,reload}from'firebase/auth';import{firebaseAuth}from'../lib/firebase';import{supabase}from'../lib/supabase';
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, updateEmail, updatePassword, sendEmailVerification, sendPasswordResetEmail, verifyPasswordResetCode, confirmPasswordReset, reload } from 'firebase/auth'
+import { firebaseAuth } from '../lib/firebase'
+import { supabase } from '../lib/supabase'
+
 const C=createContext(null);
 function friendlyError(e){const map={'auth/email-already-in-use':'An account already exists with this email.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password must be at least 6 characters.','auth/invalid-credential':'Email or password is incorrect.','auth/user-not-found':'Email or password is incorrect.','auth/wrong-password':'Email or password is incorrect.','auth/too-many-requests':'Too many attempts. Please wait a moment and try again.','auth/requires-recent-login':'For security, please sign in again before changing this account detail.','auth/expired-action-code':'This password reset link has expired. Please request a new one.','auth/invalid-action-code':'This password reset link is invalid or has already been used.'};return map[e?.code]||e?.message||'Authentication failed. Please try again.'}
 function appUserFromSupabase(u){return u?{...u,authSource:'supabase'}:null}
