@@ -1,4 +1,10 @@
-import{useState}from'react';import{toast}from'../lib/toast';import{useAuth}from'../context/AuthContext';import{useCredits}from'../context/CreditsContext';import{useTeam}from'../context/TeamContext';import{supabase}from'../lib/supabase';
+import { useState } from 'react'
+import { toast } from '../lib/toast'
+import { useAuth } from '../context/AuthContext'
+import { useCredits } from '../context/CreditsContext'
+import { useTeam } from '../context/TeamContext'
+import { supabase } from '../lib/supabase'
+
 
 export default function AddCourse(){
  const{team,reload}=useTeam();const{dataUser}=useAuth();const{cost,charge}=useCredits();
