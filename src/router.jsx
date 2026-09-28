@@ -41,15 +41,11 @@ function CoursePlayerRoute() {
 
 function TestRoute() {
   const { testId } = useParams()
-  const location = useLocation()
-  return <TestRunner testId={testId} onBack={() => window.history.length > 1 ? window.history.back() : window.location.assign('/app/courses')} />
+  const navigate = useNavigate()
+  return <TestRunner testId={testId} onBack={() => navigate('/app/courses')} />
 }
 
-function DashboardRoute() { return <Dashboard openCourse={id => window.location.assign(`/app/courses/${id}`)} /> }
+function DashboardRoute() { const navigate = useNavigate(); return <Dashboard openCourse={id => navigate(`/app/courses/${id}`)} /> }
 function CoursesRoute() { const navigate = useNavigate(); return <Courses openCourse={id => navigate(`/app/courses/${id}`)} onAddCourse={() => navigate('/app/courses/add')} onStartTest={id => navigate(`/app/tests/${id}`)} /> }
-
-export function AppRoutes() {
-  return <RequireAuth />
-}
 
 export { WorkspaceLayout, CourseOverviewRoute, CoursePlayerRoute, TestRoute, DashboardRoute, CoursesRoute, Teams, Chat, Leaderboard, Profile, Credits, AddCourse, Admin }

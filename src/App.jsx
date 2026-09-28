@@ -7,7 +7,6 @@ import ToastHost from './components/ui/ToastHost'
 import Landing from './pages/Landing'
 import { WorkspaceLayout, CourseOverviewRoute, CoursePlayerRoute, TestRoute, DashboardRoute, CoursesRoute, Teams, Chat, Leaderboard, Profile, Credits, AddCourse, Admin } from './router'
 import { useAuth as useAuthContext } from './context/AuthContext'
-import { supabase } from './lib/supabase'
 
 function AuthPage({ mode }) {
   const [signup, setSignup] = useState(mode === 'signup')
@@ -18,7 +17,7 @@ function AuthPage({ mode }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const { resetPassword, signUp, signIn } = useAuthContext()
+  const { resetPassword, signUp, signIn } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => { setSignup(mode === 'signup'); setForgot(mode === 'forgot'); setError(''); setMessage('') }, [mode])
