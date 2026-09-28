@@ -46,6 +46,10 @@ export default function AppShell({children,view,setView,locked=false}){
   </aside>
   <header className="mobile-head"><div className="brand">Learning<span>Beyond</span></div><button onClick={()=>setOpen(!open)} aria-label={open?"Close navigation":"Open navigation"}><Icon name={open?"close":"list"} size={22}/></button></header>
   {open&&<div className="mobile-nav">{items.map(([id,label,icon])=><button onClick={()=>nav(id)} key={id}><Icon name={icon}/>{label}</button>)}{platformAdmin&&<button onClick={()=>nav('admin')}><Icon name="shield"/>Admin</button>}</div>}
-  <main className="content"><div className="global-topbar"><div className="global-search"><MagnifyingGlass size={18}/><input placeholder="Search LearningBeyond…"/></div><div className="global-topbar-actions"><button className="credit-wallet" onClick={()=>nav("credits")}><Coins size={18} weight="fill"/><span><small>CREDITS</small><b>{credits.toLocaleString()}</b></span></button><button className="add-credit-btn" onClick={()=>nav("credits")}><Plus size={16} weight="bold"/> Add Credits</button></div></div>{children}</main>
+  <header className="global-topbar">
+   <div className="global-search"><MagnifyingGlass size={18}/><input placeholder="Search LearningBeyond…"/></div>
+   <div className="global-topbar-actions"><button className="credit-wallet" onClick={()=>nav("credits")}><Coins size={18} weight="fill"/><span><small>CREDITS</small><b>{credits.toLocaleString()}</b></span></button><button className="add-credit-btn" onClick={()=>nav("credits")}><Plus size={16} weight="bold"/> Add Credits</button></div>
+  </header>
+  <main className="content">{children}</main>
  </div>
 }
