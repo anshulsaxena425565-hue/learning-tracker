@@ -2103,3 +2103,6 @@ img,svg,video,iframe{max-width:100%}
   .result-insight-grid{grid-template-columns:1fr 1fr!important}
   .result-insight-grid>div{min-width:0!important}
 }
+
+/* Build freshness marker: mobile audit 2026-09-29 */
+:root{--lb-mobile-audit-version:20260929}
