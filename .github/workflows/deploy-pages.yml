@@ -39,6 +39,8 @@ jobs:
 
       - name: Publish compiled site to main
         run: |
+          git fetch origin main
+          git reset --hard origin/main
           rm -rf _site_publish
           mkdir -p _site_publish
           cp -R dist/. _site_publish/
@@ -48,9 +50,6 @@ jobs:
           cp _site_publish/index.html ./index.html
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html assets
-          git fetch origin main
-          git rebase origin/main
           git add index.html assets
           if git diff --cached --quiet; then
             echo "Compiled site is already up to date."
