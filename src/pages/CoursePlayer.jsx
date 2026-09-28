@@ -1,4 +1,7 @@
-import{useEffect,useRef,useState}from'react';import{useTeam}from'../context/TeamContext';import{useAuth}from'../context/AuthContext';import{useCredits}from'../context/CreditsContext';import{supabase}from'../lib/supabase';import{totalVideoProgressXp,XP_PER_MINUTE,COMPLETION_XP}from'../lib/xp';
+import{useEffect,useRef,useState}from'react';import { useTeam } from '../context/TeamContext'
+import { useAuth } from '../context/AuthContext'
+import{useCredits}from'../context/CreditsContext';import { supabase } from '../lib/supabase'
+import{totalVideoProgressXp,XP_PER_MINUTE,COMPLETION_XP}from'../lib/xp';
 
 let ytApiPromise=null;function ensureYouTubeApi(){if(window.YT?.Player)return Promise.resolve(window.YT);if(ytApiPromise)return ytApiPromise;ytApiPromise=new Promise(resolve=>{const previous=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=()=>{previous?.();resolve(window.YT)};if(!document.querySelector('script[data-learning-youtube-api]')){const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.async=true;s.dataset.learningYoutubeApi='1';document.body.appendChild(s)}});return ytApiPromise}function youtubeId(value){const s=String(value||'').trim();if(!s)return '';const m=s.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([^?&/]+)/i);return m?.[1]||s}function time(s){s=Math.max(0,Math.floor(s||0));return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
 
