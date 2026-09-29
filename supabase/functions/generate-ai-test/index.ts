@@ -30,17 +30,23 @@ Questions: exactly ${count}
 Language: ${lang}
 Instructions: ${prompt.trim()}
 Return ONLY valid JSON with questions. Each question must have question, question_hi, explanation, explanation_hi and exactly four options. Each option must have text, text_hi and correct. Exactly one option is correct.`;
-  const requestGemini=async(model:string)=>await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":geminiKey},body:JSON.stringify({contents:[{role:"user",parts:[{text:promptText}]}],generationConfig:{responseMimeType:"application/json",thinkingConfig:{thinkingLevel:"low"},maxOutputTokens:16000}})});
-  let ai=await requestGemini("gemini-3.8-flash");
-  let p=await ai.json();
-  if(!ai.ok){
-    console.error("Gemini primary failed",ai.status,JSON.stringify(p));
-    ai=await requestGemini("gemini-3.6-flash");
-    p=await ai.json();
+  const requestGemini=async(model:string)=>await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":geminiKey},body:JSON.stringify({contents:[{role:"user",parts:[{text:promptText}]}],generationConfig:{responseMimeType:"application/json",thinkingConfig:{thinkingLevel:"low"},maxOutputTokens:12000}})});
+  const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
+  let ai:Response|null=null,p:any=null;
+  const models=["gemini-3.8-flash","gemini-3.7-flash","gemini-3.6-flash","gemini-3.5-flash-lite"];
+  for(const model of models){
+    for(let attempt=0;attempt<2;attempt++){
+      ai=await requestGemini(model);
+      p=await ai.json();
+      if(ai.ok) break;
+      console.error("Gemini attempt failed",model,ai.status,JSON.stringify(p));
+      if(![408,429,500,502,503,504].includes(ai.status)) break;
+      await sleep(1500*(attempt+1));
+    }
+    if(ai?.ok) break;
   }
-  if(!ai.ok){
-    console.error("Gemini fallback failed",ai.status,JSON.stringify(p));
-    return out({error:p?.error?.message||`Gemini request failed (${ai.status}). Check GEMINI_API_KEY and Gemini API access.`},502);
+  if(!ai?.ok){
+    return out({error:"Gemini is temporarily overloaded. The app tried multiple available Gemini models with retries. Please try Generate again in a moment."},503);
   }
   const text=p?.candidates?.[0]?.content?.parts?.map((x:any)=>x.text||"").join("")||"";
   if(!text){ console.error("Gemini empty response",JSON.stringify(p)); return out({error:p?.promptFeedback?.blockReason||"Gemini returned no quiz."},502); }
