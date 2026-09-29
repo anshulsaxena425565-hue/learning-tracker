@@ -2329,3 +2329,40 @@ img,svg,video,iframe{max-width:100%}
  .team-transfer-controls{flex-direction:column;align-items:stretch}
  .team-transfer-controls select{min-width:0;width:100%}
 }
+
+/* Team settings modal — responsive polish */
+.team-settings-modal{
+  width:min(620px,calc(100vw - 32px))!important;
+  max-width:620px!important;
+  max-height:calc(100dvh - 40px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  box-sizing:border-box!important;
+  scrollbar-width:thin;
+}
+.team-settings-modal .team-modal-form{padding-bottom:2px}
+.team-settings-modal .team-setting-row{align-items:flex-start}
+.team-settings-modal .team-danger-zone .danger{
+  background:#fff!important;
+  color:#b4233c!important;
+  border:1px solid #efb9c3!important;
+}
+.team-settings-modal .team-danger-zone .danger:hover:not(:disabled){
+  background:#fff2f4!important;
+  border-color:#e49aaa!important;
+}
+@media(max-width:600px){
+  .team-settings-modal{
+    width:calc(100vw - 24px)!important;
+    max-height:calc(100dvh - 24px)!important;
+    padding:20px!important;
+    border-radius:20px!important;
+  }
+  .team-settings-modal h2{font-size:21px!important;line-height:1.2}
+  .team-settings-modal .team-setting-row{
+    gap:10px;
+  }
+  .team-settings-modal .team-setting-row>div:first-child{
+    width:100%;
+  }
+}
