@@ -2366,3 +2366,50 @@ img,svg,video,iframe{max-width:100%}
     width:100%;
   }
 }
+
+/* TEAM SETTINGS — hard viewport-safe dialog */
+.team-action-modal-backdrop{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  min-height:100dvh!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  padding:20px!important;
+  overflow:auto!important;
+  overscroll-behavior:contain!important;
+}
+.team-settings-modal{
+  position:relative!important;
+  flex:0 1 620px!important;
+  width:min(620px,calc(100vw - 40px))!important;
+  max-width:620px!important;
+  height:min(760px,calc(100dvh - 40px))!important;
+  max-height:calc(100dvh - 40px)!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:26px!important;
+  box-sizing:border-box!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+}
+.team-settings-modal .team-modal-form{
+  min-height:0!important;
+}
+@media(max-width:600px){
+  .team-action-modal-backdrop{
+    align-items:flex-start!important;
+    padding:12px!important;
+  }
+  .team-settings-modal{
+    flex-basis:auto!important;
+    width:calc(100vw - 24px)!important;
+    height:calc(100dvh - 24px)!important;
+    max-height:calc(100dvh - 24px)!important;
+    padding:20px!important;
+  }
+}
