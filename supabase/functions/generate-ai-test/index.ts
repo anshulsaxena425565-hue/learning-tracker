@@ -30,12 +30,21 @@ Questions: exactly ${count}
 Language: ${lang}
 Instructions: ${prompt.trim()}
 Return ONLY valid JSON with questions. Each question must have question, question_hi, explanation, explanation_hi and exactly four options. Each option must have text, text_hi and correct. Exactly one option is correct.`;
-  const ai=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":geminiKey},body:JSON.stringify({contents:[{role:"user",parts:[{text:promptText}]}],generationConfig:{responseMimeType:"application/json",thinkingConfig:{thinkingLevel:"low"}}})});
-  const p=await ai.json();
-  if(!ai.ok)return out({error:p?.error?.message||`Gemini request failed (${ai.status}).`},502);
+  const requestGemini=async(model:string)=>await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":geminiKey},body:JSON.stringify({contents:[{role:"user",parts:[{text:promptText}]}],generationConfig:{responseMimeType:"application/json",thinkingConfig:{thinkingLevel:"low"},maxOutputTokens:16000}})});
+  let ai=await requestGemini("gemini-3.8-flash");
+  let p=await ai.json();
+  if(!ai.ok){
+    console.error("Gemini primary failed",ai.status,JSON.stringify(p));
+    ai=await requestGemini("gemini-3.6-flash");
+    p=await ai.json();
+  }
+  if(!ai.ok){
+    console.error("Gemini fallback failed",ai.status,JSON.stringify(p));
+    return out({error:p?.error?.message||`Gemini request failed (${ai.status}). Check GEMINI_API_KEY and Gemini API access.`},502);
+  }
   const text=p?.candidates?.[0]?.content?.parts?.map((x:any)=>x.text||"").join("")||"";
-  if(!text)return out({error:p?.promptFeedback?.blockReason||"Gemini returned no quiz."},502);
-  let result:any;try{result=JSON.parse(text)}catch{return out({error:"Gemini returned invalid quiz JSON. Please try again."},502)}
+  if(!text){ console.error("Gemini empty response",JSON.stringify(p)); return out({error:p?.promptFeedback?.blockReason||"Gemini returned no quiz."},502); }
+  let result:any; try { const cleaned=text.replace(/^```(?:json)?\\s*/i,"").replace(/\\s*```$/,"").trim(); result=JSON.parse(cleaned); } catch(e) { console.error("Gemini JSON parse failed",text.slice(0,4000)); return out({error:"Gemini returned invalid quiz JSON. Please try again."},502); }
   const qs=Array.isArray(result?.questions)?result.questions:[];
   if(qs.length!==count)return out({error:`AI generated ${qs.length} questions instead of ${count}.`},502);
   const {data:test,error:te}=await db.from("test_series").insert({playlist_id:playlist_id||null,team_id,title:title.trim(),description:description?.trim()||null,time_limit_minutes:time_limit_minutes?Number(time_limit_minutes):null,points_per_question:Number(points_per_question)||10,default_language:lang==="bilingual"?"en":lang,max_reattempts:Number(max_reattempts)||0,created_by:user.id,ai_prompt:prompt.trim(),difficulty:diff,question_count:count,ai_generated:true,published:true}).select().single();
