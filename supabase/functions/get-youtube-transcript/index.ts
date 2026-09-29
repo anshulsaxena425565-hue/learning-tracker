@@ -173,23 +173,23 @@ function parseCaptionJson(payload: any) {
 
 function parseCaptionXml(xml: string) {
   const out: any[] = [];
-  const regex = /<text([^>]*)>([\\s\\S]*?)<\\/text>/gi;
+  const regex = /<text([^>]*)>([\s\S]*?)<\/text>/gi;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(xml))) {
     const attrs = match[1] || "";
     const text = decodeHtml(
       match[2]
-        .replace(/<br\\s*\\/?\\s*>/gi, " ")
+        .replace(/<br\s*\/?\s*>/gi, " ")
         .replace(/<[^>]+>/g, "")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim(),
     );
 
     if (!text) continue;
 
-    const startMatch = attrs.match(/\\bstart="([^"]+)"/i);
-    const durationMatch = attrs.match(/\\bdur="([^"]+)"/i);
+    const startMatch = attrs.match(/\bstart="([^"]+)"/i);
+    const durationMatch = attrs.match(/\bdur="([^"]+)"/i);
     const start = Number(startMatch?.[1] || 0);
     const duration = Number(durationMatch?.[1] || 0);
 
