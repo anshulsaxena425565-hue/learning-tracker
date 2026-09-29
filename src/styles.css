@@ -2312,3 +2312,20 @@ img,svg,video,iframe{max-width:100%}
  .manual-video-remove{width:29px;height:29px;font-size:18px}
  .manual-course-intro{padding:11px}
 }
+
+.team-settings-modal{max-width:620px}
+.team-settings-modal textarea{width:100%;min-height:88px;resize:vertical}
+.team-settings-actions{display:flex;justify-content:flex-end}
+.team-settings-divider{height:1px;background:var(--line);margin:18px 0}
+.team-setting-row{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.team-setting-row>div:first-child{display:flex;flex-direction:column;gap:4px}
+.team-setting-row small,.team-danger-zone small{color:var(--muted);font-size:11px;line-height:1.45}
+.team-transfer-controls{display:flex;gap:8px;align-items:center}
+.team-transfer-controls select{min-width:170px}
+.team-danger-zone{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid #f0c8cf;border-radius:14px;background:#fff8f9}
+.team-danger-zone .danger{align-self:flex-start;margin-top:4px}
+@media(max-width:600px){
+ .team-setting-row{flex-direction:column;align-items:stretch}
+ .team-transfer-controls{flex-direction:column;align-items:stretch}
+ .team-transfer-controls select{min-width:0;width:100%}
+}
