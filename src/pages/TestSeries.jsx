@@ -17,6 +17,7 @@ function parseQuestions(raw){
  }
  return out;
 }
+// Test Series: paste import + AI builder; manual builder intentionally removed.
 export default function TestSeries({courseId,onStart,standalone=false}){
  const{team}=useTeam(),{user}=useAuth(),{cost,charge}=useCredits(),admin=['owner','admin'].includes(team?.role);
  const[tests,setTests]=useState([]),[mode,setMode]=useState(null),[leaderboard,setLeaderboard]=useState(null),[leaderboardTest,setLeaderboardTest]=useState(null),[history,setHistory]=useState([]),[historyTest,setHistoryTest]=useState(null),[title,setTitle]=useState(''),[desc,setDesc]=useState(''),[prompt,setPrompt]=useState(''),[raw,setRaw]=useState(''),[rawHi,setRawHi]=useState(''),[topics,setTopics]=useState(''),[minutes,setMinutes]=useState('30'),[points,setPoints]=useState(10),[defaultLanguage,setDefaultLanguage]=useState('en'),[maxReattempts,setMaxReattempts]=useState(0),[questionCount,setQuestionCount]=useState(10),[difficulty,setDifficulty]=useState('medium'),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
