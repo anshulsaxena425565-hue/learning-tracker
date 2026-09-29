@@ -2424,3 +2424,13 @@ img,svg,video,iframe{max-width:100%}
 .ai-test-features span{font-size:10px;line-height:1.45;color:var(--muted)}
 @media(max-width:900px){.ai-test-features{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.ai-test-features{grid-template-columns:1fr}.ai-test-builder .test-builder-top{gap:12px}.ai-test-builder .test-builder-top h3{font-size:22px!important}}
+
+
+/* GLOBAL OVERLAY LAYER — all viewport dialogs must cover the app chrome */
+.global-topbar{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.test-modal-backdrop,
+.test-focus-overlay,
+.admin-overlay,
+.team-action-modal-backdrop{
+  z-index:9999!important;
+}
