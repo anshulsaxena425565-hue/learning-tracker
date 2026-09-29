@@ -38,7 +38,7 @@ export default function TestSeries({courseId,onStart,standalone=false}){
 
  async function createPasteTest(){
   setMessage('');
-  const parsed=parseQuestions(raw),parsedHi=parseQuestions(rawHi);
+  const parsed=parseQuestions(raw);let parsedHi=parseQuestions(rawHi);
   if(!parsed.length)return setMessage('English MCQs could not be parsed. Use Q1 + A/B/C/D + Answer format.');
   if(rawHi.trim()&&parsedHi.length!==parsed.length)return setMessage('Hindi MCQ count does not match English. English: '+parsed.length+' · Hindi: '+parsedHi.length+'.');
   setBusy(true);
