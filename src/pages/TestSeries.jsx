@@ -61,7 +61,12 @@ export default function TestSeries({courseId,onStart,standalone=false}){
    topics:topics.split(',').map(x=>x.trim()).filter(Boolean),question_count:count,time_limit_minutes:minutes?Number(minutes):null,
    points_per_question:Number(points)||10,default_language:defaultLanguage,max_reattempts:Number(maxReattempts)||0,difficulty
   }});
-  if(error||data?.error){const msg=error?.message||data?.error||'AI test generation failed.';setMessage(msg);toast(msg,'error','AI test failed');setBusy(false);return}
+  if(error||data?.error){
+   let serverMessage=data?.error||'';
+   try{if(error?.context){const body=await error.context.clone().json();serverMessage=body?.error||serverMessage}}catch{}
+   const msg=serverMessage||error?.message||'AI test generation failed.';
+   setMessage(msg);toast(msg,'error','AI test failed');setBusy(false);return
+  }
   setTitle('');setDesc('');setPrompt('');setTopics('');setMinutes('30');setPoints(10);setDefaultLanguage('en');setMaxReattempts(0);setQuestionCount(10);setDifficulty('medium');setMode(false);
   setMessage('AI created '+data.question_count+' questions. English/Hindi versions are ready for learners.');
   toast('AI test created with '+data.question_count+' questions.','success','AI Test created');await load();setBusy(false);
