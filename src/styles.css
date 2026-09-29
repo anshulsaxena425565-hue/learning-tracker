@@ -2139,8 +2139,12 @@ img,svg,video,iframe{max-width:100%}
     box-sizing:border-box!important;
     border:1px solid var(--line)!important;
     border-radius:20px!important;
-    background:linear-gradient(135deg,var(--surface),color-mix(in srgb,var(--accent) 7%,var(--surface)))!important;
-    box-shadow:var(--shadow)!important;
+    /* Keep the mobile Learning Arena hero on its dark visual system.
+       The earlier light mobile override made the existing white hero text and
+       translucent white filters unreadable. */
+    background:linear-gradient(120deg,#17182d 0%,#24224f 48%,#46317a 100%)!important;
+    color:#fff!important;
+    box-shadow:0 20px 50px rgba(67,54,164,.18)!important;
   }
   .leaderboard-page .leaderboard-hero>div:first-child{
     width:100%!important;
