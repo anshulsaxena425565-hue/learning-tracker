@@ -23,5 +23,7 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      - name: Verify function source
+        run: test -f supabase/functions/generate-ai-test/index.ts
       - name: Deploy generate-ai-test
         run: supabase functions deploy generate-ai-test --project-ref "$PROJECT_ID" --use-api
