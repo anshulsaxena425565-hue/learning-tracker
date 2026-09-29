@@ -2434,3 +2434,53 @@ img,svg,video,iframe{max-width:100%}
 .team-action-modal-backdrop{
   z-index:9999!important;
 }
+
+
+/* Teams — details + role-based administration dialogs */
+.modern-team-actions{display:flex;align-items:center;gap:7px}
+.modern-team-actions button{display:inline-flex!important;align-items:center;justify-content:center;gap:6px}
+.modern-team-actions .team-details-btn{background:var(--surface)!important;color:var(--text)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+.modern-team-actions .team-details-btn:hover{background:var(--surface2)!important}
+.team-details-backdrop{
+  position:fixed!important;inset:0!important;z-index:9999!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  padding:24px!important;box-sizing:border-box!important;
+  background:rgba(12,15,28,.58)!important;
+  backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important;
+}
+.team-details-modal{
+  position:relative!important;width:min(620px,100%)!important;max-height:min(760px,calc(100dvh - 48px))!important;
+  overflow:auto!important;box-sizing:border-box!important;
+  padding:25px!important;border:1px solid var(--line)!important;border-radius:24px!important;
+  background:var(--surface)!important;color:var(--text)!important;
+  box-shadow:0 28px 90px rgba(12,15,35,.22)!important;
+}
+.team-details-modal .team-modal-close{position:absolute;right:16px;top:15px}
+.team-details-hero{display:flex;align-items:center;gap:13px;padding-right:34px}
+.team-details-avatar{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;flex:none;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-size:15px;font-weight:850;box-shadow:0 12px 28px color-mix(in srgb,var(--accent) 18%,transparent)}
+.team-details-hero .eyebrow{margin:0 0 4px;font-size:8px}
+.team-details-hero h2{margin:0 0 5px;font-size:25px;letter-spacing:-.04em;line-height:1.12}
+.team-details-role{font-size:9px;color:var(--accent);font-weight:800;text-transform:capitalize}
+.team-details-description{margin:20px 0 15px;padding:14px 15px;border:1px solid var(--line);border-radius:14px;background:var(--surface2);color:var(--muted);font-size:11px;line-height:1.6}
+.team-details-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.team-details-stats>div{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.team-details-stats svg{grid-row:span 2;color:var(--accent)}
+.team-details-stats b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-details-stats span{font-size:8px;color:var(--muted)}
+.team-details-info{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;padding:13px 14px;border:1px dashed color-mix(in srgb,var(--accent) 24%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
+.team-details-info>div span{display:block;color:var(--muted);font-size:8px;margin-bottom:3px}
+.team-details-info>div b{font-size:14px;letter-spacing:.08em}
+.team-details-info>button{display:inline-flex!important;align-items:center;gap:6px!important;background:var(--surface)!important;color:var(--text)!important;border:1px solid var(--line)!important;box-shadow:none!important;padding:8px 10px!important;font-size:9px!important}
+.team-details-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.team-details-actions button{display:inline-flex!important;align-items:center;gap:6px!important}
+@media(max-width:600px){
+ .team-details-backdrop{padding:12px!important;align-items:flex-end!important}
+ .team-details-modal{width:100%!important;max-height:calc(100dvh - 24px)!important;padding:20px!important;border-radius:22px!important}
+ .team-details-hero h2{font-size:21px}
+ .team-details-stats{grid-template-columns:1fr 1fr}
+ .team-details-stats>div:last-child{grid-column:1/-1}
+ .team-details-actions{display:grid;grid-template-columns:1fr}
+ .team-details-actions button{width:100%;justify-content:center}
+ .modern-team-actions{width:100%;justify-content:flex-end}
+ .modern-team-actions .team-details-btn{display:none!important}
+}
