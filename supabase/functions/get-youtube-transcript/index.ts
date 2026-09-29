@@ -123,6 +123,129 @@ function pickAudioUrl(playerResponse: any) {
   return audio?.url || null;
 }
 
+function decodeHtml(value: string) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/gi, "'");
+}
+
+function captionTracks(playerResponse: any) {
+  return playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+}
+
+function pickCaptionTrack(playerResponse: any) {
+  const tracks = captionTracks(playerResponse);
+  if (!tracks.length) return null;
+
+  const preferred = tracks.find((track: any) =>
+    String(track?.languageCode || "").toLowerCase().startsWith("en"),
+  ) || tracks.find((track: any) =>
+    String(track?.languageCode || "").toLowerCase().startsWith("hi"),
+  ) || tracks.find((track: any) =>
+    String(track?.kind || "").toLowerCase() === "asr",
+  ) || tracks[0];
+
+  return preferred?.baseUrl || null;
+}
+
+function parseCaptionJson(payload: any) {
+  const events = Array.isArray(payload?.events) ? payload.events : [];
+  return events
+    .map((event: any) => {
+      const text = (event?.segs || [])
+        .map((seg: any) => String(seg?.utf8 || ""))
+        .join("")
+        .replace(/\\n/g, " ")
+        .trim();
+
+      return {
+        start: Math.max(0, Number(event?.tStartMs || 0) / 1000),
+        duration: Math.max(0, Number(event?.dDurationMs || 0) / 1000),
+        text,
+      };
+    })
+    .filter((item: any) => item.text);
+}
+
+function parseCaptionXml(xml: string) {
+  const out: any[] = [];
+  const regex = /<text([^>]*)>([\\s\\S]*?)<\\/text>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(xml))) {
+    const attrs = match[1] || "";
+    const text = decodeHtml(
+      match[2]
+        .replace(/<br\\s*\\/?\\s*>/gi, " ")
+        .replace(/<[^>]+>/g, "")
+        .replace(/\\s+/g, " ")
+        .trim(),
+    );
+
+    if (!text) continue;
+
+    const startMatch = attrs.match(/\\bstart="([^"]+)"/i);
+    const durationMatch = attrs.match(/\\bdur="([^"]+)"/i);
+    const start = Number(startMatch?.[1] || 0);
+    const duration = Number(durationMatch?.[1] || 0);
+
+    out.push({ start, duration, text });
+  }
+
+  return out;
+}
+
+async function getYouTubeCaptions(playerResponse: any) {
+  const baseUrl = pickCaptionTrack(playerResponse);
+  if (!baseUrl) return null;
+
+  const url = new URL(baseUrl);
+  url.searchParams.set("fmt", "json3");
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+      "Accept-Language": "en-US,en;q=0.9",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      "YouTube captions could not be loaded (HTTP " + response.status + ").",
+    );
+  }
+
+  const raw = await response.text();
+
+  try {
+    const parsed = JSON.parse(raw);
+    const segments = parseCaptionJson(parsed);
+    if (segments.length) {
+      return {
+        transcript: segments.map((item: any) => item.text).join(" "),
+        segments,
+        source: "youtube-captions",
+      };
+    }
+  } catch {
+    // Some caption endpoints still return XML despite fmt=json3.
+  }
+
+  const segments = parseCaptionXml(raw);
+  if (!segments.length) return null;
+
+  return {
+    transcript: segments.map((item: any) => item.text).join(" "),
+    segments,
+    source: "youtube-captions",
+  };
+}
+
 function toSegments(result: any) {
   const utterances = result?.results?.utterances;
   if (Array.isArray(utterances) && utterances.length) {
@@ -269,34 +392,49 @@ Deno.serve(async (req) => {
       }
 
       const playerResponse = await getPlayer(id);
-      const audioUrl = pickAudioUrl(playerResponse);
 
-      if (!audioUrl) {
-        throw new Error(
-          "Could not obtain a playable YouTube audio stream for this video. Please try another video or retry later.",
-        );
-      }
+      // YouTube often hides direct media URLs behind signature/SABR delivery.
+      // Use captions first when available; use Deepgram when a fetchable audio
+      // URL is exposed by YouTube.
+      const captionResult = await getYouTubeCaptions(playerResponse);
 
-      const deepgram = await transcribeWithDeepgram(audioUrl);
-      const segments = toSegments(deepgram);
-
-      const transcript =
-        deepgram?.results?.channels?.[0]?.alternatives?.[0]?.transcript ||
-        segments.map((item: any) => item.text).join(" ");
+      let transcript = captionResult?.transcript || "";
+      let segments = captionResult?.segments || [];
+      let source = captionResult?.source || "";
 
       if (!transcript.trim()) {
-        throw new Error("Deepgram returned an empty transcript.");
+        const audioUrl = pickAudioUrl(playerResponse);
+
+        if (!audioUrl) {
+          throw new Error(
+            "YouTube did not expose a directly fetchable audio stream and this video has no usable captions. Deepgram needs a server-fetchable audio URL, so this video cannot be transcribed yet.",
+          );
+        }
+
+        const deepgram = await transcribeWithDeepgram(audioUrl);
+        segments = toSegments(deepgram);
+        transcript =
+          deepgram?.results?.channels?.[0]?.alternatives?.[0]?.transcript ||
+          segments.map((item: any) => item.text).join(" ");
+        source = "deepgram";
       }
+
+      if (!transcript.trim()) {
+        throw new Error("The transcript provider returned an empty transcript.");
+      }
+
+      const selectedCaptionUrl = pickCaptionTrack(playerResponse);
+      const selectedCaption = captionTracks(playerResponse).find(
+        (track: any) => String(track?.baseUrl || "") === String(selectedCaptionUrl || ""),
+      );
 
       const result = {
         playlist_video_id: playlistVideoId,
-        language:
-          deepgram?.results?.channels?.[0]?.alternatives?.[0]?.languages?.[0] ||
-          "auto",
+        language: selectedCaption?.languageCode || "auto",
         status: "ready",
         transcript: transcript.trim(),
         segments,
-        source: "deepgram",
+        source,
         error: null,
         updated_at: new Date().toISOString(),
       };
