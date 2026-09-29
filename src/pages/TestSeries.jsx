@@ -59,7 +59,7 @@ export default function TestSeries({courseId,onStart,standalone=false}){
   const{data,error}=await supabase.functions.invoke('generate-ai-test',{body:{
    team_id:team?.id,playlist_id:standalone?null:courseId,title:title.trim(),description:desc.trim(),prompt:prompt.trim(),
    topics:topics.split(',').map(x=>x.trim()).filter(Boolean),question_count:count,time_limit_minutes:minutes?Number(minutes):null,
-   points_per_question:Number(points)||10,default_language,max_reattempts:Number(maxReattempts)||0,difficulty
+   points_per_question:Number(points)||10,default_language:defaultLanguage,max_reattempts:Number(maxReattempts)||0,difficulty
   }});
   if(error||data?.error){const msg=error?.message||data?.error||'AI test generation failed.';setMessage(msg);toast(msg,'error','AI test failed');setBusy(false);return}
   setTitle('');setDesc('');setPrompt('');setTopics('');setMinutes('30');setPoints(10);setDefaultLanguage('en');setMaxReattempts(0);setQuestionCount(10);setDifficulty('medium');setMode(false);
