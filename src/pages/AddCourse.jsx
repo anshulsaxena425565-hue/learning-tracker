@@ -6,10 +6,17 @@ import { useTeam } from '../context/TeamContext'
 import { supabase } from '../lib/supabase'
 
 function youtubeId(value){
-  const s=String(value||'').trim()
-  if(!s)return ''
-  const m=s.match(/(?:youtu\\.be\\/|youtube\\.com\\/(?:watch\\?v=|embed\\/|shorts\\/|live\\/))([^?&/]+)/i)
-  return m?.[1]||''
+  try{
+   const u=new URL(String(value||'').trim())
+   const host=u.hostname.toLowerCase()
+   if(host==='youtu.be')return u.pathname.split('/').filter(Boolean)[0]||''
+   if(host==='youtube.com'||host==='www.youtube.com'||host==='m.youtube.com'){
+    if(u.pathname==='/watch')return u.searchParams.get('v')||''
+    const parts=u.pathname.split('/').filter(Boolean)
+    if(['embed','shorts','live'].includes(parts[0]))return parts[1]||''
+   }
+  }catch{}
+  return ''
 }
 
 const blankVideo=()=>({title:'',url:''})
