@@ -17,20 +17,8 @@ function parseQuestions(raw){
  }
  return out;
 }
-function parseQuestions(raw){
- const text=String(raw||'').replace(/\r/g,'').trim();if(!text)return[];
- const blocks=text.split(/\n\s*\n+/).map(x=>x.trim()).filter(Boolean),out=[];
- for(const block of blocks){
-  const lines=block.split('\n').map(x=>x.trim()).filter(Boolean);
-  const opts=lines.map(line=>{const m=line.match(/^\s*\(?([A-D])\)?[.)\-:]\s*(.+)$/iu);return m?{letter:m[1].toUpperCase(),text:m[2].trim()}:null}).filter(Boolean);
-  const answerMatch=block.match(/(?:answer|correct\s*answer|उत्तर|सही\s*उत्तर)\s*[:\-]?\s*\(?([A-D])\)?/iu);
-  const qLine=lines.find(x=>!/^(?:\s*\(?[A-D]\)?[.)\-:]\s*)/iu.test(x)&&!/^(?:answer|correct\s*answer|उत्तर|सही\s*उत्तर)\s*[:\-]?/iu.test(x));
-  if(qLine&&opts.length>=2)out.push({question:qLine.replace(/^Q(?:uestion)?\s*\d*[.:)\-]?\s*/i,'').trim(),options:opts.map((o,i)=>({position:i,option_text:o.text,is_correct:answerMatch?o.letter===answerMatch[1].toUpperCase():false}))});
- }
- return out;
-}
 export default function TestSeries({courseId,onStart,standalone=false}){
- const{team}=useTeam(),{user}=useAuth(),{cost}=useCredits(),admin=['owner','admin'].includes(team?.role);
+ const{team}=useTeam(),{user}=useAuth(),{cost,charge}=useCredits(),admin=['owner','admin'].includes(team?.role);
  const[tests,setTests]=useState([]),[mode,setMode]=useState(null),[leaderboard,setLeaderboard]=useState(null),[leaderboardTest,setLeaderboardTest]=useState(null),[history,setHistory]=useState([]),[historyTest,setHistoryTest]=useState(null),[title,setTitle]=useState(''),[desc,setDesc]=useState(''),[prompt,setPrompt]=useState(''),[raw,setRaw]=useState(''),[rawHi,setRawHi]=useState(''),[topics,setTopics]=useState(''),[minutes,setMinutes]=useState('30'),[points,setPoints]=useState(10),[defaultLanguage,setDefaultLanguage]=useState('en'),[maxReattempts,setMaxReattempts]=useState(0),[questionCount,setQuestionCount]=useState(10),[difficulty,setDifficulty]=useState('medium'),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
 
  async function load(){const{data}=await supabase.from('test_series').select('*').eq(standalone?'team_id':'playlist_id',standalone?team.id:courseId).order('created_at',{ascending:true});setTests(data||[])}
