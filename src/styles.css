@@ -2413,3 +2413,14 @@ img,svg,video,iframe{max-width:100%}
     padding:20px!important;
   }
 }
+
+/* AI Test Builder */
+.ai-test-builder{border:1px solid #ddd8ff!important;background:linear-gradient(145deg,#fbfaff,#f5f7ff)!important}
+.ai-test-builder .test-builder-top h3{font-size:26px!important;letter-spacing:-.035em}
+.ai-test-builder .ai-prompt-input{min-height:150px!important;line-height:1.55!important}
+.ai-test-features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:2px}
+.ai-test-features>div{display:flex;flex-direction:column;gap:5px;padding:13px;border:1px solid #e3e0f5;border-radius:13px;background:#fff}
+.ai-test-features b{font-size:11px;color:#4436a8}
+.ai-test-features span{font-size:10px;line-height:1.45;color:var(--muted)}
+@media(max-width:900px){.ai-test-features{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.ai-test-features{grid-template-columns:1fr}.ai-test-builder .test-builder-top{gap:12px}.ai-test-builder .test-builder-top h3{font-size:22px!important}}
