@@ -462,8 +462,7 @@ Deno.serve(async (req) => {
         throw new Error("This lesson has no YouTube video ID.");
       }
 
-      const sourceUrl =
-        playlistVideo.video_url || `https://www.youtube.com/watch?v=${id}`;
+      const sourceUrl = `https://www.youtube.com/watch?v=${id}`;
 
       let transcript = "";
       let segments: any[] = [];
@@ -518,7 +517,7 @@ Deno.serve(async (req) => {
 
       const result = {
         playlist_video_id: playlistVideoId,
-        language: selectedCaption?.languageCode || "auto",
+        language,
         status: "ready",
         transcript: transcript.trim(),
         segments,
