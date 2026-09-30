@@ -36,7 +36,7 @@ function CourseOverviewRoute() {
 function CoursePlayerRoute() {
   const { courseId, videoId } = useParams()
   const navigate = useNavigate()
-  return <CoursePlayer courseId={courseId} videoId={videoId} back={() => navigate(`/app/courses/${courseId}`)} />
+  return <CoursePlayer courseId={courseId} videoId={videoId} onOpenVideo={id => navigate(`/app/courses/${courseId}/lesson/${id}`)} back={() => navigate(`/app/courses/${courseId}`)} />
 }
 
 function TestRoute() {
