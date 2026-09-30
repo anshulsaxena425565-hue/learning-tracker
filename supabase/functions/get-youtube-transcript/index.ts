@@ -312,6 +312,44 @@ function toSegments(result: any) {
   ].filter((item: any) => item.text);
 }
 
+async function fetchExternalTranscript(videoUrl: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25000);
+  try {
+    const response = await fetch(YOUTUBE_TRANSCRIPT_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ video_url: videoUrl }),
+      signal: controller.signal,
+    });
+    const raw = await response.text();
+    let payload: any = null;
+    try { payload = JSON.parse(raw); } catch {}
+    if (!response.ok) {
+      throw new Error(String(payload?.detail || payload?.message || payload?.error || raw.slice(0, 300) || `HTTP ${response.status}`));
+    }
+    const data = payload?.data || payload;
+    const transcript = String(data?.transcript || data?.text || data?.content || "").trim();
+    if (!transcript) throw new Error("External transcript API returned no transcript.");
+    const rawSegments = data?.segments || data?.transcript_segments || data?.items || [];
+    const segments = Array.isArray(rawSegments)
+      ? rawSegments.map((item: any) => ({
+          start: Number(item?.start ?? item?.start_seconds ?? item?.offset ?? 0),
+          duration: Number(item?.duration ?? item?.duration_seconds ?? 0),
+          text: String(item?.text ?? item?.transcript ?? item?.content ?? "").trim(),
+        })).filter((item: any) => item.text)
+      : [];
+    return {
+      transcript,
+      segments: segments.length ? segments : [{ start: 0, duration: 0, text: transcript }],
+      source: "youtube-transcript-api",
+      language: String(data?.language || data?.lang || "auto"),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function transcribeWithDeepgram(audioUrl: string) {
   if (!DEEPGRAM_API_KEY) {
     throw new Error(
@@ -424,53 +462,59 @@ Deno.serve(async (req) => {
         throw new Error("This lesson has no YouTube video ID.");
       }
 
-      const playerResponse = await getPlayer(id);
+      const sourceUrl =
+        playlistVideo.video_url || `https://www.youtube.com/watch?v=${id}`;
 
-      // YouTube often hides direct media URLs behind signature/SABR delivery.
-      // Use captions first when available; use Deepgram when a fetchable audio
-      // URL is exposed by YouTube.
-      const captionResult = await getYouTubeCaptions(playerResponse);
+      let transcript = "";
+      let segments: any[] = [];
+      let source = "";
+      let language = "auto";
 
-      let transcript = captionResult?.transcript || "";
-      let segments = captionResult?.segments || [];
-      let source = captionResult?.source || "";
+      try {
+        const external = await fetchExternalTranscript(sourceUrl);
+        transcript = external.transcript;
+        segments = external.segments;
+        source = external.source;
+        language = external.language;
+      } catch (externalError) {
+        console.error("External transcript provider failed:", externalError);
 
-      if (!transcript.trim()) {
-        let audioUrl = pickAudioUrl(playerResponse);
+        const playerResponse = await getPlayer(id);
+        const captionResult = await getYouTubeCaptions(playerResponse);
+        transcript = captionResult?.transcript || "";
+        segments = captionResult?.segments || [];
+        source = captionResult?.source || "";
 
-        // If YouTube returned cipher-protected formats, use YouTube.js to
-        // resolve the current player signature/n-transform before handing
-        // the resulting audio URL to Deepgram.
-        if (!audioUrl) {
-          try {
-            audioUrl = await getDecipheredYouTubeAudioUrl(id);
-          } catch (youtubeError) {
-            console.error("YouTube.js stream resolution failed:", youtubeError);
+        const selectedCaptionUrl = pickCaptionTrack(playerResponse);
+        const selectedCaption = captionTracks(playerResponse).find(
+          (track: any) => String(track?.baseUrl || "") === String(selectedCaptionUrl || ""),
+        );
+        language = selectedCaption?.languageCode || "auto";
+
+        if (!transcript.trim()) {
+          let audioUrl = pickAudioUrl(playerResponse);
+          if (!audioUrl) {
+            try { audioUrl = await getDecipheredYouTubeAudioUrl(id); }
+            catch (youtubeError) { console.error("YouTube.js stream resolution failed:", youtubeError); }
+          }
+          if (audioUrl) {
+            const deepgram = await transcribeWithDeepgram(audioUrl);
+            segments = toSegments(deepgram);
+            transcript =
+              deepgram?.results?.channels?.[0]?.alternatives?.[0]?.transcript ||
+              segments.map((item: any) => item.text).join(" ");
+            source = "deepgram";
+            language =
+              deepgram?.results?.channels?.[0]?.alternatives?.[0]?.languages?.[0] || "auto";
           }
         }
-
-        if (!audioUrl) {
-          throw new Error(
-            "YouTube did not expose a usable audio stream for this video. The video may require a YouTube client challenge that cannot be resolved from the current server environment.",
-          );
-        }
-
-        const deepgram = await transcribeWithDeepgram(audioUrl);
-        segments = toSegments(deepgram);
-        transcript =
-          deepgram?.results?.channels?.[0]?.alternatives?.[0]?.transcript ||
-          segments.map((item: any) => item.text).join(" ");
-        source = "deepgram";
       }
 
       if (!transcript.trim()) {
-        throw new Error("The transcript provider returned an empty transcript.");
+        throw new Error(
+          "No transcript is available from the external transcript API, YouTube captions, or Deepgram.",
+        );
       }
-
-      const selectedCaptionUrl = pickCaptionTrack(playerResponse);
-      const selectedCaption = captionTracks(playerResponse).find(
-        (track: any) => String(track?.baseUrl || "") === String(selectedCaptionUrl || ""),
-      );
 
       const result = {
         playlist_video_id: playlistVideoId,
