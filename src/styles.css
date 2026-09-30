@@ -2763,3 +2763,12 @@ body:has(.auth2-shell){overflow:hidden}
 @media(max-height:720px) and (min-width:761px){
   .auth2-hero{padding-top:22px;padding-bottom:20px}.auth2-hero-copy{padding-bottom:0}.auth2-hero h2{font-size:clamp(39px,4.4vw,60px)}.auth2-feature-row{margin-top:16px}.auth2-feature-card{min-height:61px;padding:8px 10px}.auth2-visual{height:275px;transform:scale(.82);transform-origin:bottom right}.auth2-device{height:210px}.auth2-device-screen{height:151px}.auth2-screen-grid span{height:50px}.auth2-panel{padding-top:18px;padding-bottom:18px}.auth2-back{margin-bottom:18px}.auth2-heading{margin-bottom:13px}.auth2-tabs{margin-bottom:13px}.auth2-form{gap:10px}.auth2-input{height:43px}.auth2-submit{height:46px}
 }
+
+.auth2-oauth{margin-top:13px}
+.auth2-divider{display:flex;align-items:center;gap:10px;color:#aaa7b7;font-size:7px;font-weight:700;text-transform:lowercase}
+.auth2-divider:before,.auth2-divider:after{content:"";height:1px;flex:1;background:#e9e8f1}
+.auth2-google{height:45px;width:100%;margin-top:9px;display:flex!important;align-items:center;justify-content:center;gap:9px;border:1px solid #e4e4ef!important;border-radius:13px!important;background:#fff!important;color:#27243d!important;box-shadow:0 7px 20px rgba(30,27,65,.035);font:800 9px 'Manrope',sans-serif!important;cursor:pointer;transition:.2s}
+.auth2-google:hover{transform:translateY(-1px);border-color:#c9c5df!important;box-shadow:0 10px 24px rgba(30,27,65,.08)}
+.auth2-google:disabled{opacity:.6;cursor:wait;transform:none}
+.auth2-google svg{font-size:17px;color:#4285f4}
+@media(max-height:720px) and (min-width:761px){.auth2-oauth{margin-top:8px}.auth2-google{height:39px}}
