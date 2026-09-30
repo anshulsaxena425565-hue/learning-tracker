@@ -1,3 +1,4 @@
+import { Innertube } from "npm:youtubei.js@18.1.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -121,6 +122,36 @@ function pickAudioUrl(playerResponse: any) {
     .sort((a: any, b: any) => Number(b?.bitrate || 0) - Number(a?.bitrate || 0))[0];
 
   return audio?.url || null;
+}
+
+let youtubeClientPromise: Promise<Innertube> | null = null;
+
+async function getYoutubeClient() {
+  if (!youtubeClientPromise) {
+    youtubeClientPromise = Innertube.create({
+      lang: "en",
+      location: "IN",
+      client_type: "WEB",
+      retrieve_player: true,
+      enable_session_cache: false,
+    });
+  }
+
+  return youtubeClientPromise;
+}
+
+async function getDecipheredYouTubeAudioUrl(videoIdValue: string) {
+  const youtube = await getYoutubeClient();
+  const info = await youtube.getBasicInfo(videoIdValue);
+  const format = info.chooseFormat({
+    type: "audio",
+    quality: "best",
+  });
+
+  if (!format) return null;
+
+  const url = await format.decipher(youtube.session.player);
+  return url || null;
 }
 
 function decodeHtml(value: string) {
@@ -403,11 +434,22 @@ Deno.serve(async (req) => {
       let source = captionResult?.source || "";
 
       if (!transcript.trim()) {
-        const audioUrl = pickAudioUrl(playerResponse);
+        let audioUrl = pickAudioUrl(playerResponse);
+
+        // If YouTube returned cipher-protected formats, use YouTube.js to
+        // resolve the current player signature/n-transform before handing
+        // the resulting audio URL to Deepgram.
+        if (!audioUrl) {
+          try {
+            audioUrl = await getDecipheredYouTubeAudioUrl(id);
+          } catch (youtubeError) {
+            console.error("YouTube.js stream resolution failed:", youtubeError);
+          }
+        }
 
         if (!audioUrl) {
           throw new Error(
-            "YouTube did not expose a directly fetchable audio stream and this video has no usable captions. Deepgram needs a server-fetchable audio URL, so this video cannot be transcribed yet.",
+            "YouTube did not expose a usable audio stream for this video. The video may require a YouTube client challenge that cannot be resolved from the current server environment.",
           );
         }
 
