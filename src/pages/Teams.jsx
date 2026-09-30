@@ -28,12 +28,12 @@ return <div className="page teams-page">
 {teamView==='grid' ? <div className="team-grid modern-team-grid">{teams.map(t=><section className={'team-card modern-team-card team-showcase-card '+(t.id===team?.id?'active':'')} key={t.id}>
  <div className="team-showcase-cover">
   <div className="team-cover-pattern"/>
-  <span className="team-cover-kicker">{t.visibility==='public'?'PUBLIC COMMUNITY':'PRIVATE WORKSPACE'}</span>
+  <span className={"team-cover-kicker team-visibility-badge "+(t.visibility==='public'?'public':'private')} >{t.visibility==='public'?<GlobeHemisphereWest size={11} weight="bold"/>:<LockKey size={11} weight="bold"/>}{t.visibility==='public'?'Public community':'Private workspace'}</span>
   <strong>{t.name.slice(0,2).toUpperCase()}</strong>
   <span className="team-cover-type">{t.role==='owner'?'Owner':t.role==='admin'?'Admin':'Member'}</span>
   {t.id===team?.id&&<span className="team-cover-current"><CheckCircle size={12} weight="fill"/> Current</span>}
  </div>
- <div className="team-showcase-body">
+ <div className="team-showcase-body"><span className="team-card-selected-label">{t.id===team?.id?<><CheckCircle size={11} weight="fill"/> Selected team</>:''}</span>
   <div className="team-showcase-heading"><div><p className="team-showcase-category">{t.visibility==='public'?'Community workspace':'Learning workspace'}</p><h2>{t.name}</h2></div><DotsThreeVertical size={19} className="team-dots"/></div>
   <div className="team-showcase-meta">
    <div><span>ROLE</span><b>{t.role==='owner'?'Owner':t.role==='admin'?'Admin':'Member'}</b></div>
