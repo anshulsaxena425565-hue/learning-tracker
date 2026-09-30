@@ -9,6 +9,8 @@ const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
 const DEEPGRAM_API_BASE_URL =
   Deno.env.get("DEEPGRAM_API_BASE_URL") || "https://api.in.deepgram.com";
 
+const YOUTUBE_TRANSCRIPT_API_URL = Deno.env.get("YOUTUBE_TRANSCRIPT_API_URL") || "https://youtube-transcript-api-tau-one.vercel.app/transcript";
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
