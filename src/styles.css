@@ -2595,3 +2595,8 @@ img,svg,video,iframe{max-width:100%}
  .team-showcase-footer .modern-team-actions{width:100%}
  .team-showcase-footer .modern-team-actions button{flex:1;justify-content:center}
 }
+
+
+/* Teams list — selected workspace title must remain readable on the light header */
+.team-list-selected-head h2{color:var(--text)!important}
+.team-list-selected-head .team-list-role{color:var(--muted)!important}
