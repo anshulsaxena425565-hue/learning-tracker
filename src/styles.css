@@ -2600,3 +2600,16 @@ img,svg,video,iframe{max-width:100%}
 /* Teams list — selected workspace title must remain readable on the light header */
 .team-list-selected-head h2{color:var(--text)!important}
 .team-list-selected-head .team-list-role{color:var(--muted)!important}
+
+
+/* Teams — selected state uses a filled card treatment; visibility uses badges */
+.team-showcase-card.active{background:linear-gradient(180deg,#f2efff 0%,#ffffff 42%,#ffffff 100%)!important;border:2px solid color-mix(in srgb,var(--accent) 55%,#fff)!important;box-shadow:0 16px 38px rgba(91,83,220,.14)!important}
+.team-showcase-card.active .team-showcase-cover{background:linear-gradient(135deg,#e9e5ff 0%,#ddd8ff 52%,#ebe8ff 100%)!important}
+.team-showcase-card.active .team-showcase-cover>strong{color:rgba(91,83,220,.22)}
+.team-showcase-card.active .team-showcase-body{background:transparent}
+.team-card-selected-label{display:none}
+.team-showcase-card.active .team-card-selected-label{display:inline-flex;align-items:center;gap:5px;width:max-content;margin-bottom:7px;padding:5px 9px;border-radius:999px;background:var(--accent);color:#fff;font-size:8px;font-weight:850}
+.team-visibility-badge{display:inline-flex!important;align-items:center;gap:5px;width:max-content!important;align-self:flex-start!important;padding:6px 9px!important;border-radius:999px!important;background:rgba(255,255,255,.82)!important;border:1px solid rgba(255,255,255,.95)!important;backdrop-filter:blur(8px);letter-spacing:.01em!important;text-transform:none!important;color:var(--text)!important}
+.team-visibility-badge.private{color:#6259a9!important}
+.team-visibility-badge.public{color:#177a61!important}
+.team-showcase-card.active .team-visibility-badge{background:rgba(255,255,255,.9)!important}
