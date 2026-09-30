@@ -25,7 +25,7 @@ return <div className="page teams-page">
   <button type="button" className={teamView==='list'?'active':''} onMouseDown={e=>{e.stopPropagation()}} onClick={e=>{e.stopPropagation();setTeamView('list')}} title="List view"><Rows size={15}/> List</button>
  </div>
 </div>
-{teamView==='grid' ? <div className="team-grid modern-team-grid">{[...teams].sort((a,b)=>a.id===team?.id?-1:b.id===team?.id?1:0).map(t=><section className={'team-card modern-team-card team-showcase-card '+(t.id===team?.id?'active':'')} key={t.id}>
+{teamView==='grid' ? <div className="team-grid modern-team-grid">{teams.map(t=><section className={'team-card modern-team-card team-showcase-card '+(t.id===team?.id?'active':'')} key={t.id}>
  <div className="team-showcase-cover">
   <div className="team-cover-pattern"/>
   <span className={"team-cover-kicker team-visibility-badge "+(t.visibility==='public'?'public':'private')} >{t.visibility==='public'?<GlobeHemisphereWest size={11} weight="bold"/>:<LockKey size={11} weight="bold"/>}{t.visibility==='public'?'Public community':'Private workspace'}</span>
