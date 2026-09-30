@@ -1,5 +1,5 @@
-import{useEffect,useState}from'react';import{toast}from'../lib/toast';import{useTeam}from'../context/TeamContext';import{useCredits}from'../context/CreditsContext';import{supabase}from'../lib/supabase';import{UsersThree,Plus,UserPlus,GlobeHemisphereWest,Copy,ShareNetwork,SignOut,ArrowRight,CheckCircle,LockKey,ShieldCheck,DotsThreeVertical,Lightning,Info,CalendarBlank,Buildings,GearSix}from'@phosphor-icons/react';
-export default function Teams(){const{teams,team,switchTeam,reload,members}=useTeam(),{cost}=useCredits(),[explore,setExplore]=useState(false),[name,setName]=useState(''),[code,setCode]=useState(''),[busy,setBusy]=useState(false),[msg,setMsg]=useState(''),[publicTeams,setPublicTeams]=useState([]),[publicStats,setPublicStats]=useState({}),[platformAdmin,setPlatformAdmin]=useState(false),[actionModal,setActionModal]=useState(null),[publicName,setPublicName]=useState(''),[publicDesc,setPublicDesc]=useState(''),[publicCategory,setPublicCategory]=useState(''),[settingsOpen,setSettingsOpen]=useState(false),[settingsName,setSettingsName]=useState(''),[settingsDesc,setSettingsDesc]=useState(''),[transferUser,setTransferUser]=useState(''),[detailsTeam,setDetailsTeam]=useState(null),[detailsMembers,setDetailsMembers]=useState(null);
+import{useEffect,useState}from'react';import{toast}from'../lib/toast';import{useTeam}from'../context/TeamContext';import{useCredits}from'../context/CreditsContext';import{supabase}from'../lib/supabase';import{UsersThree,Plus,UserPlus,GlobeHemisphereWest,Copy,ShareNetwork,SignOut,ArrowRight,CheckCircle,LockKey,ShieldCheck,DotsThreeVertical,Lightning,Info,CalendarBlank,Buildings,GearSix,CaretDown,Rows,GridFour}from'@phosphor-icons/react';
+export default function Teams(){const{teams,team,switchTeam,reload,members}=useTeam(),{cost}=useCredits(),[explore,setExplore]=useState(false),[name,setName]=useState(''),[code,setCode]=useState(''),[busy,setBusy]=useState(false),[msg,setMsg]=useState(''),[publicTeams,setPublicTeams]=useState([]),[publicStats,setPublicStats]=useState({}),[platformAdmin,setPlatformAdmin]=useState(false),[actionModal,setActionModal]=useState(null),[publicName,setPublicName]=useState(''),[publicDesc,setPublicDesc]=useState(''),[publicCategory,setPublicCategory]=useState(''),[settingsOpen,setSettingsOpen]=useState(false),[settingsName,setSettingsName]=useState(''),[settingsDesc,setSettingsDesc]=useState(''),[transferUser,setTransferUser]=useState(''),[detailsTeam,setDetailsTeam]=useState(null),[detailsMembers,setDetailsMembers]=useState(null),[teamView,setTeamView]=useState('grid'),[teamListOpen,setTeamListOpen]=useState(true);
 async function loadPublic(){const{data,error}=await supabase.from('teams').select('id,name,created_by,created_at,visibility,description,category').eq('visibility','public').order('created_at',{ascending:false});if(error){setMsg(error.message);return}const list=data||[];setPublicTeams(list);const stats={};await Promise.all(list.map(async t=>{const[{count:membersCount},{count:coursesCount},{count:quizCount}]=await Promise.all([supabase.from('team_members').select('user_id',{count:'exact',head:true}).eq('team_id',t.id),supabase.from('playlists').select('id',{count:'exact',head:true}).eq('team_id',t.id),supabase.from('test_series').select('id',{count:'exact',head:true}).eq('team_id',t.id)]);stats[t.id]={members:Number(membersCount||0),courses:Number(coursesCount||0),quizzes:Number(quizCount||0)}}));setPublicStats(stats)}
 useEffect(()=>{loadPublic();supabase.rpc('is_platform_admin').then(({data})=>setPlatformAdmin(!!data))},[]);
 async function create(){if(!name.trim())return;setBusy(true);setMsg('');const{error}=await supabase.rpc('create_team',{p_name:name.trim()});if(error)setMsg(error.message);else{setName('');setActionModal(null);await reload();setMsg('Private team created.');toast('Your workspace is ready.','success','Team created')}setBusy(false)}
@@ -16,12 +16,49 @@ async function role(userId,role){if(!team)return;const{error}=await supabase.rpc
 return <div className="page teams-page">
 <header className="teams-page-header"><div className="teams-title"><div className="teams-title-icon"><UsersThree size={25} weight="duotone"/></div><div><p className="eyebrow">WORKSPACES</p><h1>Your teams</h1><p className="muted">Private learning spaces and communities built around shared goals.</p></div></div><div className="teams-header-actions"><div className="team-header-count"><b>{teams.length}</b><span>{teams.length===1?'workspace':'workspaces'}</span></div><button className="teams-header-cta secondary" onClick={()=>{setActionModal('join');setMsg('')}}><UserPlus size={17}/> Join team</button><button className="teams-header-cta primary" onClick={()=>{setActionModal('create');setMsg('')}}><Plus size={17} weight="bold"/> Create team</button></div></header>
 {msg&&<div className="notice teams-notice"><CheckCircle size={17} weight="fill"/><span>{msg}</span></div>}
-<div className="team-overview"><div className="team-overview-icon"><UsersThree size={20} weight="duotone"/></div><div><b>Choose your learning workspace</b><p>Switch between your teams without losing your course progress.</p></div><span>{team?.name||'No active team'}</span></div>
-<div className="team-grid modern-team-grid">{teams.map(t=><section className={'team-card modern-team-card '+(t.id===team?.id?'active':'')} key={t.id}>
+<div className="team-overview">
+ <div className="team-overview-icon"><UsersThree size={20} weight="duotone"/></div>
+ <div className="team-overview-copy"><b>Choose your learning workspace</b><p>Switch between your teams without losing your course progress.</p></div>
+ <span>{team?.name||'No active team'}</span>
+ <div className="team-view-toggle" role="group" aria-label="Team view">
+  <button className={teamView==='grid'?'active':''} onClick={()=>setTeamView('grid')} title="Grid view"><GridFour size={15}/> Grid</button>
+  <button className={teamView==='list'?'active':''} onClick={()=>setTeamView('list')} title="List view"><Rows size={15}/> List</button>
+ </div>
+</div>
+{teamView==='grid' ? <div className="team-grid modern-team-grid">{teams.map(t=><section className={'team-card modern-team-card '+(t.id===team?.id?'active':'')} key={t.id}>
 <div className="modern-team-top"><div className="modern-team-avatar">{t.name.slice(0,2).toUpperCase()}</div><div className="grow"><div className="team-label-row"><p className="eyebrow">{t.visibility==='public'?'PUBLIC COMMUNITY':'PRIVATE WORKSPACE'}</p>{t.id===team?.id&&<span className="current-badge"><CheckCircle size={12} weight="fill"/> Current</span>}</div><h2>{t.name}</h2><p className="muted">{t.role==='owner'?'Owner':t.role==='admin'?'Admin':'Member'}</p></div><DotsThreeVertical size={20} className="team-dots"/></div>
 <div className="team-code modern-team-code"><div><span><LockKey size={13}/> Invite code</span><b>{t.code}</b></div><button className="code-copy" onClick={async()=>{await navigator.clipboard?.writeText(t.code||'');setMsg('Invite code copied.')}} title="Copy invite code"><Copy size={15}/></button></div>
 <div className="modern-team-footer"><span className="team-access"><span className="status-dot"/> {t.visibility==='public'?'Open community':'Private team'}</span><div className="modern-team-actions"><button className="team-details-btn" onClick={()=>openTeamDetails(t)}><Info size={15}/> Details</button><button disabled={t.id===team?.id} onClick={()=>switchTeam(t.id)}>{t.id===team?.id?'Current team':<>Switch team <ArrowRight size={16}/></>}</button></div></div>
-</section>)}</div>
+</section>)}</div> : <div className="team-list-view">
+ <section className={'team-list-selected '+(teamListOpen?'open':'')}>
+  <button className="team-list-selected-head" onClick={()=>setTeamListOpen(x=>!x)}>
+   <div className="modern-team-avatar">{(team?.name||'--').slice(0,2).toUpperCase()}</div>
+   <div className="grow"><p className="eyebrow">SELECTED WORKSPACE</p><h2>{team?.name||'No active team'}</h2><span>{team?.visibility==='public'?'Public community':'Private workspace'} · {team?.role||'Member'}</span></div>
+   <span className="current-badge"><CheckCircle size={12} weight="fill"/> Current</span><CaretDown size={19} className="team-list-chevron"/>
+  </button>
+  {team&&teamListOpen&&<div className="team-list-selected-body">
+   <div className="team-list-detail-grid">
+    <div><span>Invite code</span><b>{team.code}</b><button onClick={copy}><Copy size={14}/> Copy</button></div>
+    <div><span>Members</span><b>{members.length}</b><small>people in this workspace</small></div>
+    <div><span>Access</span><b>{team.visibility==='public'?'Public':'Private'}</b><small>{team.role==='owner'?'You own this workspace':team.role==='admin'?'You are an admin':'Member access'}</small></div>
+   </div>
+   {team.description&&<p className="team-list-description">{team.description}</p>}
+   <div className="team-list-selected-actions">
+    <button className="team-details-btn" onClick={()=>openTeamDetails(team)}><Info size={15}/> Details</button>
+    <button className="ghost" onClick={share}><ShareNetwork size={15}/> Share invite</button>
+    {(team.role==='owner'||team.role==='admin')&&<button className="ghost" onClick={()=>{setSettingsName(team.name||'');setSettingsDesc(team.description||'');setTransferUser('');setSettingsOpen(true)}}><GearSix size={15}/> Team settings</button>}
+    <button className="danger" onClick={leave}><SignOut size={15}/> Leave</button>
+   </div>
+  </div>}
+ </section>
+ <div className="team-list-heading"><div><p className="eyebrow">YOUR WORKSPACES</p><b>All teams</b></div><span>{teams.length} workspaces</span></div>
+ <div className="team-list-items">{teams.filter(t=>t.id!==team?.id).map(t=><article className="team-list-item" key={t.id}>
+   <div className="modern-team-avatar">{t.name.slice(0,2).toUpperCase()}</div>
+   <div className="grow"><div className="team-list-item-title"><h3>{t.name}</h3><span>{t.visibility==='public'?'Public':'Private'}</span></div><p>{t.role==='owner'?'Owner':t.role==='admin'?'Admin':'Member'} · Invite code <b>{t.code}</b></p></div>
+   <button className="team-details-btn" onClick={()=>openTeamDetails(t)}><Info size={15}/> Details</button>
+   <button onClick={()=>switchTeam(t.id)}>Switch team <ArrowRight size={15}/></button>
+ </article>)}</div>
+ </div>}
 <section className="public-teams-cta modern-community-cta"><div className="community-copy"><span className="public-orb"><GlobeHemisphereWest size={25} weight="duotone"/></span><div><p className="eyebrow">LEARNING COMMUNITY</p><h2>Find your people</h2><p className="muted">Explore public teams, discover shared interests and learn together.</p></div></div><button onClick={()=>setExplore(true)}>Explore public teams <ArrowRight size={17}/></button></section>
 
 {actionModal&&<div className="team-action-modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&setActionModal(null)}><section className="team-action-modal" role="dialog" aria-modal="true">
