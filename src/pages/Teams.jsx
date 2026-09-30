@@ -21,8 +21,8 @@ return <div className="page teams-page">
  <div className="team-overview-copy"><b>Choose your learning workspace</b><p>Switch between your teams without losing your course progress.</p></div>
  <span>{team?.name||'No active team'}</span>
  <div className="team-view-toggle" role="group" aria-label="Team view">
-  <button className={teamView==='grid'?'active':''} onClick={()=>setTeamView('grid')} title="Grid view"><GridFour size={15}/> Grid</button>
-  <button className={teamView==='list'?'active':''} onClick={()=>setTeamView('list')} title="List view"><Rows size={15}/> List</button>
+  <button type="button" className={teamView==='grid'?'active':''} onPointerDown={e=>{e.preventDefault();e.stopPropagation();setTeamView('grid')}} onClick={e=>{e.preventDefault();e.stopPropagation();setTeamView('grid')}} title="Grid view"><GridFour size={15}/> Grid</button>
+  <button type="button" className={teamView==='list'?'active':''} onPointerDown={e=>{e.preventDefault();e.stopPropagation();setTeamView('list')}} onClick={e=>{e.preventDefault();e.stopPropagation();setTeamView('list')}} title="List view"><Rows size={15}/> List</button>
  </div>
 </div>
 {teamView==='grid' ? <div className="team-grid modern-team-grid">{teams.map(t=><section className={'team-card modern-team-card '+(t.id===team?.id?'active':'')} key={t.id}>
