@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ArrowRight, ArrowUpRight, BookOpen, ChartLineUp, EnvelopeSimple, Eye, EyeSlash, LockKey, Sparkle, UserCirclePlus, UsersThree, CheckCircle } from '@phosphor-icons/react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { TeamProvider } from './context/TeamContext'
@@ -14,6 +15,7 @@ function AuthPage({ mode }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -25,6 +27,7 @@ function AuthPage({ mode }) {
     setForgot(mode === 'forgot')
     setError('')
     setMessage('')
+    setShowPassword(false)
   }, [mode])
 
   async function submit(event) {
@@ -33,7 +36,7 @@ function AuthPage({ mode }) {
     try {
       if (forgot) {
         await resetPassword(email)
-        setMessage('Password reset link sent. Check your inbox.')
+        setMessage('Reset link sent — check your inbox.')
       } else {
         await (signup ? signUp(email, password, name) : signIn(email, password))
         if (signup) setMessage('Check your email to confirm your account.')
@@ -47,117 +50,146 @@ function AuthPage({ mode }) {
 
   const switchMode = () => navigate(signup ? '/login' : '/signup')
 
-  const highlights = signup
-    ? [
-        ['✦', 'One beautiful learning space', 'Courses, notes, quizzes and progress in one place.'],
-        ['↗', 'Turn effort into momentum', 'See your streaks, milestones and learning growth.'],
-        ['∞', 'Learn together', 'Teams, shared notes and friendly competition built in.'],
-      ]
-    : [
-        ['✦', 'Welcome back, learner', 'Your courses, progress and team activity are waiting.'],
-        ['↗', 'Keep your momentum', 'Jump straight back into the things you were learning.'],
-        ['∞', 'Everything stays connected', 'Your workspace brings learning and progress together.'],
-      ]
-
   return (
-    <main className="auth-shell">
-      <div className="auth-orb auth-orb-one" />
-      <div className="auth-orb auth-orb-two" />
-      <div className="auth-orb auth-orb-three" />
+    <main className="auth2-shell">
+      <section className="auth2-hero">
+        <div className="auth2-glow auth2-glow-a" />
+        <div className="auth2-glow auth2-glow-b" />
+        <div className="auth2-grid" />
 
-      <section className="auth-showcase" aria-hidden="true">
-        <button className="auth-brand" onClick={() => navigate('/')} type="button">
-          <span className="auth-brand-mark">L</span>
+        <button className="auth2-brand" onClick={() => navigate('/')} type="button">
+          <span className="auth2-brand-mark">L</span>
           <span>Learning<b>Beyond</b></span>
         </button>
 
-        <div className="auth-showcase-content">
-          <span className="auth-kicker">{forgot ? 'A fresh start' : signup ? 'Your learning era starts here' : 'Good to see you again'}</span>
-          <h2>{forgot ? <>Reset.<br /><em>Refocus.</em><br />Keep going.</> : signup ? <>Make learning<br /><em>feel like progress.</em></> : <>Ready to pick up<br /><em>where you left off?</em></>}</h2>
-          <p>{forgot ? 'Set a new password and get back to your learning space.' : 'A calmer, smarter place to learn, build momentum and actually see how far you have come.'}</p>
+        <div className="auth2-hero-copy">
+          <div className="auth2-eyebrow"><Sparkle weight="fill" /> LEARN · PLAN · GROW</div>
+          <h2>Turn learning<br />into <span>progress.</span></h2>
+          <p>One space for courses, teams and momentum.</p>
 
-          {!forgot && (
-            <div className="auth-highlights">
-              {highlights.map(([icon, title, copy]) => (
-                <div className="auth-highlight" key={title}>
-                  <span>{icon}</span>
-                  <div><b>{title}</b><small>{copy}</small></div>
-                </div>
-              ))}
+          <div className="auth2-feature-row">
+            <div className="auth2-feature-card">
+              <span><BookOpen weight="duotone" /></span>
+              <b>Learn</b><small>your way</small>
             </div>
-          )}
+            <div className="auth2-feature-card">
+              <span><UsersThree weight="duotone" /></span>
+              <b>Learn</b><small>together</small>
+            </div>
+            <div className="auth2-feature-card">
+              <span><ChartLineUp weight="duotone" /></span>
+              <b>Track</b><small>progress</small>
+            </div>
+          </div>
         </div>
 
-        <div className="auth-showcase-footer">
-          <span><i /> Built for curious minds</span>
-          <span>LearningBeyond · 2026</span>
+        <div className="auth2-visual" aria-hidden="true">
+          <div className="auth2-float-card auth2-course-card">
+            <span className="auth2-mini-icon"><BookOpen weight="duotone" /></span>
+            <div><b>My Courses</b><small>3 / 5 complete</small></div>
+            <i><span /></i>
+          </div>
+          <div className="auth2-float-card auth2-team-card">
+            <span className="auth2-mini-icon"><UsersThree weight="duotone" /></span>
+            <div><b>Team Study</b><small>+ 4 learners</small></div>
+            <div className="auth2-avatars"><i>J</i><i>A</i><i>R</i><em>+2</em></div>
+          </div>
+          <div className="auth2-device">
+            <div className="auth2-device-top"><span /><span /><span /></div>
+            <div className="auth2-device-screen">
+              <div className="auth2-screen-title">Today's goal <b>72%</b></div>
+              <div className="auth2-progress"><i /></div>
+              <div className="auth2-screen-grid"><span /><span /><span /></div>
+            </div>
+          </div>
+          <div className="auth2-float-card auth2-goal-card">
+            <span className="auth2-ring">✓</span>
+            <div><b>Level up</b><small>+120 XP</small></div>
+          </div>
         </div>
+
+        <div className="auth2-hero-footer"><span><i /> Built for curious minds</span><span>LearningBeyond · 2026</span></div>
       </section>
 
-      <section className="auth-panel">
-        <div className="auth-mobile-brand">
-          <button className="auth-brand" onClick={() => navigate('/')} type="button">
-            <span className="auth-brand-mark">L</span>
-            <span>Learning<b>Beyond</b></span>
-          </button>
-          <button className="auth-mobile-back" onClick={() => navigate('/')} type="button">Back home</button>
-        </div>
+      <section className="auth2-panel">
+        <div className="auth2-panel-orb auth2-panel-orb-a" />
+        <div className="auth2-panel-orb auth2-panel-orb-b" />
 
-        <div className="auth-form-wrap">
-          <button className="auth-back" onClick={() => navigate('/')}>← Back to LearningBeyond</button>
+        <div className="auth2-form-wrap">
+          <button className="auth2-back" onClick={() => navigate('/')} type="button"><ArrowRight weight="bold" /> Back to LearningBeyond</button>
 
-          <div className="auth-form-heading">
-            <div className="auth-status">
-              <span>{forgot ? 'PASSWORD RECOVERY' : signup ? 'CREATE YOUR SPACE' : 'WELCOME BACK'}</span>
-              <i />
-            </div>
-            <h1>{forgot ? 'Reset your password' : signup ? <>Create your<br /><strong>learning space.</strong></> : <>Welcome <strong>back.</strong></>}</h1>
-            <p>{forgot ? 'Enter your email and we’ll send you a secure password reset link.' : signup ? 'Your courses, progress and learning momentum — all in one beautiful place.' : 'Pick up where you left off and keep your learning momentum moving.'}</p>
+          <div className="auth2-heading">
+            <div className="auth2-welcome">{forgot ? 'PASSWORD RESET' : signup ? 'WELCOME, BUILDER' : 'WELCOME BACK'} <i /></div>
+            <h1>{forgot ? 'Reset your password' : <>Welcome back <span>👋</span></>}</h1>
+            <p>{forgot ? 'Enter your email and we’ll send a secure reset link.' : 'Continue your learning journey.'}</p>
           </div>
 
-          <form className="auth-form" onSubmit={submit}>
+          {!forgot && (
+            <div className="auth2-tabs">
+              <button className={!signup ? 'active' : ''} type="button" onClick={() => { if (signup) navigate('/login') }}><ArrowRight weight="bold" /> Sign in</button>
+              <button className={signup ? 'active' : ''} type="button" onClick={() => { if (!signup) navigate('/signup') }}><UserCirclePlus weight="bold" /> Create account</button>
+            </div>
+          )}
+
+          <form className="auth2-form" onSubmit={submit}>
             {signup && !forgot && (
               <label>
-                <span>Your name</span>
-                <div className="auth-input-wrap"><span>✦</span><input value={name} onChange={e => setName(e.target.value)} placeholder="What should we call you?" autoComplete="name" required /></div>
-              </label>
-            )}
-            <label>
-              <span>Email address</span>
-              <div className="auth-input-wrap"><span>@</span><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required /></div>
-            </label>
-            {!forgot && (
-              <label>
-                <div className="auth-label-row"><span>Password</span>{!signup && <button type="button" className="auth-forgot" onClick={() => navigate('/forgot-password')}>Forgot password?</button>}</div>
-                <div className="auth-input-wrap"><span>••</span><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" minLength="6" autoComplete={signup ? 'new-password' : 'current-password'} required /></div>
+                <span>Name</span>
+                <div className="auth2-input">
+                  <UserCirclePlus weight="duotone" />
+                  <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" autoComplete="name" required />
+                </div>
               </label>
             )}
 
-            <button className="auth-submit" disabled={busy} type="submit">
-              <span>{busy ? 'Working on it…' : forgot ? 'Send reset link' : signup ? 'Create my account' : 'Enter LearningBeyond'}</span>
-              {!busy && <b>↗</b>}
+            <label>
+              <span>Email address</span>
+              <div className="auth2-input">
+                <EnvelopeSimple weight="duotone" />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required />
+              </div>
+            </label>
+
+            {!forgot && (
+              <label>
+                <div className="auth2-label-row">
+                  <span>Password</span>
+                  {!signup && <button type="button" onClick={() => navigate('/forgot-password')}>Forgot password?</button>}
+                </div>
+                <div className="auth2-input">
+                  <LockKey weight="duotone" />
+                  <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Your password" minLength="6" autoComplete={signup ? 'new-password' : 'current-password'} required />
+                  <button className="auth2-eye" type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                    {showPassword ? <EyeSlash weight="duotone" /> : <Eye weight="duotone" />}
+                  </button>
+                </div>
+              </label>
+            )}
+
+            <button className="auth2-submit" disabled={busy} type="submit">
+              <span>{busy ? 'Please wait…' : forgot ? 'Send reset link' : signup ? 'Create account' : 'Sign in'}</span>
+              {!busy && <ArrowRight weight="bold" />}
             </button>
           </form>
 
-          {message && <div className="auth-feedback auth-success"><span>✓</span><div>{message}</div></div>}
-          {error && <div className="auth-feedback auth-error"><span>!</span><div>{error}</div></div>}
+          {message && <div className="auth2-feedback success"><CheckCircle weight="fill" /><span>{message}</span></div>}
+          {error && <div className="auth2-feedback error"><span>!</span><span>{error}</span></div>}
 
           {!forgot ? (
-            <div className="auth-switch">
-              <span>{signup ? 'Already learning with us?' : 'New to LearningBeyond?'}</span>
-              <button onClick={switchMode}>{signup ? 'Sign in' : 'Create an account'} <b>→</b></button>
+            <div className="auth2-switch">
+              <span>{signup ? 'Already have an account?' : 'New to LearningBeyond?'}</span>
+              <button onClick={switchMode}>{signup ? 'Sign in' : 'Create account'} <ArrowUpRight weight="bold" /></button>
             </div>
           ) : (
-            <div className="auth-switch"><button onClick={() => navigate('/login')}>← Back to sign in</button></div>
+            <div className="auth2-switch"><button onClick={() => navigate('/login')}><ArrowRight weight="bold" /> Back to sign in</button></div>
           )}
 
-          <p className="auth-privacy">By continuing, you agree to use LearningBeyond responsibly and respectfully.</p>
+          <p className="auth2-privacy">Secure sign-in · Your learning stays yours.</p>
         </div>
       </section>
     </main>
   )
 }
-
 function PasswordRecovery() {
   const { updateRecoveredPassword, resetEmail } = useAuth(); const [password, setPassword] = useState(''); const [confirm, setConfirm] = useState(''); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [done, setDone] = useState(false); const navigate = useNavigate()
   async function submit(e) { e.preventDefault(); setError(''); if (password.length < 6) return setError('Password must be at least 6 characters.'); if (password !== confirm) return setError('Passwords do not match.'); setBusy(true); try { await updateRecoveredPassword(password); setDone(true) } catch (e) { setError(e.message) } finally { setBusy(false) } }
