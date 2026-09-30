@@ -468,6 +468,7 @@ Deno.serve(async (req) => {
       let segments: any[] = [];
       let source = "";
       let language = "auto";
+      let externalProviderError = "";
 
       try {
         const external = await fetchExternalTranscript(sourceUrl);
@@ -476,7 +477,8 @@ Deno.serve(async (req) => {
         source = external.source;
         language = external.language;
       } catch (externalError) {
-        console.error("External transcript provider failed:", externalError);
+        externalProviderError = externalError instanceof Error ? externalError.message : String(externalError);
+        console.error("External transcript provider failed:", externalProviderError);
 
         const playerResponse = await getPlayer(id);
         const captionResult = await getYouTubeCaptions(playerResponse);
@@ -511,7 +513,7 @@ Deno.serve(async (req) => {
 
       if (!transcript.trim()) {
         throw new Error(
-          "No transcript is available from the external transcript API, YouTube captions, or Deepgram.",
+          "No transcript is available. External provider: " + (externalProviderError || "no response") + ". YouTube captions/audio and Deepgram also returned no usable transcript.",
         );
       }
 
