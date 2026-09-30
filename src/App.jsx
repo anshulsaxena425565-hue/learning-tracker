@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, ArrowUpRight, BookOpen, ChartLineUp, EnvelopeSimple, Eye, EyeSlash, LockKey, Sparkle, UserCirclePlus, UsersThree, CheckCircle } from '@phosphor-icons/react'
+import { ArrowRight, ArrowUpRight, BookOpen, ChartLineUp, EnvelopeSimple, Eye, EyeSlash, LockKey, Sparkle, UserCirclePlus, UsersThree, CheckCircle, GoogleLogo } from '@phosphor-icons/react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { TeamProvider } from './context/TeamContext'
@@ -19,7 +19,7 @@ function AuthPage({ mode }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const { resetPassword, signUp, signIn } = useAuth()
+  const { resetPassword, signUp, signIn, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -29,6 +29,16 @@ function AuthPage({ mode }) {
     setMessage('')
     setShowPassword(false)
   }, [mode])
+
+  async function googleLogin() {
+    setBusy(true); setError(''); setMessage('')
+    try {
+      await signInWithGoogle()
+    } catch (e) {
+      setBusy(false)
+      setError(e.message)
+    }
+  }
 
   async function submit(event) {
     event.preventDefault()
@@ -130,6 +140,13 @@ function AuthPage({ mode }) {
               <button className={signup ? 'active' : ''} type="button" onClick={() => { if (!signup) navigate('/signup') }}><UserCirclePlus weight="bold" /> Create account</button>
             </div>
           )}
+
+          <div className="auth2-oauth">
+            <div className="auth2-divider"><span>or continue with</span></div>
+            <button className="auth2-google" type="button" onClick={googleLogin} disabled={busy}>
+              <GoogleLogo weight="bold" /> <span>Continue with Google</span>
+            </button>
+          </div>
 
           <form className="auth2-form" onSubmit={submit}>
             {signup && !forgot && (
