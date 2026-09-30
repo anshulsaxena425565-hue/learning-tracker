@@ -25,10 +25,24 @@ return <div className="page teams-page">
   <button type="button" className={teamView==='list'?'active':''} onMouseDown={e=>{e.stopPropagation()}} onClick={e=>{e.stopPropagation();setTeamView('list')}} title="List view"><Rows size={15}/> List</button>
  </div>
 </div>
-{teamView==='grid' ? <div className="team-grid modern-team-grid">{teams.map(t=><section className={'team-card modern-team-card '+(t.id===team?.id?'active':'')} key={t.id}>
-<div className="modern-team-top"><div className="modern-team-avatar">{t.name.slice(0,2).toUpperCase()}</div><div className="grow"><div className="team-label-row"><p className="eyebrow">{t.visibility==='public'?'PUBLIC COMMUNITY':'PRIVATE WORKSPACE'}</p>{t.id===team?.id&&<span className="current-badge"><CheckCircle size={12} weight="fill"/> Current</span>}</div><h2>{t.name}</h2><p className="muted">{t.role==='owner'?'Owner':t.role==='admin'?'Admin':'Member'}</p></div><DotsThreeVertical size={20} className="team-dots"/></div>
-<div className="team-code modern-team-code"><div><span><LockKey size={13}/> Invite code</span><b>{t.code}</b></div><button className="code-copy" onClick={async()=>{await navigator.clipboard?.writeText(t.code||'');setMsg('Invite code copied.')}} title="Copy invite code"><Copy size={15}/></button></div>
-<div className="modern-team-footer"><span className="team-access"><span className="status-dot"/> {t.visibility==='public'?'Open community':'Private team'}</span><div className="modern-team-actions"><button className="team-details-btn" onClick={()=>openTeamDetails(t)}><Info size={15}/> Details</button><button disabled={t.id===team?.id} onClick={()=>switchTeam(t.id)}>{t.id===team?.id?'Current team':<>Switch team <ArrowRight size={16}/></>}</button></div></div>
+{teamView==='grid' ? <div className="team-grid modern-team-grid">{teams.map(t=><section className={'team-card modern-team-card team-showcase-card '+(t.id===team?.id?'active':'')} key={t.id}>
+ <div className="team-showcase-cover">
+  <div className="team-cover-pattern"/>
+  <span className="team-cover-kicker">{t.visibility==='public'?'PUBLIC COMMUNITY':'PRIVATE WORKSPACE'}</span>
+  <strong>{t.name.slice(0,2).toUpperCase()}</strong>
+  <span className="team-cover-type">{t.role==='owner'?'Owner':t.role==='admin'?'Admin':'Member'}</span>
+  {t.id===team?.id&&<span className="team-cover-current"><CheckCircle size={12} weight="fill"/> Current</span>}
+ </div>
+ <div className="team-showcase-body">
+  <div className="team-showcase-heading"><div><p className="team-showcase-category">{t.visibility==='public'?'Community workspace':'Learning workspace'}</p><h2>{t.name}</h2></div><DotsThreeVertical size={19} className="team-dots"/></div>
+  <div className="team-showcase-meta">
+   <div><span>ROLE</span><b>{t.role==='owner'?'Owner':t.role==='admin'?'Admin':'Member'}</b></div>
+   <div><span>MEMBERS</span><b>{t.id===team?.id?members.length:'—'}</b></div>
+   <div><span>ACCESS</span><b>{t.visibility==='public'?'Public':'Private'}</b></div>
+  </div>
+  <div className="team-showcase-code"><div><span><LockKey size={12}/> TEAM CODE</span><b>{t.code}</b></div><button className="code-copy" onClick={async()=>{await navigator.clipboard?.writeText(t.code||'');setMsg('Invite code copied.')}} title="Copy team code"><Copy size={15}/></button></div>
+  <div className="team-showcase-footer"><span className="team-access"><span className="status-dot"/> {t.id===team?.id?'Currently selected':'Available workspace'}</span><div className="modern-team-actions"><button className="team-details-btn" onClick={()=>openTeamDetails(t)}><Info size={15}/> Details</button><button disabled={t.id===team?.id} onClick={()=>switchTeam(t.id)}>{t.id===team?.id?'Current team':<>Switch team <ArrowRight size={16}/></>}</button></div></div>
+ </div>
 </section>)}</div> : <div className="team-list-view">
  <section className={'team-list-selected '+(teamListOpen?'open':'')}>
   <button className="team-list-selected-head" onClick={()=>setTeamListOpen(x=>!x)}>
