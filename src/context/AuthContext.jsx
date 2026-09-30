@@ -25,8 +25,23 @@ async function signIn(email,password){const cleanEmail=email.trim().toLowerCase(
  setLoading(false);syncing.current=false;return dbUser;
 }catch(e){syncing.current=false;throw new Error(e.message||friendlyError(e))}}
 async function signUp(email,password,name){const cleanEmail=email.trim().toLowerCase();syncing.current=true;try{const{data:legacy,error:legacyError}=await supabase.auth.signUp({email:cleanEmail,password,options:{data:{full_name:name||''}}});if(legacyError)throw legacyError;if(!legacy?.user)throw new Error('Unable to create your account.');await supabase.auth.signOut();setDataUser(null);setUser(null);try{const{user:fu}=await createUserWithEmailAndPassword(firebaseAuth,cleanEmail,password);if(name)await updateProfile(fu,{displayName:name});await sendEmailVerification(fu);await signOut(firebaseAuth);setUser(null);setDataUser(null)}catch(e){await signOut(firebaseAuth).catch(()=>{});setUser(null);setDataUser(null);throw e}syncing.current=false;return legacy.user}catch(e){syncing.current=false;throw new Error(friendlyError(e))}}
+async function signInWithGoogle(){
+  syncing.current=true;
+  try{
+    const redirectTo=window.location.origin+'/login';
+    const {data,error}=await supabase.auth.signInWithOAuth({
+      provider:'google',
+      options:{redirectTo}
+    });
+    if(error)throw error;
+    return data;
+  }catch(e){
+    syncing.current=false;
+    throw new Error(e.message||'Google sign-in is unavailable right now.');
+  }
+}
 async function logout(){await Promise.allSettled([signOut(firebaseAuth),supabase.auth.signOut()]);setUser(null);setDataUser(null)}
 async function resetPassword(email){try{await sendPasswordResetEmail(firebaseAuth,email.trim().toLowerCase(),{url:window.location.origin+'/?mode=resetPassword',handleCodeInApp:true})}catch(e){throw new Error(friendlyError(e))}}
 async function updateRecoveredPassword(password){if(!resetCode)throw new Error('This password reset link is invalid or expired. Please request a new one.');try{await confirmPasswordReset(firebaseAuth,resetCode,password);setPasswordRecovery(false);setResetCode('');setResetEmail('');window.history.replaceState({},'',window.location.pathname);return true}catch(e){throw new Error(friendlyError(e))}}
 async function updateAccount(changes){try{const u=firebaseAuth.currentUser;if(u){if(changes.displayName!==undefined)await updateProfile(u,{displayName:changes.displayName});if(changes.email&&changes.email!==u.email)await updateEmail(u,changes.email);if(changes.password)await updatePassword(u,changes.password);await reload(u);setUser(firebaseAuth.currentUser)}const dbUser=supabase.auth.getUser();if(changes.displayName!==undefined){const r=await dbUser; if(r.data?.user)await supabase.auth.updateUser({data:{...r.data.user.user_metadata,full_name:changes.displayName}})}}catch(e){throw new Error(friendlyError(e))}}
-return <C.Provider value={{user,dataUser,dataUserId:dataUser?.id||null,loading,passwordRecovery,resetEmail,signUp,signIn,logout,resetPassword,updateRecoveredPassword,updateAccount}}>{children}</C.Provider>}export const useAuth=()=>useContext(C);
+return <C.Provider value={{user,dataUser,dataUserId:dataUser?.id||null,loading,passwordRecovery,resetEmail,signUp,signIn,signInWithGoogle,logout,resetPassword,updateRecoveredPassword,updateAccount}}>{children}</C.Provider>}export const useAuth=()=>useContext(C);
