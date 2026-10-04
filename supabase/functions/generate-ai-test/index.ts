@@ -9,41 +9,14 @@ const geminiKey=Deno.env.get("GEMINI_API_KEY")!;
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const out=(x:unknown,s=200)=>new Response(JSON.stringify(x),{status:s,headers:{...cors,"Content-Type":"application/json"}});
 
-function schemaFor(needHindi:boolean,count:number){
-  const option:any={
-    type:"OBJECT",
-    properties:needHindi
-      ? {text:{type:"STRING"},text_hi:{type:"STRING"},correct:{type:"BOOLEAN"}}
-      : {text:{type:"STRING"},correct:{type:"BOOLEAN"}},
-    required:needHindi?["text","text_hi","correct"]:["text","correct"],
-    additionalProperties:false
-  };
-  const question:any={
-    type:"OBJECT",
-    properties:needHindi
-      ? {
-          question:{type:"STRING"},
-          question_hi:{type:"STRING"},
-          explanation:{type:"STRING"},
-          explanation_hi:{type:"STRING"},
-          options:{type:"ARRAY",minItems:4,maxItems:4,items:option}
-        }
-      : {
-          question:{type:"STRING"},
-          explanation:{type:"STRING"},
-          options:{type:"ARRAY",minItems:4,maxItems:4,items:option}
-        },
-    required:needHindi
-      ? ["question","question_hi","explanation","explanation_hi","options"]
-      : ["question","explanation","options"],
-    additionalProperties:false
-  };
-  return {
-    type:"OBJECT",
-    properties:{questions:{type:"ARRAY",minItems:count,maxItems:count,items:question}},
-    required:["questions"],
-    additionalProperties:false
-  };
+function schemaFor(needHindi:boolean){
+  const option=needHindi
+    ? {type:"object",properties:{text:{type:"string"},text_hi:{type:"string"},correct:{type:"boolean"}},required:["text","text_hi","correct"]}
+    : {type:"object",properties:{text:{type:"string"},correct:{type:"boolean"}},required:["text","correct"]};
+  const question=needHindi
+    ? {type:"object",properties:{question:{type:"string"},question_hi:{type:"string"},explanation:{type:"string"},explanation_hi:{type:"string"},options:{type:"array",items:option}},required:["question","question_hi","explanation","explanation_hi","options"]}
+    : {type:"object",properties:{question:{type:"string"},explanation:{type:"string"},options:{type:"array",items:option}},required:["question","explanation","options"]};
+  return {type:"object",properties:{questions:{type:"array",items:question}},required:["questions"]};
 }
 
 const parseModelJson=(raw:string)=>JSON.parse(String(raw||"").trim());
@@ -109,18 +82,18 @@ Deno.serve(async req=>{
         const timer=setTimeout(()=>controller.abort(),40000);
         try{
           const response=await fetch(
-            "https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",
+            "https://generativelanguage.googleapis.com/v1beta/interactions",
             {
               method:"POST",
               signal:controller.signal,
               headers:{"Content-Type":"application/json","x-goog-api-key":geminiKey},
               body:JSON.stringify({
-                contents:[{role:"user",parts:[{text:promptText}]}],
-                generationConfig:{
-                  responseMimeType:"application/json",
-                  responseSchema:schemaFor(needHindi,chunkCount),
-                  thinkingConfig:{thinkingLevel:"low"},
-                  maxOutputTokens:needHindi?7000:4500
+                model,
+                input:promptText,
+                response_format:{
+                  type:"text",
+                  mime_type:"application/json",
+                  schema:schemaFor(needHindi)
                 }
               })
             }
