@@ -6,7 +6,6 @@ const SERVICE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
   Deno.env.get("SUPABASE_SECRET_KEY")!;
 const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
-const SUPADATA_API_KEY = Deno.env.get("SUPADATA_API_KEY");
 const DEEPGRAM_API_BASE_URL =
   Deno.env.get("DEEPGRAM_API_BASE_URL") || "https://api.in.deepgram.com";
 
@@ -311,56 +310,6 @@ function toSegments(result: any) {
   ].filter((item: any) => item.text);
 }
 
-async function fetchSupadataTranscript(videoIdValue: string) {
-  if (!SUPADATA_API_KEY) {
-    throw new Error("Supadata is not configured.");
-  }
-
-  const url = new URL("https://api.supadata.ai/v1/transcript");
-  url.searchParams.set("url", "https://www.youtube.com/watch?v=" + videoIdValue);
-  url.searchParams.set("lang", "en");
-  url.searchParams.set("text", "false");
-  url.searchParams.set("mode", "generate");
-
-  const response = await fetch(url.toString(), {
-    headers: { "x-api-key": SUPADATA_API_KEY },
-  });
-  const raw = await response.text();
-
-  if (!response.ok) {
-    let detail = raw.slice(0, 500);
-    try {
-      const parsed = JSON.parse(raw);
-      detail = parsed?.message || parsed?.details || parsed?.error || detail;
-    } catch {}
-    throw new Error("Supadata: " + detail);
-  }
-
-  let payload: any;
-  try {
-    payload = JSON.parse(raw);
-  } catch {
-    throw new Error("Supadata returned invalid JSON.");
-  }
-
-  const content = Array.isArray(payload?.content) ? payload.content : [];
-  const segments = content.map((item: any) => ({
-    start: Math.max(0, Number(item?.offset || 0) / 1000),
-    duration: Math.max(0, Number(item?.duration || 0) / 1000),
-    text: String(item?.text || "").trim(),
-  })).filter((item: any) => item.text);
-
-  const transcript = segments.map((item: any) => item.text).join(" ").trim();
-  if (!transcript) throw new Error("Supadata returned an empty transcript.");
-
-  return {
-    transcript,
-    segments,
-    source: "supadata-ai",
-    language: payload?.lang || "auto",
-  };
-}
-
 async function transcribeWithDeepgram(audioUrl: string) {
   if (!DEEPGRAM_API_KEY) {
     throw new Error(
@@ -473,28 +422,7 @@ Deno.serve(async (req) => {
         throw new Error("This lesson has no YouTube video ID.");
       }
 
-      // Supadata can transcribe the YouTube audio itself when the video has no
-      // caption track, so it is the first captionless-video fallback.
-      let transcript = "";
-      let segments: any[] = [];
-      let source = "";
-      let language = "auto";
-      let supadataError: string | null = null;
-
-      if (SUPADATA_API_KEY) {
-        try {
-          const result = await fetchSupadataTranscript(id);
-          transcript = result.transcript;
-          segments = result.segments;
-          source = result.source;
-          language = result.language;
-        } catch (error) {
-          supadataError = error instanceof Error ? error.message : String(error);
-          console.error("Supadata transcript failed:", supadataError);
-        }
-      }
-
-      const playerResponse = transcript ? null : await getPlayer(id);
+      const playerResponse = await getPlayer(id);
 
       // YouTube captions remain the preferred source when Supadata did not
       // produce a transcript.
@@ -550,7 +478,7 @@ Deno.serve(async (req) => {
 
       const result = {
         playlist_video_id: playlistVideoId,
-        language: selectedCaption?.languageCode || language || "auto",
+        language: selectedCaption?.languageCode || "auto",
         status: "ready",
         transcript: transcript.trim(),
         segments,
