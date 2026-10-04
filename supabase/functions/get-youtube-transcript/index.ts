@@ -405,7 +405,7 @@ async function fetchHostedTranscript(videoIdValue: string) {
       const response = await fetch(
         "https://yt-transcript.net/" +
           encodeURIComponent(videoIdValue) +
-          "?fmt=json&lang=" +
+          "?lang=" +
           encodeURIComponent(lang),
         {
           headers: {
@@ -823,18 +823,6 @@ Deno.serve(async (req) => {
           source = invidious.source;
         } catch (error) {
           console.error("Invidious transcript lookup failed:", error);
-        }
-      }
-
-      if (!transcript) {
-        try {
-          const direct = await fetchDirectTranscript(id);
-          transcript = direct.transcript;
-          segments = direct.segments;
-          source = direct.source;
-          language = direct.language;
-        } catch (error) {
-          console.error("Direct YouTube transcript lookup failed:", error);
         }
       }
 
