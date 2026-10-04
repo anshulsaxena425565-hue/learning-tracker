@@ -5,11 +5,9 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
   Deno.env.get("SUPABASE_SECRET_KEY")!;
-
-const YOUTUBE_TRANSCRIPT_API_URL =
-  Deno.env.get("YOUTUBE_TRANSCRIPT_API_URL") ||
-  "https://youtube-transcript-api-tau-one.vercel.app/transcript";
-const SUPADATA_API_KEY = Deno.env.get("SUPADATA_API_KEY") || "";
+const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
+const DEEPGRAM_API_BASE_URL =
+  Deno.env.get("DEEPGRAM_API_BASE_URL") || "https://api.in.deepgram.com";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +25,7 @@ const json = (body: unknown, status = 200) =>
 function videoId(input: string) {
   const value = String(input || "").trim();
   if (!value) return null;
+
   try {
     const url = new URL(value);
     if (url.hostname.includes("youtu.be")) {
@@ -42,257 +41,48 @@ function videoId(input: string) {
   }
 }
 
-function normalizeSegments(raw: any) {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((item: any) => ({
-      start: Number(
-        item?.start ??
-          item?.start_seconds ??
-          item?.offset ??
-          item?.offset_seconds ??
-          item?.startTime ??
-          0,
-      ),
-      duration: Number(
-        item?.duration ??
-          item?.duration_seconds ??
-          item?.dur ??
-          0,
-      ),
-      text: String(
-        item?.text ??
-          item?.transcript ??
-          item?.content ??
-          item?.snippet ??
-          "",
-      ).trim(),
-    }))
-    .filter((item: any) => item.text);
-}
+function extractJsonAfter(source: string, needle: string) {
+  const start = source.indexOf(needle);
+  if (start < 0) return null;
 
-async function fetchExternalTranscript(videoUrl: string) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const brace = source.indexOf("{", start + needle.length);
+  if (brace < 0) return null;
 
-  try {
-    const response = await fetch(YOUTUBE_TRANSCRIPT_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ video_url: videoUrl }),
-      signal: controller.signal,
-    });
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
 
-    const raw = await response.text();
-    let payload: any = null;
-    try {
-      payload = JSON.parse(raw);
-    } catch {
-      payload = null;
+  for (let i = brace; i < source.length; i += 1) {
+    const ch = source[i];
+
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
     }
 
-    if (!response.ok) {
-      throw new Error(
-        String(
-          payload?.detail ||
-            payload?.message ||
-            payload?.error ||
-            raw.slice(0, 300) ||
-            `HTTP ${response.status}`,
-        ),
-      );
+    if (ch === '"') {
+      inString = true;
+      continue;
     }
 
-    const data = payload?.data || payload;
-    const transcript = String(
-      data?.transcript || data?.text || data?.content || "",
-    ).trim();
-
-    if (!transcript) {
-      throw new Error("External transcript API returned an empty transcript.");
+    if (ch === "{") depth += 1;
+    else if (ch === "}" && --depth === 0) {
+      return source.slice(brace, i + 1);
     }
-
-    const segments = normalizeSegments(
-      data?.segments ||
-        data?.transcript_segments ||
-        data?.items ||
-        data?.snippets ||
-        [],
-    );
-
-    return {
-      transcript,
-      segments:
-        segments.length > 0
-          ? segments
-          : [{ start: 0, duration: 0, text: transcript }],
-      source: "youtube-transcript-api",
-      language: String(data?.language || data?.lang || "auto"),
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function fetchSupadataTranscript(videoUrl: string) {
-  if (!SUPADATA_API_KEY) {
-    throw new Error("AI transcript fallback is not configured.");
   }
 
-  const url = new URL("https://api.supadata.ai/v1/transcript");
-  url.searchParams.set("url", videoUrl);
-  url.searchParams.set("lang", "en");
-  url.searchParams.set("text", "false");
-  // Force AI generation for the captionless-video fallback.
-  url.searchParams.set("mode", "generate");
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90000);
-
-  try {
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "x-api-key": SUPADATA_API_KEY,
-      },
-      signal: controller.signal,
-    });
-
-    const raw = await response.text();
-    let payload: any = null;
-    try {
-      payload = JSON.parse(raw);
-    } catch {
-      payload = null;
-    }
-
-    if (!response.ok && response.status !== 206) {
-      throw new Error(
-        String(
-          payload?.message ||
-            payload?.details ||
-            payload?.error ||
-            raw.slice(0, 300) ||
-            `HTTP ${response.status}`,
-        ),
-      );
-    }
-
-    if (payload?.jobId) {
-      const jobUrl = `https://api.supadata.ai/v1/transcript/${encodeURIComponent(payload.jobId)}`;
-      const deadline = Date.now() + 85000;
-
-      while (Date.now() < deadline) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        const jobResponse = await fetch(jobUrl, {
-          headers: {
-            Accept: "application/json",
-            "x-api-key": SUPADATA_API_KEY,
-          },
-          signal: controller.signal,
-        });
-
-        const jobRaw = await jobResponse.text();
-        let jobPayload: any = null;
-        try {
-          jobPayload = JSON.parse(jobRaw);
-        } catch {
-          jobPayload = null;
-        }
-
-        if (!jobResponse.ok) {
-          throw new Error(
-            String(
-              jobPayload?.message ||
-                jobPayload?.details ||
-                jobPayload?.error ||
-                jobRaw.slice(0, 300) ||
-                `HTTP ${jobResponse.status}`,
-            ),
-          );
-        }
-
-        if (jobPayload?.status === "failed") {
-          throw new Error(
-            String(
-              jobPayload?.error?.message ||
-                jobPayload?.error?.details ||
-                jobPayload?.error ||
-                "Supadata transcript generation failed.",
-            ),
-          );
-        }
-
-        if (jobPayload?.status === "completed") {
-          payload = jobPayload;
-          break;
-        }
-      }
-
-      if (!payload?.content && !payload?.data?.content && !payload?.result?.content && !payload?.result?.data?.content) {
-        throw new Error("Supadata transcript generation timed out.");
-      }
-
-      payload = payload?.result || payload?.data || payload;
-      payload = payload?.data || payload;
-    }
-
-    const content = Array.isArray(payload?.content)
-      ? payload.content
-      : typeof payload?.content === "string"
-        ? [{ text: payload.content, offset: 0, duration: 0 }]
-        : [];
-
-    const segments = content
-      .map((item: any) => ({
-        start: Math.max(
-          0,
-          Number(item?.offset ?? item?.start ?? 0) / 1000,
-        ),
-        duration: Math.max(
-          0,
-          Number(item?.duration ?? item?.duration_ms ?? 0) / 1000,
-        ),
-        text: String(item?.text ?? item?.content ?? "").trim(),
-      }))
-      .filter((item: any) => item.text);
-
-    const transcript = segments.map((item: any) => item.text).join(" ").trim();
-
-    if (!transcript) {
-      throw new Error(
-        String(
-          payload?.details ||
-            payload?.message ||
-            payload?.error ||
-            "Supadata returned no transcript text.",
-        ),
-      );
-    }
-
-    return {
-      transcript,
-      segments,
-      source: "supadata-ai",
-      language: String(payload?.lang || segments[0]?.lang || "auto"),
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
+  return null;
 }
-async function fetchYouTubeCaptionsViaPlayer(videoIdValue: string) {
+
+async function getPlayer(videoIdValue: string) {
   const response = await fetch(
-    "https://www.youtube.com/watch?v=" +
-      encodeURIComponent(videoIdValue),
+    "https://www.youtube.com/watch?v=" + encodeURIComponent(videoIdValue),
     {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/154 Safari/537.36",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9",
       },
     },
@@ -305,208 +95,263 @@ async function fetchYouTubeCaptionsViaPlayer(videoIdValue: string) {
   }
 
   const html = await response.text();
-  const marker = "ytInitialPlayerResponse";
-  const markerStart = html.indexOf(marker);
-  if (markerStart < 0) {
-    throw new Error("YouTube player metadata was not found.");
+  const raw = extractJsonAfter(html, "ytInitialPlayerResponse");
+
+  if (!raw) {
+    throw new Error(
+      "Could not read YouTube player metadata. The video may be unavailable or YouTube changed its page format.",
+    );
   }
 
-  const braceStart = html.indexOf("{", markerStart);
-  if (braceStart < 0) {
-    throw new Error("YouTube player JSON was not found.");
-  }
-
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  let raw = "";
-
-  for (let i = braceStart; i < html.length; i++) {
-    const ch = html[i];
-
-    if (inString) {
-      raw += ch;
-      if (escaped) escaped = false;
-      else if (ch === "\\") escaped = true;
-      else if (ch === '"') inString = false;
-      continue;
-    }
-
-    raw += ch;
-
-    if (ch === '"') inString = true;
-    else if (ch === "{") depth += 1;
-    else if (ch === "}") {
-      depth -= 1;
-      if (depth === 0) break;
-    }
-  }
-
-  let player: any;
   try {
-    player = JSON.parse(raw);
+    return JSON.parse(raw);
   } catch {
-    throw new Error("YouTube player metadata could not be parsed.");
+    throw new Error("Could not parse YouTube player metadata.");
+  }
+}
+
+function pickAudioUrl(playerResponse: any) {
+  const formats = [
+    ...(playerResponse?.streamingData?.adaptiveFormats || []),
+    ...(playerResponse?.streamingData?.formats || []),
+  ];
+
+  const audio = formats
+    .filter((format: any) => String(format?.mimeType || "").startsWith("audio/"))
+    .filter((format: any) => typeof format?.url === "string" && format.url)
+    .sort((a: any, b: any) => Number(b?.bitrate || 0) - Number(a?.bitrate || 0))[0];
+
+  return audio?.url || null;
+}
+
+let youtubeClientPromise: Promise<Innertube> | null = null;
+
+async function getYoutubeClient() {
+  if (!youtubeClientPromise) {
+    youtubeClientPromise = Innertube.create({
+      lang: "en",
+      location: "IN",
+      client_type: "WEB",
+      retrieve_player: true,
+      enable_session_cache: false,
+    });
   }
 
-  const tracks =
-    player?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+  return youtubeClientPromise;
+}
 
-  if (!Array.isArray(tracks) || tracks.length === 0) {
-    throw new Error("This video has no accessible YouTube captions.");
+async function getDecipheredYouTubeAudioUrl(videoIdValue: string) {
+  const youtube = await getYoutubeClient();
+  const info = await youtube.getBasicInfo(videoIdValue);
+  const format = info.chooseFormat({
+    type: "audio",
+    quality: "best",
+  });
+
+  if (!format) return null;
+
+  const url = await format.decipher(youtube.session.player);
+  return url || null;
+}
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/gi, "'");
+}
+
+function captionTracks(playerResponse: any) {
+  return playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+}
+
+function pickCaptionTrack(playerResponse: any) {
+  const tracks = captionTracks(playerResponse);
+  if (!tracks.length) return null;
+
+  const preferred = tracks.find((track: any) =>
+    String(track?.languageCode || "").toLowerCase().startsWith("en"),
+  ) || tracks.find((track: any) =>
+    String(track?.languageCode || "").toLowerCase().startsWith("hi"),
+  ) || tracks.find((track: any) =>
+    String(track?.kind || "").toLowerCase() === "asr",
+  ) || tracks[0];
+
+  return preferred?.baseUrl || null;
+}
+
+function parseCaptionJson(payload: any) {
+  const events = Array.isArray(payload?.events) ? payload.events : [];
+  return events
+    .map((event: any) => {
+      const text = (event?.segs || [])
+        .map((seg: any) => String(seg?.utf8 || ""))
+        .join("")
+        .replace(/\\n/g, " ")
+        .trim();
+
+      return {
+        start: Math.max(0, Number(event?.tStartMs || 0) / 1000),
+        duration: Math.max(0, Number(event?.dDurationMs || 0) / 1000),
+        text,
+      };
+    })
+    .filter((item: any) => item.text);
+}
+
+function parseCaptionXml(xml: string) {
+  const out: any[] = [];
+  const regex = /<text([^>]*)>([\s\S]*?)<\/text>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(xml))) {
+    const attrs = match[1] || "";
+    const text = decodeHtml(
+      match[2]
+        .replace(/<br\s*\/?\s*>/gi, " ")
+        .replace(/<[^>]+>/g, "")
+        .replace(/\s+/g, " ")
+        .trim(),
+    );
+
+    if (!text) continue;
+
+    const startMatch = attrs.match(/\bstart="([^"]+)"/i);
+    const durationMatch = attrs.match(/\bdur="([^"]+)"/i);
+    const start = Number(startMatch?.[1] || 0);
+    const duration = Number(durationMatch?.[1] || 0);
+
+    out.push({ start, duration, text });
   }
 
-  const preferred =
-    tracks.find((track: any) =>
-      String(track?.languageCode || "").toLowerCase().startsWith("en"),
-    ) ||
-    tracks.find((track: any) =>
-      String(track?.languageCode || "").toLowerCase().startsWith("hi"),
-    ) ||
-    tracks.find((track: any) =>
-      String(track?.kind || "").toLowerCase() === "asr",
-    ) ||
-    tracks[0];
+  return out;
+}
 
-  const baseUrl = preferred?.baseUrl;
-  if (!baseUrl) throw new Error("YouTube caption track URL is missing.");
+async function getYouTubeCaptions(playerResponse: any) {
+  const baseUrl = pickCaptionTrack(playerResponse);
+  if (!baseUrl) return null;
 
-  const captionUrl = new URL(baseUrl);
-  captionUrl.searchParams.set("fmt", "json3");
+  const url = new URL(baseUrl);
+  url.searchParams.set("fmt", "json3");
 
-  const captionResponse = await fetch(captionUrl.toString(), {
+  const response = await fetch(url.toString(), {
     headers: {
       "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/154 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9",
     },
   });
 
-  if (!captionResponse.ok) {
+  if (!response.ok) {
     throw new Error(
-      "YouTube caption endpoint returned HTTP " +
-        captionResponse.status +
-        ".",
+      "YouTube captions could not be loaded (HTTP " + response.status + ").",
     );
   }
 
-  const payload = await captionResponse.text();
+  const raw = await response.text();
 
   try {
-    const jsonPayload = JSON.parse(payload);
-    const events = Array.isArray(jsonPayload?.events)
-      ? jsonPayload.events
-      : [];
-
-    const segments = events
-      .map((event: any) => {
-        const text = (event?.segs || [])
-          .map((seg: any) => String(seg?.utf8 || ""))
-          .join("")
-          .replace(/\n/g, " ")
-          .trim();
-
-        return {
-          start: Math.max(0, Number(event?.tStartMs || 0) / 1000),
-          duration: Math.max(0, Number(event?.dDurationMs || 0) / 1000),
-          text,
-        };
-      })
-      .filter((item: any) => item.text);
-
+    const parsed = JSON.parse(raw);
+    const segments = parseCaptionJson(parsed);
     if (segments.length) {
       return {
         transcript: segments.map((item: any) => item.text).join(" "),
         segments,
         source: "youtube-captions",
-        language: String(preferred?.languageCode || "auto"),
       };
     }
   } catch {
-    // Fall through to XML parsing.
+    // Some caption endpoints still return XML despite fmt=json3.
   }
 
-  const xmlSegments: any[] = [];
-  const regex = /<text([^>]*)>([\s\S]*?)<\/text>/gi;
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(payload))) {
-    const attrs = match[1] || "";
-    const text = match[2]
-      .replace(/<br\s*\/?\s*>/gi, " ")
-      .replace(/<[^>]+>/g, "")
-      .replace(/\s+/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;|&#x27;/gi, "'")
-      .trim();
-
-    if (!text) continue;
-
-    xmlSegments.push({
-      start: Number(attrs.match(/\bstart="([^"]+)"/i)?.[1] || 0),
-      duration: Number(attrs.match(/\bdur="([^"]+)"/i)?.[1] || 0),
-      text,
-    });
-  }
-
-  if (!xmlSegments.length) {
-    throw new Error("YouTube caption track contained no readable text.");
-  }
+  const segments = parseCaptionXml(raw);
+  if (!segments.length) return null;
 
   return {
-    transcript: xmlSegments.map((item: any) => item.text).join(" "),
-    segments: xmlSegments,
+    transcript: segments.map((item: any) => item.text).join(" "),
+    segments,
     source: "youtube-captions",
-    language: String(preferred?.languageCode || "auto"),
   };
 }
 
-async function fetchYouTubeiTranscript(videoIdValue: string) {
-  const youtube = await Innertube.create({
-    lang: "en",
-    location: "IN",
-    client_type: "WEB",
-    retrieve_player: true,
-    enable_session_cache: false,
-  });
-
-  const info = await youtube.getBasicInfo(videoIdValue);
-  const transcriptInfo = await info.getTranscript();
-  const body = transcriptInfo?.transcript?.content?.body;
-
-  const initialSegments = Array.isArray(body?.initial_segments)
-    ? body.initial_segments
-    : [];
-
-  const segments = initialSegments
-    .map((segment: any) => ({
-      start: Number(segment?.start_ms || 0) / 1000,
-      duration:
-        Math.max(0, Number(segment?.end_ms || 0) - Number(segment?.start_ms || 0)) /
-        1000,
-      text: String(segment?.snippet?.text || "").trim(),
-    }))
-    .filter((segment: any) => segment.text);
-
-  const transcript = segments.map((segment: any) => segment.text).join(" ").trim();
-
-  if (!transcript) {
-    throw new Error("youtubei.js returned no transcript text.");
+function toSegments(result: any) {
+  const utterances = result?.results?.utterances;
+  if (Array.isArray(utterances) && utterances.length) {
+    return utterances
+      .map((item: any) => ({
+        start: Number(item?.start || 0),
+        duration: Math.max(
+          0,
+          Number(item?.end || 0) - Number(item?.start || 0),
+        ),
+        text: String(item?.transcript || "").trim(),
+      }))
+      .filter((item: any) => item.text);
   }
 
-  return {
-    transcript,
-    segments,
-    source: "youtubei-js",
-    language: String(
-      transcriptInfo?.transcript?.language_code ||
-        body?.language_code ||
-        "auto",
-    ),
-  };
+  const words = result?.results?.channels?.[0]?.alternatives?.[0]?.words;
+  if (!Array.isArray(words) || !words.length) return [];
+
+  return [
+    {
+      start: Number(words[0]?.start || 0),
+      duration: Math.max(
+        0,
+        Number(words[words.length - 1]?.end || 0) -
+          Number(words[0]?.start || 0),
+      ),
+      text: String(
+        result?.results?.channels?.[0]?.alternatives?.[0]?.transcript || "",
+      ).trim(),
+    },
+  ].filter((item: any) => item.text);
+}
+
+async function transcribeWithDeepgram(audioUrl: string) {
+  if (!DEEPGRAM_API_KEY) {
+    throw new Error(
+      "Deepgram is not configured yet. Add the DEEPGRAM_API_KEY secret in Supabase.",
+    );
+  }
+
+  const endpoint =
+    DEEPGRAM_API_BASE_URL.replace(/\/$/, "") +
+    "/v1/listen?model=nova-3&smart_format=true&punctuate=true&utterances=true&mip_opt_out=true";
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: "Token " + DEEPGRAM_API_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ url: audioUrl }),
+  });
+
+  const raw = await response.text();
+
+  if (!response.ok) {
+    let message = "Deepgram transcription failed.";
+    try {
+      const parsed = JSON.parse(raw);
+      message =
+        parsed?.err_msg ||
+        parsed?.message ||
+        parsed?.error ||
+        message;
+    } catch {
+      if (raw) message = raw.slice(0, 500);
+    }
+    throw new Error(message);
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new Error("Deepgram returned an invalid transcription response.");
+  }
 }
 
 Deno.serve(async (req) => {
@@ -573,79 +418,76 @@ Deno.serve(async (req) => {
         playlistVideo.youtube_video_id ||
         videoId(playlistVideo.video_url || "");
 
-      if (!id) throw new Error("This lesson has no YouTube video ID.");
-
-      const sourceUrl = "https://www.youtube.com/watch?v=" + id;
-      const errors: string[] = [];
-      let result: any = null;
-
-      try {
-        result = await fetchExternalTranscript(sourceUrl);
-      } catch (e) {
-        errors.push(
-          "jaypaun007-api: " + (e instanceof Error ? e.message : typeof e === "string" ? e : JSON.stringify(e)),
-        );
+      if (!id) {
+        throw new Error("This lesson has no YouTube video ID.");
       }
 
-      if (!result) {
-        try {
-          result = await fetchYouTubeCaptionsViaPlayer(id);
-        } catch (e) {
-          errors.push(
-            "youtube-captions: " + (e instanceof Error ? e.message : String(e)),
+      const playerResponse = await getPlayer(id);
+
+      // YouTube often hides direct media URLs behind signature/SABR delivery.
+      // Use captions first when available; use Deepgram when a fetchable audio
+      // URL is exposed by YouTube.
+      const captionResult = await getYouTubeCaptions(playerResponse);
+
+      let transcript = captionResult?.transcript || "";
+      let segments = captionResult?.segments || [];
+      let source = captionResult?.source || "";
+
+      if (!transcript.trim()) {
+        let audioUrl = pickAudioUrl(playerResponse);
+
+        // If YouTube returned cipher-protected formats, use YouTube.js to
+        // resolve the current player signature/n-transform before handing
+        // the resulting audio URL to Deepgram.
+        if (!audioUrl) {
+          try {
+            audioUrl = await getDecipheredYouTubeAudioUrl(id);
+          } catch (youtubeError) {
+            console.error("YouTube.js stream resolution failed:", youtubeError);
+          }
+        }
+
+        if (!audioUrl) {
+          throw new Error(
+            "YouTube did not expose a usable audio stream for this video. The video may require a YouTube client challenge that cannot be resolved from the current server environment.",
           );
         }
+
+        const deepgram = await transcribeWithDeepgram(audioUrl);
+        segments = toSegments(deepgram);
+        transcript =
+          deepgram?.results?.channels?.[0]?.alternatives?.[0]?.transcript ||
+          segments.map((item: any) => item.text).join(" ");
+        source = "deepgram";
       }
 
-      if (!result) {
-        try {
-          result = await fetchYouTubeiTranscript(id);
-        } catch (e) {
-          errors.push(
-            "youtubei-js: " + (e instanceof Error ? e.message : String(e)),
-          );
-        }
+      if (!transcript.trim()) {
+        throw new Error("The transcript provider returned an empty transcript.");
       }
 
-      if (!result && SUPADATA_API_KEY) {
-        try {
-          result = await fetchSupadataTranscript(sourceUrl);
-        } catch (e) {
-          errors.push(
-            "supadata-ai: " + (e instanceof Error ? e.message : JSON.stringify(e)),
-          );
-        }
-      }
+      const selectedCaptionUrl = pickCaptionTrack(playerResponse);
+      const selectedCaption = captionTracks(playerResponse).find(
+        (track: any) => String(track?.baseUrl || "") === String(selectedCaptionUrl || ""),
+      );
 
-      if (!result?.transcript?.trim()) {
-        console.error("Transcript providers exhausted:", errors);
-        const providerFailure = errors[errors.length - 1] || "No transcript provider returned usable text.";
-        throw new Error(
-          "We couldn't access a transcript for this video. " +
-            (SUPADATA_API_KEY
-              ? "AI transcript provider failure: " + providerFailure.slice(0, 500)
-              : "This video does not expose accessible captions. Enable the AI transcript fallback to process videos without captions."),
-        );
-      }
-
-      const saved = {
+      const result = {
         playlist_video_id: playlistVideoId,
-        language: result.language || "auto",
+        language: selectedCaption?.languageCode || "auto",
         status: "ready",
-        transcript: result.transcript.trim(),
-        segments: result.segments || [],
-        source: result.source || "youtube",
+        transcript: transcript.trim(),
+        segments,
+        source,
         error: null,
         updated_at: new Date().toISOString(),
       };
 
       const { error } = await admin
         .from("video_transcripts")
-        .upsert(saved, { onConflict: "playlist_video_id" });
+        .upsert(result, { onConflict: "playlist_video_id" });
 
       if (error) throw error;
 
-      return json(saved);
+      return json(result);
     } catch (error) {
       const message =
         error instanceof Error
@@ -662,18 +504,7 @@ Deno.serve(async (req) => {
         { onConflict: "playlist_video_id" },
       );
 
-      return json(
-        {
-          error: message,
-          status: "error",
-          user_message:
-            "We couldn't access a transcript for this video. " +
-            (SUPADATA_API_KEY
-              ? "The available transcript methods could not process it."
-              : "This video has no accessible captions yet. The AI audio fallback is not configured."),
-        },
-        200,
-      );
+      return json({ error: message, status: "error" }, 200);
     }
   } catch (error) {
     return json(
