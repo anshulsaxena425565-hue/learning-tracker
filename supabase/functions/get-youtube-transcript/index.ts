@@ -548,11 +548,6 @@ Deno.serve(async (req) => {
       }
 
       if (!result?.transcript?.trim()) {
-        const diagnostics = errors
-          .map((item) => String(item).replace(/\s+/g, " ").trim())
-          .filter(Boolean)
-          .slice(-4);
-
         throw new Error(
           "We couldn't access a transcript for this video. " +
             (SUPADATA_API_KEY
@@ -595,7 +590,18 @@ Deno.serve(async (req) => {
         { onConflict: "playlist_video_id" },
       );
 
-      return json({ error: message, status: "error" }, 200);
+      return json(
+        {
+          error: message,
+          status: "error",
+          user_message:
+            "We couldn't access a transcript for this video. " +
+            (SUPADATA_API_KEY
+              ? "The available transcript methods could not process it."
+              : "This video has no accessible captions yet. The AI audio fallback is not configured."),
+        },
+        200,
+      );
     }
   } catch (error) {
     return json(
