@@ -104,7 +104,7 @@ Deno.serve(async req=>{
             const payload=await response.json().catch(()=>({}));
             if(!response.ok){
               lastError=payload?.error?.message||("Gemini HTTP "+response.status);
-              console.error("Gemini batch failed",JSON.stringify({batch:chunkIndex+1,model,attempt,status:response.status,error:lastError}));
+              
               if([408,429,500,502,503,504].includes(response.status)){
                 capacityFailure=true;
                 const retryAfter=Number(response.headers.get("retry-after")||0);
@@ -131,27 +131,27 @@ Deno.serve(async req=>{
             let parsed:any;
             try{parsed=parseModelJson(raw)}catch(parseError){
               lastError="Gemini returned invalid JSON for batch "+(chunkIndex+1)+".";
-              console.error("Gemini JSON parse failed",JSON.stringify({batch:chunkIndex+1,model,attempt,error:parseError instanceof Error?parseError.message:String(parseError)}));
+              
               continue;
             }
 
             const qs=Array.isArray(parsed?.questions)?parsed.questions:[];
             if(qs.length!==chunkCount){
               lastError="Gemini returned "+qs.length+" questions for batch "+(chunkIndex+1)+"; expected "+chunkCount+".";
-              console.error(lastError);
+              
               continue;
             }
             return qs;
           }catch(e){
             lastError=e instanceof Error?e.message:String(e);
-            console.error("Gemini batch exception",JSON.stringify({batch:chunkIndex+1,model,attempt,error:lastError}));
+            
           }finally{
             clearTimeout(timer);
           }
         }
         if(capacityFailure)await new Promise(r=>setTimeout(r,1000));
       }
-      throw new Error("Unable to generate batch "+(chunkIndex+1)+".");
+      throw new Error(lastError || ("Unable to generate batch "+(chunkIndex+1)+"."));
     }
 
     const allQuestions:any[]=[];
