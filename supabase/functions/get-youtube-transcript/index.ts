@@ -422,53 +422,55 @@ Deno.serve(async (req) => {
         throw new Error("This lesson has no YouTube video ID.");
       }
 
-      const playerResponse = await getPlayer(id);
+      let transcript = "";
+      let segments: any[] = [];
+      let source = "";
+      let language = "auto";
 
-      // YouTube captions remain the preferred source when Supadata did not
-      // produce a transcript.
-
-      // Use captions first when available; use Deepgram when a fetchable audio
-      // URL is exposed by YouTube.
-      const captionResult = playerResponse
-        ? await getYouTubeCaptions(playerResponse)
-        : null;
-
-      if (!transcript.trim()) {
-        transcript = captionResult?.transcript || "";
-        segments = captionResult?.segments || [];
-        source = captionResult?.source || "";
+      try {
+        const youtube = await getYoutubeClient();
+        const info = await youtube.getBasicInfo(id);
+        const transcriptInfo = await info.getTranscript();
+        const body = transcriptInfo?.transcript?.content?.body;
+        const initialSegments = Array.isArray(body?.initial_segments)
+          ? body.initial_segments
+          : [];
+        segments = initialSegments
+          .map((segment: any) => ({
+            start: Number(segment?.start_ms || 0) / 1000,
+            duration: Math.max(
+              0,
+              Number(segment?.end_ms || 0) - Number(segment?.start_ms || 0),
+            ) / 1000,
+            text: String(segment?.snippet?.text || "").trim(),
+          }))
+          .filter((segment: any) => segment.text);
+        transcript = segments.map((segment: any) => segment.text).join(" ").trim();
+        language = body?.language_code || "auto";
+        if (transcript) source = "youtube-transcript";
+      } catch (error) {
+        console.error("YouTubei transcript lookup failed:", error);
       }
 
-      if (!transcript.trim()) {
-        let audioUrl = pickAudioUrl(playerResponse);
-
-        // If YouTube returned cipher-protected formats, use YouTube.js to
-        // resolve the current player signature/n-transform before handing
-        // the resulting audio URL to Deepgram.
-        if (!audioUrl) {
-          try {
-            audioUrl = await getDecipheredYouTubeAudioUrl(id);
-          } catch (youtubeError) {
-            console.error("YouTube.js stream resolution failed:", youtubeError);
+      if (!transcript) {
+        try {
+          const playerResponse = await getPlayer(id);
+          const captionResult = await getYouTubeCaptions(playerResponse);
+          if (captionResult?.transcript) {
+            transcript = captionResult.transcript;
+            segments = captionResult.segments || [];
+            source = captionResult.source || "youtube-captions";
+            language = captionResult.language || "auto";
           }
+        } catch (error) {
+          console.error("YouTube caption lookup failed:", error);
         }
-
-        if (!audioUrl) {
-          throw new Error(
-            "YouTube did not expose a usable audio stream for this video. The video may require a YouTube client challenge that cannot be resolved from the current server environment.",
-          );
-        }
-
-        const deepgram = await transcribeWithDeepgram(audioUrl);
-        segments = toSegments(deepgram);
-        transcript =
-          deepgram?.results?.channels?.[0]?.alternatives?.[0]?.transcript ||
-          segments.map((item: any) => item.text).join(" ");
-        source = "deepgram";
       }
 
-      if (!transcript.trim()) {
-        throw new Error("The transcript provider returned an empty transcript.");
+      if (!transcript) {
+        throw new Error(
+          "This YouTube video does not have an accessible transcript, captions, or subtitles.",
+        );
       }
 
       const selectedCaptionUrl = playerResponse ? pickCaptionTrack(playerResponse) : null;
