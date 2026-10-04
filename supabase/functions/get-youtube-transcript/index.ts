@@ -89,12 +89,12 @@ async function getPlayer(videoIdValue: string) {
     },
     {
       name: "IOS",
-      version: "20.10.4",
-      userAgent: "com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_0 like Mac OS X)",
+      version: "19.45.4",
+      userAgent: "com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_0 like Mac OS X)",
       numericName: "5",
       client: {
         clientName: "IOS",
-        clientVersion: "20.10.4",
+        clientVersion: "19.45.4",
         deviceModel: "iPhone16,2",
         hl: "en",
         gl: "IN",
@@ -160,42 +160,117 @@ async function getPlayer(videoIdValue: string) {
   throw new Error(lastError);
 }
 
-function encodeTranscriptParams(videoIdValue: string, languageCode: string) {
-  const value = "\n\x0b" + videoIdValue + "\x12\x12" + languageCode + "\x18\x01";
+function base64Encode(value: string) {
   const bytes = new TextEncoder().encode(value);
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return encodeURIComponent(btoa(binary));
+  return btoa(binary);
+}
+
+function encodeTranscriptParams(videoIdValue: string, languageCode: string) {
+  const languagePayload = base64Encode(
+    "\n\x03asr\x12\x02" + languageCode + "\x1a\x00",
+  );
+  const payload =
+    "\n\x0b" +
+    videoIdValue +
+    "\x12\x12" +
+    languagePayload +
+    "\x18\x01";
+
+  return base64Encode(payload);
 }
 
 function parseInnerTubeTranscript(payload: any) {
   const actions = Array.isArray(payload?.actions) ? payload.actions : [];
-  const app = actions[0]?.elementsCommand?.transformTranscriptSegmentListArguments;
-  const rawSegments = app?.overwrite?.initialSegments;
-  if (!Array.isArray(rawSegments)) return null;
 
-  const segments = rawSegments
-    .map((item: any) => {
-      const renderer = item?.transcriptSegmentRenderer;
-      const start = Number(renderer?.startMs || 0) / 1000;
-      const end = Number(renderer?.endMs || 0) / 1000;
-      const text =
-        renderer?.snippet?.elementsAttributedString?.elementsAttributedString?.content ||
-        renderer?.snippet?.simpleText ||
-        "";
+  for (const action of actions) {
+    const listArgs =
+      action?.elementsCommand?.transformEntityCommand?.arguments
+        ?.transformTranscriptSegmentListArguments;
+
+    const rawSegments = listArgs?.overwrite?.initialSegments;
+    if (!Array.isArray(rawSegments)) continue;
+
+    const segments = rawSegments
+      .map((item: any) => {
+        const renderer = item?.transcriptSegmentRenderer;
+        const text =
+          renderer?.snippet?.elementsAttributedString
+            ?.elementsAttributedString?.content ||
+          renderer?.snippet?.simpleText ||
+          "";
+
+        const startMs = Number(renderer?.startMs || 0);
+        const endMs = Number(renderer?.endMs || startMs);
+
+        return {
+          start: Math.max(0, startMs / 1000),
+          duration: Math.max(0, (endMs - startMs) / 1000),
+          text: String(text).trim(),
+        };
+      })
+      .filter((item: any) => item.text);
+
+    if (segments.length) {
       return {
-        start,
-        duration: Math.max(0, end - start),
-        text: String(text).trim(),
+        transcript: segments.map((item: any) => item.text).join(" ").trim(),
+        segments,
       };
-    })
-    .filter((item: any) => item.text);
+    }
+  }
 
-  if (!segments.length) return null;
-  return {
-    transcript: segments.map((item: any) => item.text).join(" ").trim(),
-    segments,
-  };
+  // Also support the searchable-transcript web response shape.
+  for (const action of actions) {
+    const web = action?.updateEngagementPanelAction;
+    const cueGroups =
+      web?.content?.transcriptRenderer?.content
+        ?.transcriptSearchPanelRenderer?.body
+        ?.transcriptSegmentListRenderer?.initialSegments ||
+      web?.content?.transcriptRenderer?.content
+        ?.transcriptSearchPanelRenderer?.body
+        ?.transcriptCueGroups ||
+      [];
+
+    if (!Array.isArray(cueGroups)) continue;
+
+    const segments = cueGroups
+      .map((item: any) => {
+        const renderer =
+          item?.transcriptSegmentRenderer ||
+          item?.transcriptCueGroupRenderer?.cues?.[0]
+            ?.transcriptCueRenderer;
+
+        const text =
+          renderer?.snippet?.simpleText ||
+          renderer?.snippet?.runs?.map((run: any) => run.text).join("") ||
+          renderer?.cue?.simpleText ||
+          "";
+
+        const startMs = Number(renderer?.startMs || renderer?.startOffsetMs || 0);
+        const durationMs = Number(
+          renderer?.endMs ||
+            (startMs + Number(renderer?.durationMs || 0)) ||
+            startMs,
+        );
+
+        return {
+          start: Math.max(0, startMs / 1000),
+          duration: Math.max(0, (durationMs - startMs) / 1000),
+          text: String(text).trim(),
+        };
+      })
+      .filter((item: any) => item.text);
+
+    if (segments.length) {
+      return {
+        transcript: segments.map((item: any) => item.text).join(" ").trim(),
+        segments,
+      };
+    }
+  }
+
+  return null;
 }
 
 async function getTranscriptDirect(videoIdValue: string) {
