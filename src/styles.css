@@ -2772,3 +2772,10 @@ body:has(.auth2-shell){overflow:hidden}
 .auth2-google:disabled{opacity:.6;cursor:wait;transform:none}
 .auth2-google svg{font-size:17px;color:#4285f4}
 @media(max-height:720px) and (min-width:761px){.auth2-oauth{margin-top:8px}.auth2-google{height:39px}}
+
+/* Transcript → Notes action */
+.transcript-ready-actions{display:flex;justify-content:flex-start;margin:14px 0 12px}
+.transcript-notes-btn{display:inline-flex!important;align-items:center;justify-content:center;gap:8px;min-height:44px!important;padding:11px 16px!important;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line))!important;border-radius:12px!important;background:color-mix(in srgb,var(--accent) 9%,var(--surface))!important;color:var(--accent)!important;font-weight:800!important;box-shadow:0 6px 18px rgba(20,24,50,.06);transition:.18s}
+.transcript-notes-btn:hover:not(:disabled){transform:translateY(-1px);background:color-mix(in srgb,var(--accent) 14%,var(--surface))!important}
+.transcript-notes-btn:disabled{opacity:.65;cursor:wait}
+@media(max-width:600px){.transcript-ready-actions{width:100%}.transcript-notes-btn{width:100%!important}}
