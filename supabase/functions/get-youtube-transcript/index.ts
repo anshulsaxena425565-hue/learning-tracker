@@ -1,14 +1,9 @@
-import { Innertube } from "npm:youtubei.js@18.1.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
   Deno.env.get("SUPABASE_SECRET_KEY")!;
-const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
-const DEEPGRAM_API_BASE_URL =
-  Deno.env.get("DEEPGRAM_API_BASE_URL") || "https://api.in.deepgram.com";
-
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -77,84 +72,93 @@ function extractJsonAfter(source: string, needle: string) {
 }
 
 async function getPlayer(videoIdValue: string) {
-  const response = await fetch(
-    "https://www.youtube.com/watch?v=" + encodeURIComponent(videoIdValue),
+  const endpoint = "https://www.youtube.com/youtubei/v1/player?prettyPrint=false";
+  const clients = [
     {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
+      name: "ANDROID",
+      version: "20.10.38",
+      userAgent: "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip",
+      numericName: "3",
+      client: {
+        clientName: "ANDROID",
+        clientVersion: "20.10.38",
+        androidSdkVersion: 30,
+        hl: "en",
+        gl: "IN",
       },
     },
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      "YouTube returned HTTP " + response.status + " while loading the video.",
-    );
-  }
-
-  const html = await response.text();
-  const raw = extractJsonAfter(html, "ytInitialPlayerResponse");
-
-  if (!raw) {
-    throw new Error(
-      "Could not read YouTube player metadata. The video may be unavailable or YouTube changed its page format.",
-    );
-  }
-
-  try {
-    return JSON.parse(raw);
-  } catch {
-    throw new Error("Could not parse YouTube player metadata.");
-  }
-}
-
-function pickAudioUrl(playerResponse: any) {
-  const formats = [
-    ...(playerResponse?.streamingData?.adaptiveFormats || []),
-    ...(playerResponse?.streamingData?.formats || []),
+    {
+      name: "IOS",
+      version: "20.10.4",
+      userAgent: "com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_0 like Mac OS X)",
+      numericName: "5",
+      client: {
+        clientName: "IOS",
+        clientVersion: "20.10.4",
+        deviceModel: "iPhone16,2",
+        hl: "en",
+        gl: "IN",
+      },
+    },
   ];
 
-  const audio = formats
-    .filter((format: any) => String(format?.mimeType || "").startsWith("audio/"))
-    .filter((format: any) => typeof format?.url === "string" && format.url)
-    .sort((a: any, b: any) => Number(b?.bitrate || 0) - Number(a?.bitrate || 0))[0];
+  let lastError = "YouTube InnerTube request failed.";
 
-  return audio?.url || null;
-}
+  for (const client of clients) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": client.userAgent,
+          "Accept-Language": "en-US,en;q=0.9",
+          "X-YouTube-Client-Name": client.numericName,
+          "X-YouTube-Client-Version": client.version,
+        },
+        body: JSON.stringify({
+          context: { client: client.client },
+          videoId: videoIdValue,
+        }),
+      });
 
-let youtubeClientPromise: Promise<Innertube> | null = null;
+      const raw = await response.text();
 
-async function getYoutubeClient() {
-  if (!youtubeClientPromise) {
-    youtubeClientPromise = Innertube.create({
-      lang: "en",
-      location: "IN",
-      client_type: "WEB",
-      retrieve_player: true,
-      enable_session_cache: false,
-    });
+      if (!response.ok) {
+        lastError =
+          "YouTube " + client.name + " returned HTTP " + response.status + ".";
+        continue;
+      }
+
+      let player: any;
+      try {
+        player = JSON.parse(raw);
+      } catch {
+        lastError =
+          "YouTube " + client.name + " returned invalid player JSON.";
+        continue;
+      }
+
+      const tracks =
+        player?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+
+      if (Array.isArray(tracks) && tracks.length) return player;
+
+      const playability = player?.playabilityStatus;
+      if (playability?.status === "ERROR") {
+        lastError = String(
+          playability?.reason || "YouTube rejected the video request.",
+        );
+      } else {
+        lastError =
+          "YouTube " + client.name + " returned no caption tracks.";
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
   }
 
-  return youtubeClientPromise;
-}
-
-async function getDecipheredYouTubeAudioUrl(videoIdValue: string) {
-  const youtube = await getYoutubeClient();
-  const info = await youtube.getBasicInfo(videoIdValue);
-  const format = info.chooseFormat({
-    type: "audio",
-    quality: "best",
-  });
-
-  if (!format) return null;
-
-  const url = await format.decipher(youtube.session.player);
-  return url || null;
-}
-
-function decodeHtml(value: string) {
+  throw new Error(lastError);
+}function decodeHtmlfunction decodeHtml(value: string) {
   return value
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -231,130 +235,73 @@ function parseCaptionXml(xml: string) {
 }
 
 async function getYouTubeCaptions(playerResponse: any) {
-  const baseUrl = pickCaptionTrack(playerResponse);
+  const tracks = captionTracks(playerResponse);
+  if (!Array.isArray(tracks) || !tracks.length) return null;
+
+  const preferred =
+    tracks.find((track: any) =>
+      String(track?.languageCode || "").toLowerCase().startsWith("en"),
+    ) ||
+    tracks.find((track: any) =>
+      String(track?.languageCode || "").toLowerCase().startsWith("hi"),
+    ) ||
+    tracks.find((track: any) =>
+      String(track?.kind || "").toLowerCase() === "asr",
+    ) ||
+    tracks[0];
+
+  const baseUrl = preferred?.baseUrl;
   if (!baseUrl) return null;
 
-  const url = new URL(baseUrl);
-  url.searchParams.set("fmt", "json3");
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
-      "Accept-Language": "en-US,en;q=0.9",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      "YouTube captions could not be loaded (HTTP " + response.status + ").",
-    );
-  }
-
-  const raw = await response.text();
-
+  const urls = [baseUrl];
   try {
-    const parsed = JSON.parse(raw);
-    const segments = parseCaptionJson(parsed);
-    if (segments.length) {
-      return {
-        transcript: segments.map((item: any) => item.text).join(" "),
-        segments,
-        source: "youtube-captions",
-      };
-    }
-  } catch {
-    // Some caption endpoints still return XML despite fmt=json3.
-  }
+    const jsonUrl = new URL(baseUrl);
+    jsonUrl.searchParams.set("fmt", "json3");
+    urls.push(jsonUrl.toString());
+  } catch {}
 
-  const segments = parseCaptionXml(raw);
-  if (!segments.length) return null;
-
-  return {
-    transcript: segments.map((item: any) => item.text).join(" "),
-    segments,
-    source: "youtube-captions",
-  };
-}
-
-function toSegments(result: any) {
-  const utterances = result?.results?.utterances;
-  if (Array.isArray(utterances) && utterances.length) {
-    return utterances
-      .map((item: any) => ({
-        start: Number(item?.start || 0),
-        duration: Math.max(
-          0,
-          Number(item?.end || 0) - Number(item?.start || 0),
-        ),
-        text: String(item?.transcript || "").trim(),
-      }))
-      .filter((item: any) => item.text);
-  }
-
-  const words = result?.results?.channels?.[0]?.alternatives?.[0]?.words;
-  if (!Array.isArray(words) || !words.length) return [];
-
-  return [
-    {
-      start: Number(words[0]?.start || 0),
-      duration: Math.max(
-        0,
-        Number(words[words.length - 1]?.end || 0) -
-          Number(words[0]?.start || 0),
-      ),
-      text: String(
-        result?.results?.channels?.[0]?.alternatives?.[0]?.transcript || "",
-      ).trim(),
-    },
-  ].filter((item: any) => item.text);
-}
-
-async function transcribeWithDeepgram(audioUrl: string) {
-  if (!DEEPGRAM_API_KEY) {
-    throw new Error(
-      "Deepgram is not configured yet. Add the DEEPGRAM_API_KEY secret in Supabase.",
-    );
-  }
-
-  const endpoint =
-    DEEPGRAM_API_BASE_URL.replace(/\/$/, "") +
-    "/v1/listen?model=nova-3&smart_format=true&punctuate=true&utterances=true&mip_opt_out=true";
-
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      Authorization: "Token " + DEEPGRAM_API_KEY,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ url: audioUrl }),
-  });
-
-  const raw = await response.text();
-
-  if (!response.ok) {
-    let message = "Deepgram transcription failed.";
+  for (const captionUrl of urls) {
     try {
-      const parsed = JSON.parse(raw);
-      message =
-        parsed?.err_msg ||
-        parsed?.message ||
-        parsed?.error ||
-        message;
-    } catch {
-      if (raw) message = raw.slice(0, 500);
-    }
-    throw new Error(message);
+      const response = await fetch(captionUrl, {
+        headers: {
+          "User-Agent":
+            "com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+      });
+
+      if (!response.ok) continue;
+
+      const raw = await response.text();
+      if (!raw.trim()) continue;
+
+      try {
+        const parsed = JSON.parse(raw);
+        const jsonSegments = parseCaptionJson(parsed);
+        if (jsonSegments.length) {
+          return {
+            transcript: jsonSegments.map((item: any) => item.text).join(" ").trim(),
+            segments: jsonSegments,
+            source: "youtube-captions",
+            language: preferred?.languageCode || "auto",
+          };
+        }
+      } catch {}
+
+      const xmlSegments = parseCaptionXml(raw);
+      if (xmlSegments.length) {
+        return {
+          transcript: xmlSegments.map((item: any) => item.text).join(" ").trim(),
+          segments: xmlSegments,
+          source: "youtube-captions",
+          language: preferred?.languageCode || "auto",
+        };
+      }
+    } catch {}
   }
 
-  try {
-    return JSON.parse(raw);
-  } catch {
-    throw new Error("Deepgram returned an invalid transcription response.");
-  }
-}
-
-Deno.serve(async (req) => {
+  return null;
+}Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
@@ -427,44 +374,14 @@ Deno.serve(async (req) => {
       let source = "";
       let language = "auto";
 
-      try {
-        const youtube = await getYoutubeClient();
-        const info = await youtube.getBasicInfo(id);
-        const transcriptInfo = await info.getTranscript();
-        const body = transcriptInfo?.transcript?.content?.body;
-        const initialSegments = Array.isArray(body?.initial_segments)
-          ? body.initial_segments
-          : [];
-        segments = initialSegments
-          .map((segment: any) => ({
-            start: Number(segment?.start_ms || 0) / 1000,
-            duration: Math.max(
-              0,
-              Number(segment?.end_ms || 0) - Number(segment?.start_ms || 0),
-            ) / 1000,
-            text: String(segment?.snippet?.text || "").trim(),
-          }))
-          .filter((segment: any) => segment.text);
-        transcript = segments.map((segment: any) => segment.text).join(" ").trim();
-        language = body?.language_code || "auto";
-        if (transcript) source = "youtube-transcript";
-      } catch (error) {
-        console.error("YouTubei transcript lookup failed:", error);
-      }
+      const playerResponse = await getPlayer(id);
+      const captionResult = await getYouTubeCaptions(playerResponse);
 
-      if (!transcript) {
-        try {
-          const playerResponse = await getPlayer(id);
-          const captionResult = await getYouTubeCaptions(playerResponse);
-          if (captionResult?.transcript) {
-            transcript = captionResult.transcript;
-            segments = captionResult.segments || [];
-            source = captionResult.source || "youtube-captions";
-            language = captionResult.language || "auto";
-          }
-        } catch (error) {
-          console.error("YouTube caption lookup failed:", error);
-        }
+      if (captionResult?.transcript) {
+        transcript = captionResult.transcript;
+        segments = captionResult.segments || [];
+        source = captionResult.source || "youtube-captions";
+        language = captionResult.language || "auto";
       }
 
       if (!transcript) {
