@@ -387,6 +387,145 @@ async function fetchDirectTranscript(videoIdValue: string) {
   throw new Error(lastError);
 }
 
+
+const INVIDIOUS_FALLBACKS = [
+  "https://inv.nadeko.net",
+  "https://invidious.nerdvpn.de",
+  "https://yt.chocolatemoo53.com",
+  "https://invidious.tiekoetter.com",
+  "https://invidious.f5.si",
+];
+
+function parseWebVtt(value: string) {
+  const blocks = value.replace(/^WEBVTT[^\n]*\n?/i, "").split(/\n\s*\n/);
+  const segments: any[] = [];
+
+  for (const block of blocks) {
+    const lines = block.split(/\r?\n/).map((line) => line.trim());
+    const timeIndex = lines.findIndex((line) => line.includes("-->"));
+    if (timeIndex < 0) continue;
+
+    const times = lines[timeIndex].split("-->");
+    if (times.length < 2) continue;
+
+    const parseTime = (input: string) => {
+      const cleaned = input.trim().split(/\s+/)[0];
+      const parts = cleaned.split(":").map(Number);
+      if (parts.some((n) => Number.isNaN(n))) return 0;
+      if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      if (parts.length === 2) return parts[0] * 60 + parts[1];
+      return parts[0] || 0;
+    };
+
+    const start = parseTime(times[0]);
+    const end = parseTime(times[1]);
+    const text = lines
+      .slice(timeIndex + 1)
+      .join(" ")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!text) continue;
+
+    segments.push({
+      start,
+      duration: Math.max(0, end - start),
+      text,
+    });
+  }
+
+  return segments;
+}
+
+async function fetchInvidiousTranscript(videoIdValue: string) {
+  const instances = [...INVIDIOUS_FALLBACKS];
+
+  try {
+    const discovery = await fetch(
+      "https://api.invidious.io/instances.json?sort_by=health",
+      { headers: { "Accept": "application/json" } },
+    );
+    if (discovery.ok) {
+      const list = await discovery.json();
+      if (Array.isArray(list)) {
+        for (const item of list) {
+          const uri = item?.[1]?.uri;
+          if (
+            typeof uri === "string" &&
+            uri.startsWith("https://") &&
+            !instances.includes(uri)
+          ) {
+            instances.push(uri);
+          }
+        }
+      }
+    }
+  } catch {
+    // Use the known-good official list when discovery is unavailable.
+  }
+
+  let lastError = "No Invidious instance returned captions.";
+
+  for (const instance of instances.slice(0, 8)) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const urls = [
+        instance.replace(/\/$/, "") +
+          "/api/v1/captions/" +
+          encodeURIComponent(videoIdValue) +
+          "?lang=en",
+        instance.replace(/\/$/, "") +
+          "/api/v1/captions/" +
+          encodeURIComponent(videoIdValue) +
+          "?lang=hi",
+      ];
+
+      for (const url of urls) {
+        const response = await fetch(url, {
+          headers: {
+            "Accept": "text/vtt, text/plain, */*",
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          lastError = instance + " returned HTTP " + response.status + ".";
+          continue;
+        }
+
+        const body = await response.text();
+        if (!body.trim()) continue;
+
+        const segments = parseWebVtt(body);
+        if (segments.length) {
+          return {
+            transcript: segments.map((item: any) => item.text).join(" ").trim(),
+            segments,
+            source: "invidious-captions",
+          };
+        }
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  throw new Error(lastError);
+}
+
 function decodeHtml(value: string) {
   return value
     .replace(/&amp;/g, "&")
@@ -608,13 +747,24 @@ Deno.serve(async (req) => {
       let language = "auto";
 
       try {
-        const direct = await fetchDirectTranscript(id);
-        transcript = direct.transcript;
-        segments = direct.segments;
-        source = direct.source;
-        language = direct.language;
+        const invidious = await fetchInvidiousTranscript(id);
+        transcript = invidious.transcript;
+        segments = invidious.segments;
+        source = invidious.source;
       } catch (error) {
-        console.error("Direct YouTube transcript failed:", error);
+        console.error("Invidious transcript lookup failed:", error);
+      }
+
+      if (!transcript) {
+        try {
+          const direct = await fetchDirectTranscript(id);
+          transcript = direct.transcript;
+          segments = direct.segments;
+          source = direct.source;
+          language = direct.language;
+        } catch (error) {
+          console.error("Direct YouTube transcript lookup failed:", error);
+        }
       }
 
       if (!transcript) {
