@@ -146,9 +146,10 @@ async function fetchSupadataTranscript(videoUrl: string) {
   url.searchParams.set("url", videoUrl);
   url.searchParams.set("lang", "en");
   url.searchParams.set("text", "false");
+  url.searchParams.set("mode", "auto");
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
+  const timeout = setTimeout(() => controller.abort(), 90000);
 
   try {
     const response = await fetch(url.toString(), {
@@ -168,7 +169,7 @@ async function fetchSupadataTranscript(videoUrl: string) {
       payload = null;
     }
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 206) {
       throw new Error(
         String(
           payload?.message ||
@@ -180,9 +181,70 @@ async function fetchSupadataTranscript(videoUrl: string) {
       );
     }
 
+    if (payload?.jobId) {
+      const jobUrl = `https://api.supadata.ai/v1/transcript/${encodeURIComponent(payload.jobId)}`;
+      const deadline = Date.now() + 85000;
+
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        const jobResponse = await fetch(jobUrl, {
+          headers: {
+            Accept: "application/json",
+            "x-api-key": SUPADATA_API_KEY,
+          },
+          signal: controller.signal,
+        });
+
+        const jobRaw = await jobResponse.text();
+        let jobPayload: any = null;
+        try {
+          jobPayload = JSON.parse(jobRaw);
+        } catch {
+          jobPayload = null;
+        }
+
+        if (!jobResponse.ok) {
+          throw new Error(
+            String(
+              jobPayload?.message ||
+                jobPayload?.details ||
+                jobPayload?.error ||
+                jobRaw.slice(0, 300) ||
+                `HTTP ${jobResponse.status}`,
+            ),
+          );
+        }
+
+        if (jobPayload?.status === "failed") {
+          throw new Error(
+            String(
+              jobPayload?.error?.message ||
+                jobPayload?.error?.details ||
+                jobPayload?.error ||
+                "Supadata transcript generation failed.",
+            ),
+          );
+        }
+
+        if (jobPayload?.status === "completed") {
+          payload = jobPayload;
+          break;
+        }
+      }
+
+      if (!payload?.content && !payload?.data?.content) {
+        throw new Error("Supadata transcript generation timed out.");
+      }
+
+      payload = payload?.data || payload;
+    }
+
     const content = Array.isArray(payload?.content)
       ? payload.content
-      : [];
+      : typeof payload?.content === "string"
+        ? [{ text: payload.content, offset: 0, duration: 0 }]
+        : [];
 
     const segments = content
       .map((item: any) => ({
@@ -201,7 +263,14 @@ async function fetchSupadataTranscript(videoUrl: string) {
     const transcript = segments.map((item: any) => item.text).join(" ").trim();
 
     if (!transcript) {
-      throw new Error("AI transcript provider returned no transcript text.");
+      throw new Error(
+        String(
+          payload?.details ||
+            payload?.message ||
+            payload?.error ||
+            "Supadata returned no transcript text.",
+        ),
+      );
     }
 
     return {
@@ -214,7 +283,6 @@ async function fetchSupadataTranscript(videoUrl: string) {
     clearTimeout(timeout);
   }
 }
-
 async function fetchYouTubeCaptionsViaPlayer(videoIdValue: string) {
   const response = await fetch(
     "https://www.youtube.com/watch?v=" +
@@ -548,10 +616,11 @@ Deno.serve(async (req) => {
       }
 
       if (!result?.transcript?.trim()) {
+        console.error("Transcript providers exhausted:", errors);
         throw new Error(
           "We couldn't access a transcript for this video. " +
             (SUPADATA_API_KEY
-              ? "The video may not expose captions and the AI audio fallback was also unavailable."
+              ? "The AI transcript provider could not generate one for this video."
               : "This video does not expose accessible captions. Enable the AI transcript fallback to process videos without captions."),
         );
       }
