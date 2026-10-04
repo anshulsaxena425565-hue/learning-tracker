@@ -58,7 +58,7 @@ Deno.serve(async req=>{
 
     const chunkSize=5;
     const chunks=Math.ceil(count/chunkSize);
-    const models=["gemini-3.8-flash","gemini-3.7-flash"];
+    const models=["gemini-3.8-flash","gemini-3.7-flash","gemini-3.6-flash","gemini-3.5-flash-lite","gemini-2.5-flash"];
 
     async function generateChunk(chunkIndex:number,chunkCount:number){
       const start=chunkIndex*chunkSize+1;
@@ -77,54 +77,88 @@ Deno.serve(async req=>{
         "Rules:\n- Output exactly "+chunkCount+" questions.\n- Every question must have exactly 4 options.\n- Exactly ONE option per question is correct.\n- Avoid duplicates, trivia, trick wording, and ambiguous answers.\n- Make questions exam-focused and materially different from one another.\n"+
         "Return ONLY JSON matching the provided schema.";
 
+      let lastError="Unable to generate batch "+(chunkIndex+1)+".";
+      let capacityFailure=false;
       for(const model of models){
-        const controller=new AbortController();
-        const timer=setTimeout(()=>controller.abort(),40000);
-        try{
-          const response=await fetch(
-            "https://generativelanguage.googleapis.com/v1beta/interactions",
-            {
-              method:"POST",
-              signal:controller.signal,
-              headers:{"Content-Type":"application/json","x-goog-api-key":geminiKey},
-              body:JSON.stringify({
-                model,
-                input:promptText,
-                response_format:{
-                  type:"text",
-                  mime_type:"application/json",
-                  schema:schemaFor(needHindi)
-                }
-              })
+        for(let attempt=0;attempt<3;attempt++){
+          const controller=new AbortController();
+          const timer=setTimeout(()=>controller.abort(),25000);
+          try{
+            const response=await fetch(
+              "https://generativelanguage.googleapis.com/v1beta/interactions",
+              {
+                method:"POST",
+                signal:controller.signal,
+                headers:{"Content-Type":"application/json","x-goog-api-key":geminiKey},
+                body:JSON.stringify({
+                  model,
+                  input:promptText,
+                  response_format:{
+                    type:"text",
+                    mime_type:"application/json",
+                    schema:schemaFor(needHindi)
+                  }
+                })
+              }
+            );
+            const payload=await response.json().catch(()=>({}));
+            if(!response.ok){
+              lastError=payload?.error?.message||("Gemini HTTP "+response.status);
+              console.error("Gemini batch failed",JSON.stringify({batch:chunkIndex+1,model,attempt,status:response.status,error:lastError}));
+              if([408,429,500,502,503,504].includes(response.status)){
+                capacityFailure=true;
+                const retryAfter=Number(response.headers.get("retry-after")||0);
+                const wait=Math.min(12000,retryAfter>0?retryAfter*1000:1500*Math.pow(2,attempt));
+                await new Promise(r=>setTimeout(r,wait));
+                continue;
+              }
+              break;
             }
-          );
-          const payload=await response.json();
-          if(!response.ok){
-            console.error("Gemini batch failed",JSON.stringify({model,status:response.status,payload}));
-            if(![408,429,500,502,503,504].includes(response.status))break;
-            continue;
+
+            const raw=payload?.output_text
+              ||payload?.steps?.filter((s:any)=>s.type==="model_output")
+                .flatMap((s:any)=>s.content||[])
+                .filter((x:any)=>x.type==="text")
+                .map((x:any)=>x.text||"").join("")
+              ||payload?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")
+              ||"";
+
+            if(!raw){
+              lastError="Gemini returned no quiz output for batch "+(chunkIndex+1)+".";
+              continue;
+            }
+
+            let parsed:any;
+            try{parsed=parseModelJson(raw)}catch(parseError){
+              lastError="Gemini returned invalid JSON for batch "+(chunkIndex+1)+".";
+              console.error("Gemini JSON parse failed",JSON.stringify({batch:chunkIndex+1,model,attempt,error:parseError instanceof Error?parseError.message:String(parseError)}));
+              continue;
+            }
+
+            const qs=Array.isArray(parsed?.questions)?parsed.questions:[];
+            if(qs.length!==chunkCount){
+              lastError="Gemini returned "+qs.length+" questions for batch "+(chunkIndex+1)+"; expected "+chunkCount+".";
+              console.error(lastError);
+              continue;
+            }
+            return qs;
+          }catch(e){
+            lastError=e instanceof Error?e.message:String(e);
+            console.error("Gemini batch exception",JSON.stringify({batch:chunkIndex+1,model,attempt,error:lastError}));
+          }finally{
+            clearTimeout(timer);
           }
-          const text=payload?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||"").join("")||"";
-          if(!text)throw new Error("Gemini returned an empty response.");
-          const parsed=parseModelJson(text);
-          const qs=Array.isArray(parsed?.questions)?parsed.questions:[];
-          if(qs.length!==chunkCount)throw new Error("Gemini returned "+qs.length+" questions for batch "+(chunkIndex+1)+"; expected "+chunkCount+".");
-          return qs;
-        }catch(e){
-          console.error("Gemini batch exception",model,e instanceof Error?e.message:String(e));
-          if(model===models[models.length-1])throw e;
-        }finally{
-          clearTimeout(timer);
         }
+        if(capacityFailure)await new Promise(r=>setTimeout(r,1000));
       }
       throw new Error("Unable to generate batch "+(chunkIndex+1)+".");
     }
 
     const allQuestions:any[]=[];
     const jobs=Array.from({length:chunks},(_,i)=>({index:i,size:Math.min(chunkSize,count-i*chunkSize)}));
-    for(let i=0;i<jobs.length;i+=2){
-      const results=await Promise.all(jobs.slice(i,i+2).map(x=>generateChunk(x.index,x.size)));
-      results.forEach(qs=>allQuestions.push(...qs));
+    for(const job of jobs){
+      const qs=await generateChunk(job.index,job.size);
+      allQuestions.push(...qs);
     }
 
     if(allQuestions.length!==count)
