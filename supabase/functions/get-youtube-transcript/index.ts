@@ -9,6 +9,7 @@ const SERVICE_KEY =
 const YOUTUBE_TRANSCRIPT_API_URL =
   Deno.env.get("YOUTUBE_TRANSCRIPT_API_URL") ||
   "https://youtube-transcript-api-tau-one.vercel.app/transcript";
+const SUPADATA_API_KEY = Deno.env.get("SUPADATA_API_KEY") || "";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -130,6 +131,84 @@ async function fetchExternalTranscript(videoUrl: string) {
           : [{ start: 0, duration: 0, text: transcript }],
       source: "youtube-transcript-api",
       language: String(data?.language || data?.lang || "auto"),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchSupadataTranscript(videoUrl: string) {
+  if (!SUPADATA_API_KEY) {
+    throw new Error("AI transcript fallback is not configured.");
+  }
+
+  const url = new URL("https://api.supadata.ai/v1/transcript");
+  url.searchParams.set("url", videoUrl);
+  url.searchParams.set("lang", "en");
+  url.searchParams.set("text", "false");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "x-api-key": SUPADATA_API_KEY,
+      },
+      signal: controller.signal,
+    });
+
+    const raw = await response.text();
+    let payload: any = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        String(
+          payload?.message ||
+            payload?.details ||
+            payload?.error ||
+            raw.slice(0, 300) ||
+            `HTTP ${response.status}`,
+        ),
+      );
+    }
+
+    const content = Array.isArray(payload?.content)
+      ? payload.content
+      : [];
+
+    const segments = content
+      .map((item: any) => ({
+        start: Math.max(
+          0,
+          Number(item?.offset ?? item?.start ?? 0) / 1000,
+        ),
+        duration: Math.max(
+          0,
+          Number(item?.duration ?? item?.duration_ms ?? 0) / 1000,
+        ),
+        text: String(item?.text ?? item?.content ?? "").trim(),
+      }))
+      .filter((item: any) => item.text);
+
+    const transcript = segments.map((item: any) => item.text).join(" ").trim();
+
+    if (!transcript) {
+      throw new Error("AI transcript provider returned no transcript text.");
+    }
+
+    return {
+      transcript,
+      segments,
+      source: "supadata-ai",
+      language: String(payload?.lang || segments[0]?.lang || "auto"),
     };
   } finally {
     clearTimeout(timeout);
@@ -434,7 +513,7 @@ Deno.serve(async (req) => {
         result = await fetchExternalTranscript(sourceUrl);
       } catch (e) {
         errors.push(
-          "jaypaun007-api: " + (e instanceof Error ? e.message : String(e)),
+          "jaypaun007-api: " + (e instanceof Error ? e.message : typeof e === "string" ? e : JSON.stringify(e)),
         );
       }
 
@@ -458,9 +537,22 @@ Deno.serve(async (req) => {
         }
       }
 
+      if (!result && SUPADATA_API_KEY) {
+        try {
+          result = await fetchSupadataTranscript(sourceUrl);
+        } catch (e) {
+          errors.push(
+            "supadata-ai: " + (e instanceof Error ? e.message : JSON.stringify(e)),
+          );
+        }
+      }
+
       if (!result?.transcript?.trim()) {
         throw new Error(
-          "Could not generate a transcript. " + errors.join(" | "),
+          "We couldn't access a transcript for this video. " +
+            (SUPADATA_API_KEY
+              ? "The video may not expose captions and the AI audio fallback was also unavailable."
+              : "This video does not expose accessible captions. Enable the AI transcript fallback to process videos without captions."),
         );
       }
 
@@ -498,7 +590,18 @@ Deno.serve(async (req) => {
         { onConflict: "playlist_video_id" },
       );
 
-      return json({ error: message, status: "error" }, 200);
+      return json(
+        {
+          error: message,
+          status: "error",
+          user_message:
+            "We couldn't access a transcript for this video. " +
+            (SUPADATA_API_KEY
+              ? "The available transcript methods could not process it."
+              : "This video has no accessible captions yet. The AI audio fallback is not configured."),
+        },
+        200,
+      );
     }
   } catch (error) {
     return json(
