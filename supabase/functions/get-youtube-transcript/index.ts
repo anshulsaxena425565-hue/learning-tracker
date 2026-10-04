@@ -5,11 +5,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
   Deno.env.get("SUPABASE_SECRET_KEY")!;
-const DEEPGRAM_API_KEY = Deno.env.get("DEEPGRAM_API_KEY");
-const DEEPGRAM_API_BASE_URL =
-  Deno.env.get("DEEPGRAM_API_BASE_URL") || "https://api.in.deepgram.com";
 
-const YOUTUBE_TRANSCRIPT_API_URL = Deno.env.get("YOUTUBE_TRANSCRIPT_API_URL") || "https://youtube-transcript-api-tau-one.vercel.app/transcript";
+const YOUTUBE_TRANSCRIPT_API_URL =
+  Deno.env.get("YOUTUBE_TRANSCRIPT_API_URL") ||
+  "https://youtube-transcript-api-tau-one.vercel.app/transcript";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -27,7 +26,6 @@ const json = (body: unknown, status = 200) =>
 function videoId(input: string) {
   const value = String(input || "").trim();
   if (!value) return null;
-
   try {
     const url = new URL(value);
     if (url.hostname.includes("youtu.be")) {
@@ -43,48 +41,109 @@ function videoId(input: string) {
   }
 }
 
-function extractJsonAfter(source: string, needle: string) {
-  const start = source.indexOf(needle);
-  if (start < 0) return null;
-
-  const brace = source.indexOf("{", start + needle.length);
-  if (brace < 0) return null;
-
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-
-  for (let i = brace; i < source.length; i += 1) {
-    const ch = source[i];
-
-    if (inString) {
-      if (escaped) escaped = false;
-      else if (ch === "\\") escaped = true;
-      else if (ch === '"') inString = false;
-      continue;
-    }
-
-    if (ch === '"') {
-      inString = true;
-      continue;
-    }
-
-    if (ch === "{") depth += 1;
-    else if (ch === "}" && --depth === 0) {
-      return source.slice(brace, i + 1);
-    }
-  }
-
-  return null;
+function normalizeSegments(raw: any) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item: any) => ({
+      start: Number(
+        item?.start ??
+          item?.start_seconds ??
+          item?.offset ??
+          item?.offset_seconds ??
+          item?.startTime ??
+          0,
+      ),
+      duration: Number(
+        item?.duration ??
+          item?.duration_seconds ??
+          item?.dur ??
+          0,
+      ),
+      text: String(
+        item?.text ??
+          item?.transcript ??
+          item?.content ??
+          item?.snippet ??
+          "",
+      ).trim(),
+    }))
+    .filter((item: any) => item.text);
 }
 
-async function getPlayer(videoIdValue: string) {
+async function fetchExternalTranscript(videoUrl: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch(YOUTUBE_TRANSCRIPT_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ video_url: videoUrl }),
+      signal: controller.signal,
+    });
+
+    const raw = await response.text();
+    let payload: any = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        String(
+          payload?.detail ||
+            payload?.message ||
+            payload?.error ||
+            raw.slice(0, 300) ||
+            `HTTP ${response.status}`,
+        ),
+      );
+    }
+
+    const data = payload?.data || payload;
+    const transcript = String(
+      data?.transcript || data?.text || data?.content || "",
+    ).trim();
+
+    if (!transcript) {
+      throw new Error("External transcript API returned an empty transcript.");
+    }
+
+    const segments = normalizeSegments(
+      data?.segments ||
+        data?.transcript_segments ||
+        data?.items ||
+        data?.snippets ||
+        [],
+    );
+
+    return {
+      transcript,
+      segments:
+        segments.length > 0
+          ? segments
+          : [{ start: 0, duration: 0, text: transcript }],
+      source: "youtube-transcript-api",
+      language: String(data?.language || data?.lang || "auto"),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchYouTubeCaptionsViaPlayer(videoIdValue: string) {
   const response = await fetch(
-    "https://www.youtube.com/watch?v=" + encodeURIComponent(videoIdValue),
+    "https://www.youtube.com/watch?v=" +
+      encodeURIComponent(videoIdValue),
     {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/154 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9",
       },
     },
@@ -97,301 +156,208 @@ async function getPlayer(videoIdValue: string) {
   }
 
   const html = await response.text();
-  const raw = extractJsonAfter(html, "ytInitialPlayerResponse");
-
-  if (!raw) {
-    throw new Error(
-      "Could not read YouTube player metadata. The video may be unavailable or YouTube changed its page format.",
-    );
+  const marker = "ytInitialPlayerResponse";
+  const markerStart = html.indexOf(marker);
+  if (markerStart < 0) {
+    throw new Error("YouTube player metadata was not found.");
   }
 
+  const braceStart = html.indexOf("{", markerStart);
+  if (braceStart < 0) {
+    throw new Error("YouTube player JSON was not found.");
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let raw = "";
+
+  for (let i = braceStart; i < html.length; i++) {
+    const ch = html[i];
+
+    if (inString) {
+      raw += ch;
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+
+    raw += ch;
+
+    if (ch === '"') inString = true;
+    else if (ch === "{") depth += 1;
+    else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0) break;
+    }
+  }
+
+  let player: any;
   try {
-    return JSON.parse(raw);
+    player = JSON.parse(raw);
   } catch {
-    throw new Error("Could not parse YouTube player metadata.");
-  }
-}
-
-function pickAudioUrl(playerResponse: any) {
-  const formats = [
-    ...(playerResponse?.streamingData?.adaptiveFormats || []),
-    ...(playerResponse?.streamingData?.formats || []),
-  ];
-
-  const audio = formats
-    .filter((format: any) => String(format?.mimeType || "").startsWith("audio/"))
-    .filter((format: any) => typeof format?.url === "string" && format.url)
-    .sort((a: any, b: any) => Number(b?.bitrate || 0) - Number(a?.bitrate || 0))[0];
-
-  return audio?.url || null;
-}
-
-let youtubeClientPromise: Promise<Innertube> | null = null;
-
-async function getYoutubeClient() {
-  if (!youtubeClientPromise) {
-    youtubeClientPromise = Innertube.create({
-      lang: "en",
-      location: "IN",
-      client_type: "WEB",
-      retrieve_player: true,
-      enable_session_cache: false,
-    });
+    throw new Error("YouTube player metadata could not be parsed.");
   }
 
-  return youtubeClientPromise;
-}
+  const tracks =
+    player?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
 
-async function getDecipheredYouTubeAudioUrl(videoIdValue: string) {
-  const youtube = await getYoutubeClient();
-  const info = await youtube.getBasicInfo(videoIdValue);
-  const format = info.chooseFormat({
-    type: "audio",
-    quality: "best",
-  });
-
-  if (!format) return null;
-
-  const url = await format.decipher(youtube.session.player);
-  return url || null;
-}
-
-function decodeHtml(value: string) {
-  return value
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/gi, "'");
-}
-
-function captionTracks(playerResponse: any) {
-  return playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
-}
-
-function pickCaptionTrack(playerResponse: any) {
-  const tracks = captionTracks(playerResponse);
-  if (!tracks.length) return null;
-
-  const preferred = tracks.find((track: any) =>
-    String(track?.languageCode || "").toLowerCase().startsWith("en"),
-  ) || tracks.find((track: any) =>
-    String(track?.languageCode || "").toLowerCase().startsWith("hi"),
-  ) || tracks.find((track: any) =>
-    String(track?.kind || "").toLowerCase() === "asr",
-  ) || tracks[0];
-
-  return preferred?.baseUrl || null;
-}
-
-function parseCaptionJson(payload: any) {
-  const events = Array.isArray(payload?.events) ? payload.events : [];
-  return events
-    .map((event: any) => {
-      const text = (event?.segs || [])
-        .map((seg: any) => String(seg?.utf8 || ""))
-        .join("")
-        .replace(/\\n/g, " ")
-        .trim();
-
-      return {
-        start: Math.max(0, Number(event?.tStartMs || 0) / 1000),
-        duration: Math.max(0, Number(event?.dDurationMs || 0) / 1000),
-        text,
-      };
-    })
-    .filter((item: any) => item.text);
-}
-
-function parseCaptionXml(xml: string) {
-  const out: any[] = [];
-  const regex = /<text([^>]*)>([\s\S]*?)<\/text>/gi;
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(xml))) {
-    const attrs = match[1] || "";
-    const text = decodeHtml(
-      match[2]
-        .replace(/<br\s*\/?\s*>/gi, " ")
-        .replace(/<[^>]+>/g, "")
-        .replace(/\s+/g, " ")
-        .trim(),
-    );
-
-    if (!text) continue;
-
-    const startMatch = attrs.match(/\bstart="([^"]+)"/i);
-    const durationMatch = attrs.match(/\bdur="([^"]+)"/i);
-    const start = Number(startMatch?.[1] || 0);
-    const duration = Number(durationMatch?.[1] || 0);
-
-    out.push({ start, duration, text });
+  if (!Array.isArray(tracks) || tracks.length === 0) {
+    throw new Error("This video has no accessible YouTube captions.");
   }
 
-  return out;
-}
+  const preferred =
+    tracks.find((track: any) =>
+      String(track?.languageCode || "").toLowerCase().startsWith("en"),
+    ) ||
+    tracks.find((track: any) =>
+      String(track?.languageCode || "").toLowerCase().startsWith("hi"),
+    ) ||
+    tracks.find((track: any) =>
+      String(track?.kind || "").toLowerCase() === "asr",
+    ) ||
+    tracks[0];
 
-async function getYouTubeCaptions(playerResponse: any) {
-  const baseUrl = pickCaptionTrack(playerResponse);
-  if (!baseUrl) return null;
+  const baseUrl = preferred?.baseUrl;
+  if (!baseUrl) throw new Error("YouTube caption track URL is missing.");
 
-  const url = new URL(baseUrl);
-  url.searchParams.set("fmt", "json3");
+  const captionUrl = new URL(baseUrl);
+  captionUrl.searchParams.set("fmt", "json3");
 
-  const response = await fetch(url.toString(), {
+  const captionResponse = await fetch(captionUrl.toString(), {
     headers: {
       "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/154 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9",
     },
   });
 
-  if (!response.ok) {
+  if (!captionResponse.ok) {
     throw new Error(
-      "YouTube captions could not be loaded (HTTP " + response.status + ").",
+      "YouTube caption endpoint returned HTTP " +
+        captionResponse.status +
+        ".",
     );
   }
 
-  const raw = await response.text();
+  const payload = await captionResponse.text();
 
   try {
-    const parsed = JSON.parse(raw);
-    const segments = parseCaptionJson(parsed);
+    const jsonPayload = JSON.parse(payload);
+    const events = Array.isArray(jsonPayload?.events)
+      ? jsonPayload.events
+      : [];
+
+    const segments = events
+      .map((event: any) => {
+        const text = (event?.segs || [])
+          .map((seg: any) => String(seg?.utf8 || ""))
+          .join("")
+          .replace(/\n/g, " ")
+          .trim();
+
+        return {
+          start: Math.max(0, Number(event?.tStartMs || 0) / 1000),
+          duration: Math.max(0, Number(event?.dDurationMs || 0) / 1000),
+          text,
+        };
+      })
+      .filter((item: any) => item.text);
+
     if (segments.length) {
       return {
         transcript: segments.map((item: any) => item.text).join(" "),
         segments,
         source: "youtube-captions",
+        language: String(preferred?.languageCode || "auto"),
       };
     }
   } catch {
-    // Some caption endpoints still return XML despite fmt=json3.
+    // Fall through to XML parsing.
   }
 
-  const segments = parseCaptionXml(raw);
-  if (!segments.length) return null;
+  const xmlSegments: any[] = [];
+  const regex = /<text([^>]*)>([\s\S]*?)<\/text>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(payload))) {
+    const attrs = match[1] || "";
+    const text = match[2]
+      .replace(/<br\s*\/?\s*>/gi, " ")
+      .replace(/<[^>]+>/g, "")
+      .replace(/\s+/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;|&#x27;/gi, "'")
+      .trim();
+
+    if (!text) continue;
+
+    xmlSegments.push({
+      start: Number(attrs.match(/\bstart="([^"]+)"/i)?.[1] || 0),
+      duration: Number(attrs.match(/\bdur="([^"]+)"/i)?.[1] || 0),
+      text,
+    });
+  }
+
+  if (!xmlSegments.length) {
+    throw new Error("YouTube caption track contained no readable text.");
+  }
 
   return {
-    transcript: segments.map((item: any) => item.text).join(" "),
-    segments,
+    transcript: xmlSegments.map((item: any) => item.text).join(" "),
+    segments: xmlSegments,
     source: "youtube-captions",
+    language: String(preferred?.languageCode || "auto"),
   };
 }
 
-function toSegments(result: any) {
-  const utterances = result?.results?.utterances;
-  if (Array.isArray(utterances) && utterances.length) {
-    return utterances
-      .map((item: any) => ({
-        start: Number(item?.start || 0),
-        duration: Math.max(
-          0,
-          Number(item?.end || 0) - Number(item?.start || 0),
-        ),
-        text: String(item?.transcript || "").trim(),
-      }))
-      .filter((item: any) => item.text);
-  }
-
-  const words = result?.results?.channels?.[0]?.alternatives?.[0]?.words;
-  if (!Array.isArray(words) || !words.length) return [];
-
-  return [
-    {
-      start: Number(words[0]?.start || 0),
-      duration: Math.max(
-        0,
-        Number(words[words.length - 1]?.end || 0) -
-          Number(words[0]?.start || 0),
-      ),
-      text: String(
-        result?.results?.channels?.[0]?.alternatives?.[0]?.transcript || "",
-      ).trim(),
-    },
-  ].filter((item: any) => item.text);
-}
-
-async function fetchExternalTranscript(videoUrl: string) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 25000);
-  try {
-    const response = await fetch(YOUTUBE_TRANSCRIPT_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ video_url: videoUrl }),
-      signal: controller.signal,
-    });
-    const raw = await response.text();
-    let payload: any = null;
-    try { payload = JSON.parse(raw); } catch {}
-    if (!response.ok) {
-      throw new Error(String(payload?.detail || payload?.message || payload?.error || raw.slice(0, 300) || `HTTP ${response.status}`));
-    }
-    const data = payload?.data || payload;
-    const transcript = String(data?.transcript || data?.text || data?.content || "").trim();
-    if (!transcript) throw new Error("External transcript API returned no transcript.");
-    const rawSegments = data?.segments || data?.transcript_segments || data?.items || [];
-    const segments = Array.isArray(rawSegments)
-      ? rawSegments.map((item: any) => ({
-          start: Number(item?.start ?? item?.start_seconds ?? item?.offset ?? 0),
-          duration: Number(item?.duration ?? item?.duration_seconds ?? 0),
-          text: String(item?.text ?? item?.transcript ?? item?.content ?? "").trim(),
-        })).filter((item: any) => item.text)
-      : [];
-    return {
-      transcript,
-      segments: segments.length ? segments : [{ start: 0, duration: 0, text: transcript }],
-      source: "youtube-transcript-api",
-      language: String(data?.language || data?.lang || "auto"),
-    };
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function transcribeWithDeepgram(audioUrl: string) {
-  if (!DEEPGRAM_API_KEY) {
-    throw new Error(
-      "Deepgram is not configured yet. Add the DEEPGRAM_API_KEY secret in Supabase.",
-    );
-  }
-
-  const endpoint =
-    DEEPGRAM_API_BASE_URL.replace(/\/$/, "") +
-    "/v1/listen?model=nova-3&smart_format=true&punctuate=true&utterances=true&mip_opt_out=true";
-
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      Authorization: "Token " + DEEPGRAM_API_KEY,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ url: audioUrl }),
+async function fetchYouTubeiTranscript(videoIdValue: string) {
+  const youtube = await Innertube.create({
+    lang: "en",
+    location: "IN",
+    client_type: "WEB",
+    retrieve_player: true,
+    enable_session_cache: false,
   });
 
-  const raw = await response.text();
+  const info = await youtube.getBasicInfo(videoIdValue);
+  const transcriptInfo = await info.getTranscript();
+  const body = transcriptInfo?.transcript?.content?.body;
 
-  if (!response.ok) {
-    let message = "Deepgram transcription failed.";
-    try {
-      const parsed = JSON.parse(raw);
-      message =
-        parsed?.err_msg ||
-        parsed?.message ||
-        parsed?.error ||
-        message;
-    } catch {
-      if (raw) message = raw.slice(0, 500);
-    }
-    throw new Error(message);
+  const initialSegments = Array.isArray(body?.initial_segments)
+    ? body.initial_segments
+    : [];
+
+  const segments = initialSegments
+    .map((segment: any) => ({
+      start: Number(segment?.start_ms || 0) / 1000,
+      duration:
+        Math.max(0, Number(segment?.end_ms || 0) - Number(segment?.start_ms || 0)) /
+        1000,
+      text: String(segment?.snippet?.text || "").trim(),
+    }))
+    .filter((segment: any) => segment.text);
+
+  const transcript = segments.map((segment: any) => segment.text).join(" ").trim();
+
+  if (!transcript) {
+    throw new Error("youtubei.js returned no transcript text.");
   }
 
-  try {
-    return JSON.parse(raw);
-  } catch {
-    throw new Error("Deepgram returned an invalid transcription response.");
-  }
+  return {
+    transcript,
+    segments,
+    source: "youtubei-js",
+    language: String(
+      transcriptInfo?.transcript?.language_code ||
+        body?.language_code ||
+        "auto",
+    ),
+  };
 }
 
 Deno.serve(async (req) => {
@@ -458,83 +424,64 @@ Deno.serve(async (req) => {
         playlistVideo.youtube_video_id ||
         videoId(playlistVideo.video_url || "");
 
-      if (!id) {
-        throw new Error("This lesson has no YouTube video ID.");
-      }
+      if (!id) throw new Error("This lesson has no YouTube video ID.");
 
-      const sourceUrl = `https://www.youtube.com/watch?v=${id}`;
-
-      let transcript = "";
-      let segments: any[] = [];
-      let source = "";
-      let language = "auto";
-      let externalProviderError = "";
+      const sourceUrl = "https://www.youtube.com/watch?v=" + id;
+      const errors: string[] = [];
+      let result: any = null;
 
       try {
-        const external = await fetchExternalTranscript(sourceUrl);
-        transcript = external.transcript;
-        segments = external.segments;
-        source = external.source;
-        language = external.language;
-      } catch (externalError) {
-        externalProviderError = externalError instanceof Error ? externalError.message : String(externalError);
-        console.error("External transcript provider failed:", externalProviderError);
-
-        const playerResponse = await getPlayer(id);
-        const captionResult = await getYouTubeCaptions(playerResponse);
-        transcript = captionResult?.transcript || "";
-        segments = captionResult?.segments || [];
-        source = captionResult?.source || "";
-
-        const selectedCaptionUrl = pickCaptionTrack(playerResponse);
-        const selectedCaption = captionTracks(playerResponse).find(
-          (track: any) => String(track?.baseUrl || "") === String(selectedCaptionUrl || ""),
+        result = await fetchExternalTranscript(sourceUrl);
+      } catch (e) {
+        errors.push(
+          "jaypaun007-api: " + (e instanceof Error ? e.message : String(e)),
         );
-        language = selectedCaption?.languageCode || "auto";
+      }
 
-        if (!transcript.trim()) {
-          let audioUrl = pickAudioUrl(playerResponse);
-          if (!audioUrl) {
-            try { audioUrl = await getDecipheredYouTubeAudioUrl(id); }
-            catch (youtubeError) { console.error("YouTube.js stream resolution failed:", youtubeError); }
-          }
-          if (audioUrl) {
-            const deepgram = await transcribeWithDeepgram(audioUrl);
-            segments = toSegments(deepgram);
-            transcript =
-              deepgram?.results?.channels?.[0]?.alternatives?.[0]?.transcript ||
-              segments.map((item: any) => item.text).join(" ");
-            source = "deepgram";
-            language =
-              deepgram?.results?.channels?.[0]?.alternatives?.[0]?.languages?.[0] || "auto";
-          }
+      if (!result) {
+        try {
+          result = await fetchYouTubeCaptionsViaPlayer(id);
+        } catch (e) {
+          errors.push(
+            "youtube-captions: " + (e instanceof Error ? e.message : String(e)),
+          );
         }
       }
 
-      if (!transcript.trim()) {
+      if (!result) {
+        try {
+          result = await fetchYouTubeiTranscript(id);
+        } catch (e) {
+          errors.push(
+            "youtubei-js: " + (e instanceof Error ? e.message : String(e)),
+          );
+        }
+      }
+
+      if (!result?.transcript?.trim()) {
         throw new Error(
-          "No transcript is available. External provider: " + (externalProviderError || "no response") + ". YouTube captions/audio and Deepgram also returned no usable transcript.",
+          "Could not generate a transcript. " + errors.join(" | "),
         );
       }
 
-      const result = {
+      const saved = {
         playlist_video_id: playlistVideoId,
-        language,
+        language: result.language || "auto",
         status: "ready",
-        transcript: transcript.trim(),
-        segments,
-        source,
+        transcript: result.transcript.trim(),
+        segments: result.segments || [],
+        source: result.source || "youtube",
         error: null,
         updated_at: new Date().toISOString(),
       };
 
       const { error } = await admin
         .from("video_transcripts")
-        .upsert(result, { onConflict: "playlist_video_id" });
+        .upsert(saved, { onConflict: "playlist_video_id" });
 
       if (error) throw error;
 
-      return json(result);
+      return json(saved);
     } catch (error) {
       const message =
         error instanceof Error
