@@ -38,7 +38,12 @@ export default function CoursePlayer({courseId,videoId,onOpenVideo,back}){
   setTranscript(r.data);
 }
  async function loadAiContent(){if(!user||!v)return;const{data,error}=await supabase.from('video_ai_content').select('notes,summary,quiz').eq('playlist_video_id',v.id).eq('user_id',dataUser?.id).maybeSingle();if(!error)setAiContent(data||null)}
- async function generateAi(action){if(!user||!v)return;const key='ai_'+action;const credit=await charge(key,'AI '+action+' for '+v.title,{video_id:v.id});if(credit.error||!credit.data?.ok){setAiError(credit.error?.message||credit.data?.error||'Not enough credits.');return}setAiLoading(action);setAiError('');const r=await supabase.functions.invoke('generate-video-ai',{body:{action,playlist_video_id:v.id}});if(r.error){setAiError(r.error.message||'AI generation failed.');setAiLoading('');return}setAiContent(r.data?.content||null);setAiLoading('')}
+ async function generateAi(action){
+  if(!user||!v)return;
+  if(action==='notes'&&transcript?.status!=='ready'){
+    setAiError('Generate the transcript first, then turn it into notes.');
+    return;
+  }const key='ai_'+action;const credit=await charge(key,'AI '+action+' for '+v.title,{video_id:v.id});if(credit.error||!credit.data?.ok){setAiError(credit.error?.message||credit.data?.error||'Not enough credits.');return}setAiLoading(action);setAiError('');const r=await supabase.functions.invoke('generate-video-ai',{body:{action,playlist_video_id:v.id}});if(r.error){setAiError(r.error.message||'AI generation failed.');setAiLoading('');return}setAiContent(r.data?.content||null);setAiLoading('')}
  if(!p)return null;if(!v)return <div className="page learning-player-page"><section className="section"><h2>Preparing your lesson…</h2><p className="muted">Loading the course video. Please wait a moment.</p></section></div>;
  const duration=Math.max(progress[v.id]?.duration_seconds||0,1),percent=Math.min(100,Math.round((watched/duration)*100)),completed=!!progress[v.id]?.completed_at;
  const completedCount=vs.filter(x=>progress[x.id]?.completed_at).length,totalCount=vs.length,coursePercent=totalCount?Math.round(completedCount/totalCount*100):0,xp=globalXp,level=Math.max(1,Math.floor(xp/250)+1),nextIndex=Math.min(vs.findIndex(x=>x.id===v.id)+1,totalCount-1);
@@ -61,7 +66,14 @@ export default function CoursePlayer({courseId,videoId,onOpenVideo,back}){
      </div>
      <div className="player-panel">{tab==='outline'&&<Outline chapters={ch} player={player}/>}
       {tab==='notes'&&<div className="section player-section"><div className="panel-heading"><div><b>Timestamped notes</b><span>Capture what matters while you learn.</span></div></div><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="What do you want to remember from this moment?"/><button onClick={saveNote}>＋ Post note at current time</button>{notes.map(n=><button className="note-card" key={n.id} onClick={()=>player.current?.seekTo(n.position_seconds||0,true)}><b>{time(n.position_seconds)}</b> · {n.content}</button>)}</div>}
-      {tab==='transcript'&&<div className="section player-section">{!transcript&&<><div className="panel-heading"><div><b>Video transcript</b><span>Jump directly to any spoken section.</span></div></div><button onClick={generate}>Generate transcript ✦</button></>}{transcript?.status==='processing'&&<p className="muted">Generating transcript…</p>}{transcript?.status==='error'&&<><p className="error">{transcript.error}</p><button onClick={generate}>Retry</button></>}{transcript?.status==='ready'&&<div className="transcript-list">{(transcript.segments||[]).map((s,i)=><button key={i} onClick={()=>player.current?.seekTo(Number(s.start||0),true)}><span>{time(s.start)}</span>{s.text}</button>)}</div>}</div>}
+      {tab==='transcript'&&<div className="section player-section">{!transcript&&<><div className="panel-heading"><div><b>Video transcript</b><span>Jump directly to any spoken section.</span></div></div><button onClick={generate}>Generate transcript ✦</button></>}{transcript?.status==='processing'&&<p className="muted">Generating transcript…</p>}{transcript?.status==='error'&&<><p className="error">{transcript.error}</p><button onClick={generate}>Retry</button></>}{transcript?.status==='ready'&&<>
+ <div className="transcript-ready-actions">
+  <button className="transcript-notes-btn" onClick={()=>{setTab('ai');generateAi('notes')}} disabled={!!aiLoading}>
+   {aiLoading==='notes'?'Turning transcript into notes…':'✦ Turn transcript into notes'}
+  </button>
+ </div>
+ <div className="transcript-list">{(transcript.segments||[]).map((s,i)=><button key={i} onClick={()=>player.current?.seekTo(Number(s.start||0),true)}><span>{time(s.start)}</span>{s.text}</button>)}</div>
+ </>}</div>}
       {tab==='ai'&&<div className="section player-section">
  <div className="panel-heading"><div><b>AI Learning</b><span>Notes, summary and quiz for this video only.</span></div></div>
  <div className="ai-source-banner"><span>✦</span><div><b>{transcript?.status==='ready'?'Transcript ready':'No captions? No problem.'}</b><small>{transcript?.status==='ready'?'AI is using the current video transcript.':'AI can analyze this YouTube video directly.'}</small></div></div>
