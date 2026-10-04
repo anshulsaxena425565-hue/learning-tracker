@@ -146,7 +146,8 @@ async function fetchSupadataTranscript(videoUrl: string) {
   url.searchParams.set("url", videoUrl);
   url.searchParams.set("lang", "en");
   url.searchParams.set("text", "false");
-  url.searchParams.set("mode", "auto");
+  // Force AI generation for the captionless-video fallback.
+  url.searchParams.set("mode", "generate");
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90000);
