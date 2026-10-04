@@ -2779,3 +2779,25 @@ body:has(.auth2-shell){overflow:hidden}
 .transcript-notes-btn:hover:not(:disabled){transform:translateY(-1px);background:color-mix(in srgb,var(--accent) 14%,var(--surface))!important}
 .transcript-notes-btn:disabled{opacity:.65;cursor:wait}
 @media(max-width:600px){.transcript-ready-actions{width:100%}.transcript-notes-btn{width:100%!important}}
+
+
+/* Cashfree payment flow */
+.cashfree-phone-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:rgba(16,14,31,.56);backdrop-filter:blur(6px)}
+.cashfree-phone-modal{position:relative;width:min(430px,100%);padding:28px;border:1px solid var(--line);border-radius:22px;background:var(--surface);box-shadow:0 28px 90px rgba(15,14,35,.26);color:var(--text)}
+.cashfree-phone-close{position:absolute;top:14px;right:14px;width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line)!important;border-radius:10px!important;background:var(--surface2)!important;color:var(--muted)!important;padding:0!important}
+.cashfree-phone-icon{width:46px;height:46px;display:grid;place-items:center;margin-bottom:16px;border-radius:14px;background:color-mix(in srgb,var(--accent) 12%,var(--surface2));color:var(--accent)}
+.cashfree-phone-modal .eyebrow{margin:0 0 6px}
+.cashfree-phone-modal h2{margin:0;font-size:25px;letter-spacing:-.035em}
+.cashfree-phone-copy{margin:7px 0 20px;color:var(--muted);font-size:12px;line-height:1.55}
+.cashfree-phone-label>span{display:block;margin-bottom:7px;color:var(--muted);font-size:11px;font-weight:750}
+.cashfree-phone-input{display:flex;align-items:center;gap:8px;height:50px;padding:0 13px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
+.cashfree-phone-input>span{padding-right:10px;border-right:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:750}
+.cashfree-phone-input input{width:100%;height:100%;padding:0;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;font:600 13px inherit}
+.cashfree-phone-input:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+.cashfree-phone-error{margin-top:8px;padding:9px 10px;border:1px solid color-mix(in srgb,var(--bad) 26%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--bad) 7%,var(--surface));color:var(--bad);font-size:11px}
+.cashfree-phone-plan{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 12px;padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);font-size:11px}
+.cashfree-phone-plan span{color:var(--muted)}.cashfree-phone-plan strong{font-size:15px;color:var(--text)}
+.cashfree-phone-continue{width:100%!important;height:48px;display:flex!important;align-items:center;justify-content:center;gap:9px;border-radius:12px!important;background:var(--accent)!important;color:#fff!important;font-weight:800!important}
+.cashfree-phone-continue:hover{filter:brightness(.96);transform:translateY(-1px)}
+.cashfree-phone-continue span{font-size:17px}.cashfree-phone-secure{display:block;margin-top:10px;text-align:center;color:var(--muted);font-size:9px}
+@media(max-width:600px){.cashfree-phone-overlay{align-items:end;padding:10px}.cashfree-phone-modal{padding:24px 18px 18px;border-radius:20px}.cashfree-phone-modal h2{font-size:22px}}
