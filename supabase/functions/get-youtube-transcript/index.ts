@@ -850,7 +850,7 @@ Deno.serve(async (req) => {
 
       const result = {
         playlist_video_id: playlistVideoId,
-        language: selectedCaption?.languageCode || "auto",
+        language: language || "auto",
         status: "ready",
         transcript: transcript.trim(),
         segments,
