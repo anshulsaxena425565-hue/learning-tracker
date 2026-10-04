@@ -31,7 +31,26 @@ export default function TestSeries({courseId,onStart,standalone=false}){
   if(!parsed.length)return setMessage('English MCQs could not be parsed. Use Q1 + A/B/C/D + Answer format.');
   if(rawHi.trim()&&parsedHi.length!==parsed.length)return setMessage('Hindi MCQ count does not match English. English: '+parsed.length+' · Hindi: '+parsedHi.length+'.');
   setBusy(true);
-  if(!rawHi.trim()){setMessage('Generating Hindi version…');try{const tr=await supabase.functions.invoke('translate-test-mcq',{body:{items:parsed.map(x=>({question:x.question,options:x.options.map(o=>o.option_text)}))}});if(!tr.error&&tr.data?.items?.length){parsedHi=parsed.map((x,i)=>({question:tr.data.items[i]?.question||x.question,options:x.options.map((o,j)=>({...o,option_text:tr.data.items[i]?.options?.[j]||o.option_text}))}));setMessage('Hindi translation generated. Creating test…')}else setMessage('Hindi translation unavailable — creating the English test.');}catch{setMessage('Hindi translation unavailable — creating the English test.');}}
+  if(!rawHi.trim()){
+   setMessage('Generating Hindi version…');
+   try{
+    const tr=await supabase.functions.invoke('translate-test-mcq',{body:{
+     target_language:'hi',
+     items:parsed.map(x=>({question:x.question,options:x.options.map(o=>o.option_text),explanation:''}))
+    }});
+    if(tr.error||!Array.isArray(tr.data?.items)||tr.data.items.length!==parsed.length)
+      throw new Error(tr.data?.error||tr.error?.message||'Hindi translation could not be generated.');
+    parsedHi=parsed.map((x,i)=>({
+     question:tr.data.items[i]?.question||'',
+     options:x.options.map((o,j)=>({...o,option_text:tr.data.items[i]?.options?.[j]||''}))
+    }));
+    if(parsedHi.some(x=>!x.question||x.options.some(o=>!o.option_text)))throw new Error('Hindi translation returned incomplete questions.');
+    setMessage('Hindi translation generated. Creating test…');
+   }catch(e){
+    const msg=e?.message||'Hindi translation could not be generated.';
+    setMessage(msg);toast(msg,'error','Hindi translation failed');setBusy(false);return;
+   }
+  }
   if(!title.trim()){setMessage('Add a test title first.');setBusy(false);return}
   const credit=await charge('quiz_creation','Created quiz: '+title.trim(),{title:title.trim()});
   if(credit.error||!credit.data?.ok){setMessage(credit.error?.message||credit.data?.error||'Not enough credits.');setBusy(false);return}
