@@ -1,13 +1,84 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { supabase } from '../lib/supabase'
 import { Coins, Lightning, ArrowRight, X, Sparkle } from '@phosphor-icons/react'
 
 const CreditsContext=createContext(null);
-export function CreditsProvider({children}){const{user,dataUser}=useAuth();const[credits,setCredits]=useState(0),[settings,setSettings]=useState({}),[plans,setPlans]=useState([]),[loading,setLoading]=useState(true),[creditAlert,setCreditAlert]=useState(null);
- async function load(){if(!user||!dataUser){setCredits(0);setSettings({});setPlans([]);setLoading(false);return}setLoading(true);const[{data:p},{data:s},{data:pl}]=await Promise.all([supabase.from('profiles').select('credits') .eq('id',dataUser.id).maybeSingle(),supabase.from('credit_settings').select('key,label,credits'),supabase.from('credit_plans').select('*').eq('active',true).order('position')]);setCredits(Number(p?.credits||0));setSettings(Object.fromEntries((s||[]).map(x=>[x.key,x])));setPlans(pl||[]);setLoading(false)}
- useEffect(()=>{load()},[user?.id,dataUser?.id]);
- async function charge(actionKey,description,metadata){const{data,error}=await supabase.rpc('charge_credits',{p_action_key:actionKey,p_description:description||null,p_metadata:metadata||{}});if(!error&&data?.ok)setCredits(Number(data.balance||0));if((!error&&!data?.ok)||error){const required=Number(data?.required||settings[actionKey]?.credits||0);const balance=Number(data?.balance??credits);setCreditAlert({required,balance,action:settings[actionKey]?.label||actionKey,error:error?.message||data?.error||'You do not have enough Credits for this task.'})}return{data,error}}
+
+export function CreditsProvider({children}){
+ const{user,dataUser}=useAuth();
+ const[credits,setCredits]=useState(0),[settings,setSettings]=useState({}),[plans,setPlans]=useState([]),[loading,setLoading]=useState(true),[creditAlert,setCreditAlert]=useState(null);
+ const refreshTimer=useRef(null);
+
+ async function load(){
+  if(!user||!dataUser){
+   setCredits(0);setSettings({});setPlans([]);setLoading(false);return;
+  }
+  setLoading(true);
+  const[{data:p,error:pe},{data:s},{data:pl}]=await Promise.all([
+   supabase.from('profiles').select('credits').eq('id',dataUser.id).maybeSingle(),
+   supabase.from('credit_settings').select('key,label,credits'),
+   supabase.from('credit_plans').select('*').eq('active',true).order('position')
+  ]);
+  if(pe){console.error('Unable to load Credits:',pe)}
+  setCredits(Number(p?.credits||0));
+  setSettings(Object.fromEntries((s||[]).map(x=>[x.key,x])));
+  setPlans(pl||[]);
+  setLoading(false);
+ }
+
+ function scheduleRefresh(){
+  clearTimeout(refreshTimer.current);
+  refreshTimer.current=setTimeout(()=>load(),150);
+ }
+
+ useEffect(()=>{
+  load();
+  if(!dataUser?.id)return;
+  const channel=supabase
+   .channel('credits-wallet-'+dataUser.id)
+   .on('postgres_changes',{
+     event:'UPDATE',
+     schema:'public',
+     table:'profiles',
+     filter:'id=eq.'+dataUser.id
+   },payload=>{
+     const next=Number(payload.new?.credits);
+     if(Number.isFinite(next))setCredits(next);
+     scheduleRefresh();
+   })
+   .subscribe((status,error)=>{
+     if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.error('Credits realtime subscription failed:',error);
+   });
+
+  const onFocus=()=>scheduleRefresh();
+  const onVisible=()=>{if(document.visibilityState==='visible')scheduleRefresh()};
+  window.addEventListener('focus',onFocus);
+  document.addEventListener('visibilitychange',onVisible);
+
+  return()=>{
+   clearTimeout(refreshTimer.current);
+   window.removeEventListener('focus',onFocus);
+   document.removeEventListener('visibilitychange',onVisible);
+   supabase.removeChannel(channel);
+  };
+ },[user?.id,dataUser?.id]);
+
+ async function charge(actionKey,description,metadata){
+  const{data,error}=await supabase.rpc('charge_credits',{p_action_key:actionKey,p_description:description||null,p_metadata:metadata||{}});
+  if(!error&&data?.ok){
+   setCredits(Number(data.balance||0));
+   scheduleRefresh();
+  }
+  if((!error&&!data?.ok)||error){
+   const required=Number(data?.required||settings[actionKey]?.credits||0);
+   const balance=Number(data?.balance??credits);
+   setCredits(balance);
+   setCreditAlert({required,balance,action:settings[actionKey]?.label||actionKey,error:error?.message||data?.error||'You do not have enough Credits for this task.'});
+  }
+  return{data,error}
+ }
+
  function cost(key){return Number(settings[key]?.credits||0)}
  return <CreditsContext.Provider value={{credits,settings,plans,loading,cost,charge,refresh:load}}>{children}{creditAlert&&<div className="credits-alert-backdrop" role="dialog" aria-modal="true" aria-labelledby="credits-alert-title" onClick={()=>setCreditAlert(null)}><div className="credits-alert" onClick={e=>e.stopPropagation()}>
   <button className="credits-alert-close" aria-label="Close" onClick={()=>setCreditAlert(null)}><X size={18}/></button>
