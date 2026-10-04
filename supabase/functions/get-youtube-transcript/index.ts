@@ -233,10 +233,11 @@ async function fetchSupadataTranscript(videoUrl: string) {
         }
       }
 
-      if (!payload?.content && !payload?.data?.content) {
+      if (!payload?.content && !payload?.data?.content && !payload?.result?.content && !payload?.result?.data?.content) {
         throw new Error("Supadata transcript generation timed out.");
       }
 
+      payload = payload?.result || payload?.data || payload;
       payload = payload?.data || payload;
     }
 
