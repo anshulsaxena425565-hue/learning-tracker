@@ -618,10 +618,11 @@ Deno.serve(async (req) => {
 
       if (!result?.transcript?.trim()) {
         console.error("Transcript providers exhausted:", errors);
+        const providerFailure = errors[errors.length - 1] || "No transcript provider returned usable text.";
         throw new Error(
           "We couldn't access a transcript for this video. " +
             (SUPADATA_API_KEY
-              ? "The AI transcript provider could not generate one for this video."
+              ? "AI transcript provider failure: " + providerFailure.slice(0, 500)
               : "This video does not expose accessible captions. Enable the AI transcript fallback to process videos without captions."),
         );
       }
