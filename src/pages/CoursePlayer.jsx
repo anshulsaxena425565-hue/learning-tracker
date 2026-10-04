@@ -21,7 +21,22 @@ export default function CoursePlayer({courseId,videoId,onOpenVideo,back}){
  async function loadBookmarks(){const{data}=await supabase.from('video_bookmarks').select('*').eq('playlist_video_id',v.id).eq('user_id',dataUser?.id).order('position_seconds');setBookmarks(data||[])}
  async function bookmark(){const pos=Math.floor(player.current?.getCurrentTime?.()||0);if(!pos)return;await supabase.from('video_bookmarks').insert({user_id:dataUser?.id,playlist_video_id:v.id,position_seconds:pos,label:'Saved moment'});loadBookmarks()}
  async function loadTranscript(){const{data}=await supabase.from('video_transcripts').select('*').eq('playlist_video_id',v.id).maybeSingle();setTranscript(data||null)}
- async function generate(){setTranscript({status:'processing'});const r=await supabase.functions.invoke('get-youtube-transcript',{body:{playlist_video_id:v.id}});if(r.error)setTranscript({status:'error',error:r.error.message});else setTranscript(r.data)}
+ async function generate(){
+  setTranscript({status:'processing'});
+  const r=await supabase.functions.invoke('get-youtube-transcript',{body:{playlist_video_id:v.id}});
+  if(r.error){
+    setTranscript({status:'error',error:'We could not generate a transcript right now. Please try again in a moment.'});
+    return;
+  }
+  if(r.data?.status==='error'){
+    setTranscript({
+      status:'error',
+      error:r.data.user_message||r.data.error||'This video does not currently have an accessible transcript.'
+    });
+    return;
+  }
+  setTranscript(r.data);
+}
  async function loadAiContent(){if(!user||!v)return;const{data,error}=await supabase.from('video_ai_content').select('notes,summary,quiz').eq('playlist_video_id',v.id).eq('user_id',dataUser?.id).maybeSingle();if(!error)setAiContent(data||null)}
  async function generateAi(action){if(!user||!v)return;const key='ai_'+action;const credit=await charge(key,'AI '+action+' for '+v.title,{video_id:v.id});if(credit.error||!credit.data?.ok){setAiError(credit.error?.message||credit.data?.error||'Not enough credits.');return}setAiLoading(action);setAiError('');const r=await supabase.functions.invoke('generate-video-ai',{body:{action,playlist_video_id:v.id}});if(r.error){setAiError(r.error.message||'AI generation failed.');setAiLoading('');return}setAiContent(r.data?.content||null);setAiLoading('')}
  if(!p)return null;if(!v)return <div className="page learning-player-page"><section className="section"><h2>Preparing your lesson…</h2><p className="muted">Loading the course video. Please wait a moment.</p></section></div>;
