@@ -72,8 +72,6 @@ export default function TestSeries({courseId,onStart,standalone=false}){
   if(!topics.trim())return setMessage('Add the topics to cover.');
   const count=Math.max(1,Math.min(50,Number(questionCount)||10));
   if(count>30)return setMessage('For reliable generation, keep one AI test to 30 questions or fewer.');
-  const credit=await charge('quiz_creation','Created AI quiz: '+title.trim(),{title:title.trim(),ai_generated:true});
-  if(credit.error||!credit.data?.ok)return setMessage(credit.error?.message||credit.data?.error||'Not enough credits.');
   setBusy(true);setMessage('AI is creating your assessment…');
   const{data,error}=await supabase.functions.invoke('generate-ai-test',{body:{
    team_id:team?.id,playlist_id:standalone?null:courseId,title:title.trim(),description:desc.trim(),prompt:prompt.trim(),
@@ -85,6 +83,12 @@ export default function TestSeries({courseId,onStart,standalone=false}){
    try{if(error?.context){const body=await error.context.clone().json();serverMessage=body?.error||serverMessage}}catch{}
    const msg=serverMessage||error?.message||'AI test generation failed.';
    setMessage(msg);toast(msg,'error','AI test failed');setBusy(false);return
+  }
+  const credit=await charge('quiz_creation','Created AI quiz: '+title.trim(),{title:title.trim(),ai_generated:true,test_id:data.test_id,question_count:data.question_count});
+  if(credit.error||!credit.data?.ok){
+   const msg=credit.error?.message||credit.data?.error||'Not enough credits.';
+   try{await supabase.from('test_series').delete().eq('id',data.test_id)}catch{}
+   setMessage(msg);toast(msg,'error','Could not charge credits');setBusy(false);return;
   }
   setTitle('');setDesc('');setPrompt('');setTopics('');setMinutes('30');setPoints(10);setDefaultLanguage('en');setMaxReattempts(0);setQuestionCount(10);setDifficulty('medium');setMode(false);
   setMessage('AI created '+data.question_count+' questions. English/Hindi versions are ready for learners.');
