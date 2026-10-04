@@ -158,7 +158,9 @@ async function getPlayer(videoIdValue: string) {
   }
 
   throw new Error(lastError);
-}function decodeHtmlfunction decodeHtml(value: string) {
+}
+
+function decodeHtml(value: string) {
   return value
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
