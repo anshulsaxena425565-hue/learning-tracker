@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Coins,Lightning,ShoppingCart,ShieldCheck } from '@phosphor-icons/react'
+import { Coins,Lightning,ShoppingCart,ShieldCheck,X,Phone } from '@phosphor-icons/react'
 import{useCredits}from'../context/CreditsContext';import{supabase}from'../lib/supabase';import{toast}from'../lib/toast';
 
 export default function Credits(){
  const{credits,plans,refresh}=useCredits();
  const[paying,setPaying]=useState(null);
+ const[phoneModalPlan,setPhoneModalPlan]=useState(null);
+ const[customerPhone,setCustomerPhone]=useState('');
+ const[phoneError,setPhoneError]=useState('');
 
  const loadCashfree=()=>new Promise((resolve,reject)=>{
   if(window.Cashfree)return resolve(window.Cashfree);
@@ -27,7 +30,7 @@ export default function Credits(){
   if(!orderId)return;
   (async()=>{
    try{
-    const result=await verifyPayment(orderId);
+    await verifyPayment(orderId);
     toast('Credits added to your wallet.','success','Payment successful');
    }catch(e){
     if(!String(e?.message||'').includes('Payment was not successful'))toast(e.message||'Payment verification failed.','error','Payment issue');
@@ -39,21 +42,40 @@ export default function Credits(){
   })();
  },[]);
 
- async function buy(plan){
+ function openBuyModal(plan){
   if(paying)return;
-  const customerPhone=window.prompt('Enter your 10-digit mobile number for Cashfree checkout:');
-  if(!/^\d{10}$/.test(String(customerPhone||''))){
-   toast('Please enter a valid 10-digit mobile number.','error','Mobile number required');
+  setPhoneError('');
+  setCustomerPhone('');
+  setPhoneModalPlan(plan);
+ }
+
+ function closeBuyModal(){
+  if(paying)return;
+  setPhoneModalPlan(null);
+  setPhoneError('');
+ }
+
+ async function startPayment(){
+  const phone=String(customerPhone||'').replace(/\D/g,'');
+  if(!/^\d{10}$/.test(phone)){
+   setPhoneError('Enter a valid 10-digit mobile number.');
    return;
   }
+  const plan=phoneModalPlan;
+  if(!plan)return;
+  setPhoneModalPlan(null);
+  setPhoneError('');
   setPaying(plan.id);
   try{
    const Cashfree=await loadCashfree();
-   const{data,error}=await supabase.functions.invoke('create-credit-payment-order',{body:{plan_id:plan.id,customer_phone:String(customerPhone)}});
+   const{data,error}=await supabase.functions.invoke('create-credit-payment-order',{body:{plan_id:plan.id,customer_phone:phone}});
    if(error||!data?.ok)throw new Error(error?.message||data?.error||'Unable to start payment.');
 
    const cashfree=Cashfree({mode:data.environment==='production'?'production':'sandbox'});
-   const result=await cashfree.checkout({paymentSessionId:data.payment_session_id});
+   const result=await cashfree.checkout({
+    paymentSessionId:data.payment_session_id,
+    redirectTarget:'_modal',
+   });
    if(result?.error)throw new Error(result.error.message||'Cashfree checkout could not be opened.');
    if(result?.paymentDetails){
     try{
@@ -68,7 +90,8 @@ export default function Credits(){
   }finally{setPaying(null)}
  }
 
- return <div className="page credits-page">
+ return <>
+ <div className="page credits-page">
   <header className="credits-hero">
    <div><p className="eyebrow">LEARNINGBEYOND WALLET</p><h1>Your Credits</h1><p className="muted">Use Credits across LearningBeyond. Every action shows its cost before you commit.</p></div>
    <div className="credits-balance-card"><Coins size={25} weight="fill"/><small>AVAILABLE CREDITS</small><strong>{Number(credits||0).toLocaleString()}</strong><span>credits</span></div>
@@ -87,9 +110,24 @@ export default function Credits(){
      <div className="credit-plan-amount"><strong>{Number(p.credits).toLocaleString()}</strong><span>credits</span></div>
      {Number(p.bonus_credits)>0&&<div className="credit-bonus">+{p.bonus_credits} bonus</div>}
      <div className="credit-price">₹{Number(p.price_inr).toLocaleString('en-IN')}</div>
-     <button type="button" onClick={()=>buy(p)} disabled={paying===p.id||!!paying}>{paying===p.id?<><Lightning size={17} weight="fill"/> Opening checkout…</>:<><ShoppingCart size={17}/> Buy {p.credits} Credits</>}</button>
+     <button type="button" onClick={()=>openBuyModal(p)} disabled={paying===p.id||!!paying}>{paying===p.id?<><Lightning size={17} weight="fill"/> Opening checkout…</>:<><ShoppingCart size={17}/> Buy {p.credits} Credits</>}</button>
     </article>)}
    </div>
   </section>
  </div>
+ {phoneModalPlan&&<div className="cashfree-phone-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)closeBuyModal()}}>
+  <div className="cashfree-phone-modal" role="dialog" aria-modal="true" aria-labelledby="cashfree-phone-title">
+   <button type="button" className="cashfree-phone-close" onClick={closeBuyModal} aria-label="Close"><X size={17}/></button>
+   <div className="cashfree-phone-icon"><Phone size={22} weight="duotone"/></div>
+   <p className="eyebrow">SECURE CASHFREE CHECKOUT</p>
+   <h2 id="cashfree-phone-title">Enter your mobile number</h2>
+   <p className="cashfree-phone-copy">Cashfree uses this number for payment verification.</p>
+   <label className="cashfree-phone-label"><span>10-digit mobile number</span><div className="cashfree-phone-input"><span>+91</span><input autoFocus inputMode="numeric" maxLength={10} value={customerPhone} onChange={e=>{setCustomerPhone(e.target.value.replace(/\D/g,'').slice(0,10));setPhoneError('')}} onKeyDown={e=>{if(e.key==='Enter')startPayment()}} placeholder="9876543210"/></div></label>
+   {phoneError&&<div className="cashfree-phone-error">{phoneError}</div>}
+   <div className="cashfree-phone-plan"><span>{phoneModalPlan.name} · {Number(phoneModalPlan.credits).toLocaleString()} Credits</span><strong>₹{Number(phoneModalPlan.price_inr).toLocaleString('en-IN')}</strong></div>
+   <button type="button" className="cashfree-phone-continue" onClick={startPayment}>Continue to Cashfree <span>→</span></button>
+   <small className="cashfree-phone-secure">You’ll get the Cashfree payment window next.</small>
+  </div>
+ </div>}
+ </>
 }
