@@ -9,7 +9,6 @@ export default function Admin(){
  const[d,setD]=useState({profiles:[],teams:[],members:[],history:[],courses:[],videos:[],progress:[],chapters:[],notes:[],bookmarks:[],transcripts:[],tests:[],questions:[],options:[],attempts:[],answers:[],admins:[],chat:[],userControls:[],teamControls:[]});
  const[tab,setTab]=useState('overview'),[q,setQ]=useState(''),[userView,setUserView]=useState('active'),[busy,setBusy]=useState(false),[msg,setMsg]=useState(''),[authorized,setAuthorized]=useState(null),[detail,setDetail]=useState(null),[detailTab,setDetailTab]=useState('overview'),[edit,setEdit]=useState(null),[range,setRange]=useState(30),[creditSettings,setCreditSettings]=useState([]),[creditPlans,setCreditPlans]=useState([]);
  const load=async()=>{setBusy(true);const rs=await Promise.all([  supabase.rpc('admin_get_users'),
-  supabase.from('profiles').select('*').order('created_at',{ascending:false}).limit(2000),
   supabase.from('teams').select('*').order('created_at',{ascending:false}).limit(1000),
   supabase.from('team_members').select('*').limit(5000),
   supabase.from('team_membership_history').select('*').order('occurred_at',{ascending:false}).limit(10000),
