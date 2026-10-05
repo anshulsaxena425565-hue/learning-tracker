@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { createRemoteJWKSet, jwtVerify } from 'npm:jose@6'
 
-const PROJECT_ID = 'learningbeyond-aa6ea'
+const PROJECT_ID = 'learningbeyond-aa6ea' // Firebase project
 const ISSUER = `https://securetoken.google.com/${PROJECT_ID}`
 // Firebase publishes the Secure Token service account public keys as a JWKS.
 // The previous x509 endpoint returns certificates, not a JWKS, which caused
