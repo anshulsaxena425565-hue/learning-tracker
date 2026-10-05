@@ -3,7 +3,11 @@ import { createRemoteJWKSet, jwtVerify } from 'npm:jose@6'
 
 const PROJECT_ID = 'learningbeyond-aa6ea'
 const ISSUER = `https://securetoken.google.com/${PROJECT_ID}`
-const JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com'))
+// Firebase publishes the Secure Token service account public keys as a JWKS.
+// The previous x509 endpoint returns certificates, not a JWKS, which caused
+// jose to throw JWKSInvalid before the request could reach Supabase Admin.
+const JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'))
+
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -18,10 +22,16 @@ function json(body, status=200) {
 async function verifyFirebase(req) {
   const header = req.headers.get('Authorization') || ''
   if (!header.startsWith('Bearer ')) throw new Error('Missing Firebase authorization token.')
-  const { payload } = await jwtVerify(header.slice(7), JWKS, { issuer: ISSUER, audience: PROJECT_ID })
+
+  const { payload } = await jwtVerify(header.slice(7), JWKS, {
+    issuer: ISSUER,
+    audience: PROJECT_ID,
+  })
+
   if (!payload.sub || typeof payload.sub !== 'string' || typeof payload.email !== 'string') {
     throw new Error('Invalid Firebase identity.')
   }
+
   return payload
 }
 
@@ -29,8 +39,13 @@ function admin() {
   const keys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}')
   const key = keys.default || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
   if (!key) throw new Error('Supabase server credentials are not configured.')
+
   return createClient(Deno.env.get('SUPABASE_URL')!, key, {
-    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false,
+    },
   })
 }
 
@@ -38,22 +53,33 @@ async function findUser(client, email) {
   for (let page=1; page<=20; page++) {
     const { data, error } = await client.auth.admin.listUsers({ page, perPage: 1000 })
     if (error) throw error
+
     const found = data.users.find(u => (u.email || '').toLowerCase() === email)
     if (found) return found
     if (data.users.length < 1000) return null
   }
+
   return null
 }
 
 async function ensureWorkspace(client, userId, displayName) {
   const name = (displayName || 'Learner').trim().slice(0,120) || 'Learner'
+
   const { error: profileError } = await client.from('profiles').upsert({
-    id: userId, display_name: name, deleted_at: null
+    id: userId,
+    display_name: name,
+    deleted_at: null,
   }, { onConflict: 'id' })
+
   if (profileError) throw profileError
 
   const { data: membership, error: membershipError } = await client
-    .from('team_members').select('team_id').eq('user_id', userId).limit(1).maybeSingle()
+    .from('team_members')
+    .select('team_id')
+    .eq('user_id', userId)
+    .limit(1)
+    .maybeSingle()
+
   if (membershipError) throw membershipError
   if (membership?.team_id) return membership.team_id
 
@@ -65,11 +91,15 @@ async function ensureWorkspace(client, userId, displayName) {
     description: 'Personal Learning Beyond workspace',
     category: 'learning',
   }).select('id').single()
+
   if (teamError) throw teamError
 
   const { error: memberError } = await client.from('team_members').insert({
-    team_id: team.id, user_id: userId, role: 'owner'
+    team_id: team.id,
+    user_id: userId,
+    role: 'owner',
   })
+
   if (memberError) throw memberError
   return team.id
 }
@@ -83,40 +113,65 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const email = String(body?.email || '').trim().toLowerCase()
     const displayName = String(body?.displayName || claims.name || '').trim()
-    if (email !== String(claims.email).trim().toLowerCase()) return json({ error: 'Firebase identity mismatch.' }, 403)
+
+    if (!email || email !== String(claims.email).trim().toLowerCase()) {
+      return json({ error: 'Firebase identity mismatch.' }, 403)
+    }
 
     const client = admin()
     let user = await findUser(client, email)
+
     if (!user) {
       const created = await client.auth.admin.createUser({
         email,
         email_confirm: true,
-        user_metadata: { full_name: displayName },
+        user_metadata: {
+          full_name: displayName,
+          firebase_uid: String(claims.sub),
+        },
       })
+
       if (created.error) throw created.error
       user = created.data.user
-    } else if (displayName) {
+    } else {
       const updated = await client.auth.admin.updateUserById(user.id, {
         email_confirm: true,
-        user_metadata: { ...(user.user_metadata || {}), full_name: displayName },
+        user_metadata: {
+          ...(user.user_metadata || {}),
+          ...(displayName ? { full_name: displayName } : {}),
+          firebase_uid: String(claims.sub),
+        },
       })
+
       if (updated.error) throw updated.error
       user = updated.data.user
     }
 
     const teamId = await ensureWorkspace(client, user.id, displayName)
+
+    // Generate a one-time token hash server-side. The browser exchanges this
+    // hash with verifyOtp; the magic-link action URL is never sent to the client.
     const link = await client.auth.admin.generateLink({
       type: 'magiclink',
       email,
-      options: { redirectTo: 'https://learningbeyond.online/' },
     })
-    if (link.error) throw link.error
-    const actionLink = link.data?.properties?.action_link || link.data?.action_link
-    if (!actionLink) throw new Error('Could not create the Learning Beyond data session.')
 
-    return json({ ok: true, userId: user.id, teamId, email, actionLink })
+    if (link.error) throw link.error
+
+    const tokenHash = link.data?.properties?.hashed_token
+    if (!tokenHash) throw new Error('Could not create the Learning Beyond data session.')
+
+    return json({
+      ok: true,
+      userId: user.id,
+      teamId,
+      email,
+      tokenHash,
+    })
   } catch (error) {
     console.error('provision-firebase-account failed', error)
-    return json({ error: error?.message || 'Unable to open the Learning Beyond data account.' }, 400)
+    return json({
+      error: error?.message || 'Unable to open the Learning Beyond data account.',
+    }, 400)
   }
 })
