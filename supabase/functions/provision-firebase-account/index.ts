@@ -3,7 +3,7 @@ import { createRemoteJWKSet, jwtVerify } from 'npm:jose@6'
 
 const PROJECT_ID = 'learningbeyond-aa6ea' // Firebase project
 const ISSUER = `https://securetoken.google.com/${PROJECT_ID}`
-// Firebase publishes the Secure Token service account public keys as a JWKS.
+// Firebase publishes the Secure Token service account public keys as a JWKS.\n// Deployment trigger: keep the production bridge aligned with main.
 // The previous x509 endpoint returns certificates, not a JWKS, which caused
 // jose to throw JWKSInvalid before the request could reach Supabase Admin.
 const JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'))
