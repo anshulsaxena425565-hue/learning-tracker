@@ -113,6 +113,7 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const email = String(body?.email || '').trim().toLowerCase()
     const displayName = String(body?.displayName || claims.name || '').trim()
+    const existingOnly = body?.existingOnly === true
 
     if (!email || email !== String(claims.email).trim().toLowerCase()) {
       return json({ error: 'Firebase identity mismatch.' }, 403)
@@ -120,6 +121,14 @@ Deno.serve(async (req) => {
 
     const client = admin()
     let user = await findUser(client, email)
+
+    // During the Firebase migration, an older Learning Beyond account may
+    // already have a Supabase identity while its Firebase email is still
+    // unverified. Allow that existing identity to be restored, but never
+    // create a brand-new data account from an unverified Firebase identity.
+    if (!user && existingOnly) {
+      return json({ error: 'EXISTING_ACCOUNT_REQUIRED' }, 409)
+    }
 
     if (!user) {
       const created = await client.auth.admin.createUser({
