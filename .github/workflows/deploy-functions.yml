@@ -14,7 +14,9 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-      - run: supabase functions deploy generate-ai-test --project-ref "$PROJECT_ID" --use-api
+      - run: |
+          supabase functions deploy generate-ai-test --project-ref "$PROJECT_ID" --use-api
+          supabase functions deploy provision-firebase-account --project-ref "$PROJECT_ID" --use-api --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_ID: ejlgobrbajobdbcjodhr
