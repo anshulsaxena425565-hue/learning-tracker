@@ -6,9 +6,9 @@ const initials=v=>String(v||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join('').t
 const n=v=>Number(v||0);
 
 export default function Admin(){
- const[d,setD]=useState({profiles:[],teams:[],members:[],history:[],courses:[],videos:[],progress:[],chapters:[],notes:[],bookmarks:[],transcripts:[],tests:[],questions:[],options:[],attempts:[],answers:[],admins:[],chat:[],userControls:[],teamControls:[]});
+ const[d,setD]=useState({profiles:[],teams:[],members:[],history:[],courses:[],videos:[],progress:[],chapters:[],notes:[],bookmarks:[],transcripts:[],tests:[],questions:[],options:[],attempts:[],answers:[],admins:[],chat:[],userControls:[],teamControls:[],authUsers:[]});
  const[tab,setTab]=useState('overview'),[q,setQ]=useState(''),[userView,setUserView]=useState('active'),[busy,setBusy]=useState(false),[msg,setMsg]=useState(''),[authorized,setAuthorized]=useState(null),[detail,setDetail]=useState(null),[detailTab,setDetailTab]=useState('overview'),[edit,setEdit]=useState(null),[range,setRange]=useState(30),[creditSettings,setCreditSettings]=useState([]),[creditPlans,setCreditPlans]=useState([]);
- const load=async()=>{setBusy(true);const rs=await Promise.all([
+ const load=async()=>{setBusy(true);const rs=await Promise.all([supabase.rpc('admin_get_users'),
   supabase.from('profiles').select('*').order('created_at',{ascending:false}).limit(2000),
   supabase.from('teams').select('*').order('created_at',{ascending:false}).limit(1000),
   supabase.from('team_members').select('*').limit(5000),
@@ -29,7 +29,7 @@ export default function Admin(){
   supabase.from('platform_user_controls').select('*').limit(2000),
   supabase.from('platform_team_controls').select('*').limit(1000),
   supabase.from('team_chat_messages').select('*').order('created_at',{ascending:false}).limit(3000),supabase.from('credit_settings').select('*').order('key'),supabase.from('credit_plans').select('*').order('position')
- ]);const keys=['profiles','teams','members','history','courses','videos','progress','chapters','notes','bookmarks','transcripts','tests','questions','options','attempts','answers','admins','userControls','teamControls','chat','creditSettings','creditPlans'];const bad=rs.find(x=>x.error);if(bad)setMsg(bad.error.message);const x={};keys.forEach((k,i)=>x[k]=rs[i].data||[]);setD(x);setCreditSettings(x.creditSettings||[]);setCreditPlans(x.creditPlans||[]);setBusy(false)};
+ ]);const keys=['authUsers','profiles','teams','members','history','courses','videos','progress','chapters','notes','bookmarks','transcripts','tests','questions','options','attempts','answers','admins','userControls','teamControls','chat','creditSettings','creditPlans'];const bad=rs.find(x=>x.error);if(bad)setMsg(bad.error.message);const x={};keys.forEach((k,i)=>x[k]=rs[i].data||[]);x.profiles=(x.authUsers||[]).map(u=>({...u}));setD(x);setCreditSettings(x.creditSettings||[]);setCreditPlans(x.creditPlans||[]);setBusy(false)};
  useEffect(()=>{supabase.rpc('is_platform_admin').then(({data,error})=>{if(error){setAuthorized(false);setMsg(error.message)}else{setAuthorized(Boolean(data));if(data)load();else setMsg('Platform admin access required.')}})},[]);
  useEffect(()=>{const fn=e=>{const t=d.teams.find(x=>x.id===e.detail?.teamId);if(t){setDetail({type:'team',data:t});setDetailTab('courses')}};window.addEventListener('admin:manage-content',fn);return()=>window.removeEventListener('admin:manage-content',fn)},[d.teams]);
  const names=useMemo(()=>Object.fromEntries(d.profiles.map(x=>[x.id,x.display_name||'Unnamed user'])),[d.profiles]),teamNames=useMemo(()=>Object.fromEntries(d.teams.map(x=>[x.id,x.name])),[d.teams]),testNames=useMemo(()=>Object.fromEntries(d.tests.map(x=>[x.id,x.title])),[d.tests]),courseNames=useMemo(()=>Object.fromEntries(d.courses.map(x=>[x.id,x.title])),[d.courses]);
@@ -37,7 +37,7 @@ export default function Admin(){
  const videosByCourse=useMemo(()=>{const m={};d.videos.forEach(x=>m[x.playlist_id]=(m[x.playlist_id]||0)+1);return m},[d.videos]);
  const questionsByTest=useMemo(()=>{const m={};d.questions.forEach(x=>m[x.test_id]=(m[x.test_id]||0)+1);return m},[d.questions]);
  const submitted=d.attempts.filter(x=>x.submitted_at),avgScore=submitted.length?Math.round(submitted.reduce((a,x)=>a+n(x.percentage),0)/submitted.length):0;
- const activeCutoff=Date.now()-range*864e5,activeUsers=new Set([...d.progress.filter(x=>new Date(x.updated_at).getTime()>activeCutoff).map(x=>x.user_id),...d.attempts.filter(x=>new Date(x.started_at).getTime()>activeCutoff).map(x=>x.user_id)]).size;
+ const activeCutoff=Date.now()-range*864e5,activityUsers=new Set([...d.progress.filter(x=>new Date(x.updated_at).getTime()>activeCutoff).map(x=>x.user_id),...d.attempts.filter(x=>new Date(x.started_at).getTime()>activeCutoff).map(x=>x.user_id)]),activeUsers=d.profiles.filter(x=>!x.deleted_at&&((x.last_sign_in_at&&new Date(x.last_sign_in_at).getTime()>activeCutoff)||activityUsers.has(x.id))).length;
  const completion=d.progress.length?Math.round(d.progress.filter(x=>x.completed_at).length/d.progress.length*100):0,watchedHours=Math.round(d.progress.reduce((a,x)=>a+n(x.watched_seconds),0)/3600*10)/10;
  const filtered=useMemo(()=>{const s=q.toLowerCase();if(tab==='users')return d.profiles.filter(x=>userView==='deleted'?Boolean(x.deleted_at):!x.deleted_at).filter(x=>JSON.stringify(x).toLowerCase().includes(s));if(tab==='teams')return d.teams.filter(x=>JSON.stringify(x).toLowerCase().includes(s));return d.admins.filter(x=>JSON.stringify(x).toLowerCase().includes(s))},[tab,q,d,userView]);
  const open=(type,data)=>{setDetail({type,data});setDetailTab('overview')};
