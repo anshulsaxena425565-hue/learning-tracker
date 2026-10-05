@@ -111,10 +111,10 @@ Deno.serve(async (req) => {
       options: { redirectTo: 'https://learningbeyond.online/' },
     })
     if (link.error) throw link.error
-    const tokenHash = link.data?.properties?.hashed_token
-    if (!tokenHash) throw new Error('Could not create the Learning Beyond data session.')
+    const actionLink = link.data?.properties?.action_link || link.data?.action_link
+    if (!actionLink) throw new Error('Could not create the Learning Beyond data session.')
 
-    return json({ ok: true, userId: user.id, teamId, email, tokenHash })
+    return json({ ok: true, userId: user.id, teamId, email, actionLink })
   } catch (error) {
     console.error('provision-firebase-account failed', error)
     return json({ error: error?.message || 'Unable to open the Learning Beyond data account.' }, 400)
