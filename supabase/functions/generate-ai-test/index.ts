@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const url=Deno.env.get("SUPABASE_URL")!;
 const publishableKey=Deno.env.get("SUPABASE_PUBLISHABLE_KEY")||Deno.env.get("SUPABASE_ANON_KEY")!;
 const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const geminiKey=Deno.env.get("GEMINI_API_KEY")!;
+const geminiKey=Deno.env.get("GEMINI_API_KEY")||"";
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const out=(x:unknown,s=200)=>new Response(JSON.stringify(x),{status:s,headers:{...cors,"Content-Type":"application/json"}});
 
@@ -27,6 +27,7 @@ Deno.serve(async req=>{
   try{
     const auth=req.headers.get("Authorization");
     if(!auth?.startsWith("Bearer "))return out({error:"Authentication required."},401);
+    if(!geminiKey)return out({error:"AI quiz service is not configured: GEMINI_API_KEY is missing."},503);
 
     const db=createClient(url,publishableKey,{auth:{persistSession:false},global:{headers:{Authorization:auth}}});
     const admin=createClient(url,serviceKey,{auth:{persistSession:false}});
@@ -104,6 +105,7 @@ Deno.serve(async req=>{
             const payload=await response.json().catch(()=>({}));
             if(!response.ok){
               lastError=payload?.error?.message||("Gemini HTTP "+response.status);
+              console.error("Gemini generation error", { model, status: response.status, error: payload?.error||payload });
               
               if([408,429,500,502,503,504].includes(response.status)){
                 capacityFailure=true;
@@ -144,6 +146,7 @@ Deno.serve(async req=>{
             return qs;
           }catch(e){
             lastError=e instanceof Error?e.message:String(e);
+            console.error("Gemini generation request failed", { model, attempt: attempt+1, error: lastError });
             
           }finally{
             clearTimeout(timer);
@@ -235,6 +238,6 @@ Deno.serve(async req=>{
       }
     }
     console.error("AI test generation failed",e);
-    return out({error:e instanceof Error?e.message:"AI test generation failed."},500);
+    return out({error:e instanceof Error?e.message:"AI test generation failed.",code:"AI_QUIZ_GENERATION_FAILED"},502);
   }
 });
