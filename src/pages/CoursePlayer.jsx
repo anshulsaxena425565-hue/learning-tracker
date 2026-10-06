@@ -78,9 +78,15 @@ export default function CoursePlayer({courseId,videoId,onOpenVideo,back}){
  <div className="panel-heading"><div><b>AI Learning</b><span>Notes, summary and quiz for this video only.</span></div></div>
  <div className="ai-source-banner"><span>✦</span><div><b>{transcript?.status==='ready'?'Transcript ready':'No captions? No problem.'}</b><small>{transcript?.status==='ready'?'AI is using the current video transcript.':'AI can analyze this YouTube video directly.'}</small></div></div>
  <div className="ai-actions"><div className="ai-action-copy"><span>LEARN WITH AI</span><b>Pick a study mode</b></div>
-  <button onClick={()=>generateAi('notes')} disabled={!!aiLoading}>{aiLoading==='notes'?'Generating…' :'✦ AI Notes · '+cost('ai_notes')+' Credits'}</button>
-  <button onClick={()=>generateAi('summary')} disabled={!!aiLoading}>{aiLoading==='summary'?'Generating…' :'▤ AI Summary · '+cost('ai_summary')+' Credits'}</button>
-  <button onClick={()=>generateAi('quiz')} disabled={!!aiLoading||!!aiContent?.quiz?.length}>{aiLoading==='quiz'?'Generating…' :aiContent?.quiz?.length?'✓ Quiz ready':'? AI Quiz · '+cost('ai_quiz')+' Credits'}</button>
+  <button onClick={()=>generateAi('notes')} disabled={!!aiLoading||!!aiContent?.notes}>
+   {aiLoading==='notes'?'Generating…':aiContent?.notes?'✓ Notes ready':'✦ AI Notes · '+cost('ai_notes')+' Credits'}
+  </button>
+  <button onClick={()=>generateAi('summary')} disabled={!!aiLoading||!!aiContent?.summary}>
+   {aiLoading==='summary'?'Generating…':aiContent?.summary?'✓ Summary ready':'▤ AI Summary · '+cost('ai_summary')+' Credits'}
+  </button>
+  <button onClick={()=>generateAi('quiz')} disabled={!!aiLoading||!!aiContent?.quiz?.length}>
+   {aiLoading==='quiz'?'Generating…':aiContent?.quiz?.length?'✓ Quiz ready':'? AI Quiz · '+cost('ai_quiz')+' Credits'}
+  </button>
  </div>
  {aiError&&<p className="error">{aiError}</p>}
  {aiContent?.notes&&<div className="ai-result"><h3>AI Notes</h3><p>{aiContent.notes.overview}</p><h4>Key concepts</h4><ul>{(aiContent.notes.key_concepts||[]).map((x,i)=><li key={i}>{x}</li>)}</ul><h4>Important points</h4><ul>{(aiContent.notes.important_points||[]).map((x,i)=><li key={i}>{x}</li>)}</ul>{aiContent.notes.examples?.length>0&&<><h4>Examples</h4><ul>{aiContent.notes.examples.map((x,i)=><li key={i}>{x}</li>)}</ul></>}<h4>Quick revision</h4><ul>{(aiContent.notes.quick_revision||[]).map((x,i)=><li key={i}>{x}</li>)}</ul><h4>Key terms</h4><p>{(aiContent.notes.key_terms||[]).join(' • ')}</p></div>}
