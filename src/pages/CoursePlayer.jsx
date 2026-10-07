@@ -40,10 +40,48 @@ export default function CoursePlayer({courseId,videoId,onOpenVideo,back}){
  async function loadAiContent(){if(!user||!v)return;const{data,error}=await supabase.from('video_ai_content').select('notes,summary,quiz').eq('playlist_video_id',v.id).eq('user_id',dataUser?.id).maybeSingle();if(!error)setAiContent(data||null)}
  async function generateAi(action){
   if(!user||!v)return;
-  if(action==='notes'&&transcript?.status!=='ready'){
-    setAiError('Generate the transcript first, then turn it into notes.');
+  const key='ai_'+action;
+  setAiLoading(action);
+  setAiError('');
+
+  // AI generation is transcript-first. This avoids sending a public YouTube URL
+  // directly to Gemini, which can trigger external-video ingestion quota/timeouts.
+  let currentTranscript=transcript;
+  if(currentTranscript?.status!=='ready'){
+    const tr=await supabase.functions.invoke('get-youtube-transcript',{body:{playlist_video_id:v.id}});
+    if(tr.error||tr.data?.status==='error'){
+      const message=tr.data?.error||tr.error?.message||'We could not prepare the video transcript. Please try again.';
+      setAiError(message);
+      setAiLoading('');
+      return;
+    }
+    currentTranscript=tr.data;
+    setTranscript(currentTranscript);
+  }
+
+  const r=await supabase.functions.invoke('generate-video-ai',{body:{action,playlist_video_id:v.id}});
+  if(r.error||r.data?.error){
+    let serverMessage=r.data?.error||'';
+    try{
+      if(r.error?.context){
+        const body=await r.error.context.clone().json();
+        serverMessage=body?.error||serverMessage;
+      }
+    }catch{}
+    const msg=serverMessage||r.error?.message||'AI generation failed. Please try again.';
+    setAiError(msg);
+    setAiLoading('');
     return;
-  }const key='ai_'+action;setAiLoading(action);setAiError('');const r=await supabase.functions.invoke('generate-video-ai',{body:{action,playlist_video_id:v.id}});if(r.error||r.data?.error){let serverMessage=r.data?.error||'';try{if(r.error?.context){const body=await r.error.context.clone().json();serverMessage=body?.error||serverMessage}}catch{}const msg=serverMessage||r.error?.message||'AI generation failed. Please try again.';setAiError(msg);setAiLoading('');return}const credit=await charge(key,'AI '+action+' for '+v.title,{video_id:v.id});if(credit.error||!credit.data?.ok){setAiError(credit.error?.message||credit.data?.error||'Not enough credits.');setAiLoading('');return}setAiContent(r.data?.content||null);setAiLoading('')}
+  }
+  const credit=await charge(key,'AI '+action+' for '+v.title,{video_id:v.id});
+  if(credit.error||!credit.data?.ok){
+    setAiError(credit.error?.message||credit.data?.error||'Not enough credits.');
+    setAiLoading('');
+    return;
+  }
+  setAiContent(r.data?.content||null);
+  setAiLoading('');
+}
  if(!p)return null;if(!v)return <div className="page learning-player-page"><section className="section"><h2>Preparing your lesson…</h2><p className="muted">Loading the course video. Please wait a moment.</p></section></div>;
  const duration=Math.max(progress[v.id]?.duration_seconds||0,1),percent=Math.min(100,Math.round((watched/duration)*100)),completed=!!progress[v.id]?.completed_at;
  const completedCount=vs.filter(x=>progress[x.id]?.completed_at).length,totalCount=vs.length,coursePercent=totalCount?Math.round(completedCount/totalCount*100):0,xp=globalXp,level=Math.max(1,Math.floor(xp/250)+1),nextIndex=Math.min(vs.findIndex(x=>x.id===v.id)+1,totalCount-1);
