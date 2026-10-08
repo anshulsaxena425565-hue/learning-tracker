@@ -2801,3 +2801,24 @@ body:has(.auth2-shell){overflow:hidden}
 .cashfree-phone-continue:hover{filter:brightness(.96);transform:translateY(-1px)}
 .cashfree-phone-continue span{font-size:17px}.cashfree-phone-secure{display:block;margin-top:10px;text-align:center;color:var(--muted);font-size:9px}
 @media(max-width:600px){.cashfree-phone-overlay{align-items:end;padding:10px}.cashfree-phone-modal{padding:24px 18px 18px;border-radius:20px}.cashfree-phone-modal h2{font-size:22px}}
+
+
+/* Course sidebar progress spacing — remove inherited vertical whitespace */
+.learning-player-page .course-sidebar .course-progress-line{
+  margin:0!important;
+  padding:0 18px 10px!important;
+}
+.learning-player-page .course-sidebar .course-progress-line>div{
+  margin-bottom:5px!important;
+}
+.learning-player-page .course-sidebar .lesson-list-heading{
+  padding:8px 18px 7px!important;
+}
+@media(max-width:600px){
+  .learning-player-page .course-sidebar .course-progress-line{
+    padding:0 15px 8px!important;
+  }
+  .learning-player-page .course-sidebar .lesson-list-heading{
+    padding:7px 15px 6px!important;
+  }
+}
