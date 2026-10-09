@@ -145,11 +145,11 @@ function AuthPage({ mode }) {
             <div className="auth2-divider"><span>or continue with</span></div>
             <button className="auth2-google" type="button" onClick={googleLogin} disabled={busy}>
               <span className="auth2-google-mark" aria-hidden="true">
-                <svg className="google-brand-logo" viewBox="0 0 48 48" role="img" focusable="false">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" transform="translate(0 4)"/>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.76 7.18l7.73 6C44.42 37.97 46.98 31.9 46.98 24.55Z"/>
-                  <path fill="#FBBC05" d="M10.53 28.59a14.4 14.4 0 0 1 0-9.18l-7.98-6.19a23.9 23.9 0 0 0 0 21.56l7.98-6.19Z" transform="translate(0 4)"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" transform="translate(0 -4)"/>
+                <svg className="google-brand-logo" viewBox="0 0 48 48" role="img" focusable="false" aria-label="Google">
+                  <path fill="#4285F4" d="M48 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h13.94c-.6 3.04-2.38 5.63-5.08 7.36l8.22 6.38C45.91 38.19 48 31.84 48 24.55z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-8.22-6.38c-2.27 1.52-5.17 2.42-7.69 2.42-5.91 0-10.92-3.99-12.71-9.36l-8.5 6.56C6.72 42.62 14.62 48 24 48z"/>
+                  <path fill="#FBBC05" d="M11.29 28.88A14.4 14.4 0 0 1 10.5 24c0-1.69.29-3.32.79-4.88l-8.5-6.56A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.58 10.76l8.71-5.88z"/>
+                  <path fill="#EA4335" d="M24 9.55c3.53 0 6.7 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.72 5.38 2.79 12.56l8.5 6.56C13.08 13.54 18.09 9.55 24 9.55z"/>
                 </svg>
               </span>
               <span className="auth2-google-label">{busy ? 'Connecting to Google…' : 'Continue with Google'}</span>
