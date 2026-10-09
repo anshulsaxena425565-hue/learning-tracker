@@ -146,10 +146,16 @@ function AuthPage({ mode }) {
             <button className="auth2-google" type="button" onClick={googleLogin} disabled={busy}>
               <span className="auth2-google-mark" aria-hidden="true">
                 <svg className="google-brand-logo" viewBox="0 0 48 48" role="img" focusable="false" aria-label="Google">
-                  <path fill="#4285F4" d="M48 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h13.94c-.6 3.04-2.38 5.63-5.08 7.36l8.22 6.38C45.91 38.19 48 31.84 48 24.55z"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-8.22-6.38c-2.27 1.52-5.17 2.42-7.69 2.42-5.91 0-10.92-3.99-12.71-9.36l-8.5 6.56C6.72 42.62 14.62 48 24 48z"/>
-                  <path fill="#FBBC05" d="M11.29 28.88A14.4 14.4 0 0 1 10.5 24c0-1.69.29-3.32.79-4.88l-8.5-6.56A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.58 10.76l8.71-5.88z"/>
-                  <path fill="#EA4335" d="M24 9.55c3.53 0 6.7 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.72 5.38 2.79 12.56l8.5 6.56C13.08 13.54 18.09 9.55 24 9.55z"/>
+                  <defs>
+                    <linearGradient id="googleGTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb900"/><stop offset=".48" stop-color="#ff6d3a"/><stop offset="1" stop-color="#e94235"/></linearGradient>
+                    <linearGradient id="googleGBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4285f4"/><stop offset="1" stop-color="#287ae6"/></linearGradient>
+                    <linearGradient id="googleGGreen" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#34a853"/><stop offset="1" stop-color="#a8c900"/></linearGradient>
+                  </defs>
+                  <path fill="url(#googleGTop)" d="M24 2A22 22 0 0 0 2 24h9A13 13 0 0 1 33.2 14.8l6.4-6.4A21.9 21.9 0 0 0 24 2Z"/>
+                  <path fill="url(#googleGTop)" d="M2 24A22 22 0 0 1 24 2v9A13 13 0 0 0 11 24H2Z" transform="rotate(-8 24 24)"/>
+                  <path fill="url(#googleGGreen)" d="M2 24a22 22 0 0 0 39.5 13.5l-6.8-5.8A13 13 0 0 1 11 24H2Z"/>
+                  <path fill="url(#googleGBlue)" d="M24 19h22a22 22 0 0 1-6.5 18.5l-6.8-5.8A13 13 0 0 0 37 28H24Z"/>
+                  <path fill="#4285F4" d="M24 19h21.6c.3 1.6.4 3.3.4 5 0 1.4-.1 2.7-.4 4H24Z"/>
                 </svg>
               </span>
               <span className="auth2-google-label">{busy ? 'Connecting to Google…' : 'Continue with Google'}</span>
