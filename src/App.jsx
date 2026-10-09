@@ -144,7 +144,9 @@ function AuthPage({ mode }) {
           <div className="auth2-oauth">
             <div className="auth2-divider"><span>or continue with</span></div>
             <button className="auth2-google" type="button" onClick={googleLogin} disabled={busy}>
-              <GoogleLogo weight="bold" /> <span>Continue with Google</span>
+              <span className="auth2-google-mark" aria-hidden="true"><GoogleLogo weight="bold" /></span>
+              <span className="auth2-google-label">{busy ? 'Connecting to Google…' : 'Continue with Google'}</span>
+              <ArrowRight className="auth2-google-arrow" weight="bold" aria-hidden="true" />
             </button>
           </div>
 
