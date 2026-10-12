@@ -21,6 +21,18 @@ function schemaFor(needHindi:boolean){
 }
 
 const parseModelJson=(raw:string)=>JSON.parse(String(raw||"").trim());
+function validQuestionBatch(qs:any[],expected:number,needHindi:boolean){
+  if(!Array.isArray(qs)||qs.length!==expected)return false;
+  return qs.every((q:any)=>{
+    if(!String(q?.question||"").trim()||!String(q?.explanation||"").trim())return false;
+    const opts=Array.isArray(q?.options)?q.options:[];
+    if(opts.length!==4||opts.filter((o:any)=>o?.correct===true).length!==1)return false;
+    if(opts.some((o:any)=>!String(o?.text||"").trim()))return false;
+    if(needHindi&&(!String(q?.question_hi||"").trim()||!String(q?.explanation_hi||"").trim()||
+      opts.some((o:any)=>!String(o?.text_hi||"").trim())))return false;
+    return true;
+  });
+}
 
 Deno.serve(async req=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
@@ -29,7 +41,7 @@ Deno.serve(async req=>{
   try{
     const auth=req.headers.get("Authorization");
     if(!auth?.startsWith("Bearer "))return out({error:"Authentication required."},401);
-    if(!geminiKey)return out({error:"AI quiz service is not configured: GEMINI_API_KEY is missing."},503);
+    if(!geminiKey&&!openAiKey)return out({error:"AI quiz service is not configured: add GEMINI_API_KEY or OPENAI_API_KEY."},503);
 
     const db=createClient(url,publishableKey,{auth:{persistSession:false},global:{headers:{Authorization:auth}}});
     const admin=createClient(url,serviceKey,{auth:{persistSession:false}});
@@ -84,6 +96,7 @@ Deno.serve(async req=>{
       let lastError="Unable to generate batch "+(chunkIndex+1)+".";
       let capacityFailure=false;
       for(const model of models){
+        if(!geminiKey)break;
         for(let attempt=0;attempt<3;attempt++){
           const controller=new AbortController();
           const timer=setTimeout(()=>controller.abort(),25000);
@@ -141,9 +154,8 @@ Deno.serve(async req=>{
             }
 
             const qs=Array.isArray(parsed?.questions)?parsed.questions:[];
-            if(qs.length!==chunkCount){
-              lastError="Gemini returned "+qs.length+" questions for batch "+(chunkIndex+1)+"; expected "+chunkCount+".";
-              
+            if(!validQuestionBatch(qs,chunkCount,needHindi)){
+              lastError="Gemini returned an incomplete or invalid question batch "+(chunkIndex+1)+".";
               continue;
             }
             return qs;
