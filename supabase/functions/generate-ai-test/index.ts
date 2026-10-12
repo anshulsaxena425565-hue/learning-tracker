@@ -6,6 +6,7 @@ const url=Deno.env.get("SUPABASE_URL")!;
 const publishableKey=Deno.env.get("SUPABASE_PUBLISHABLE_KEY")||Deno.env.get("SUPABASE_ANON_KEY")!;
 const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const geminiKey=Deno.env.get("GEMINI_API_KEY")||"";
+const openAiKey=Deno.env.get("OPENAI_API_KEY")||"";
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const out=(x:unknown,s=200)=>new Response(JSON.stringify(x),{status:s,headers:{...cors,"Content-Type":"application/json"}});
 
@@ -20,17 +21,31 @@ function schemaFor(needHindi:boolean){
 }
 
 const parseModelJson=(raw:string)=>JSON.parse(String(raw||"").trim());
+function validQuestionBatch(qs:any[],expected:number,needHindi:boolean){
+  if(!Array.isArray(qs)||qs.length!==expected)return false;
+  return qs.every((q:any)=>{
+    if(!String(q?.question||"").trim()||!String(q?.explanation||"").trim())return false;
+    const opts=Array.isArray(q?.options)?q.options:[];
+    if(opts.length!==4||opts.filter((o:any)=>o?.correct===true).length!==1)return false;
+    if(opts.some((o:any)=>!String(o?.text||"").trim()))return false;
+    if(needHindi&&(!String(q?.question_hi||"").trim()||!String(q?.explanation_hi||"").trim()||
+      opts.some((o:any)=>!String(o?.text_hi||"").trim())))return false;
+    return true;
+  });
+}
 
 Deno.serve(async req=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
   let createdTestId:string|null=null;
+  let cleanupAdmin:any=null;
   try{
     const auth=req.headers.get("Authorization");
     if(!auth?.startsWith("Bearer "))return out({error:"Authentication required."},401);
-    if(!geminiKey)return out({error:"AI quiz service is not configured: GEMINI_API_KEY is missing."},503);
+    if(!geminiKey&&!openAiKey)return out({error:"AI quiz service is not configured: add GEMINI_API_KEY or OPENAI_API_KEY."},503);
 
     const db=createClient(url,publishableKey,{auth:{persistSession:false},global:{headers:{Authorization:auth}}});
     const admin=createClient(url,serviceKey,{auth:{persistSession:false}});
+    cleanupAdmin=admin;
 
     const {data:{user},error:authError}=await db.auth.getUser();
     if(authError||!user)return out({error:"Invalid session."},401);
@@ -59,7 +74,7 @@ Deno.serve(async req=>{
 
     const chunkSize=5;
     const chunks=Math.ceil(count/chunkSize);
-    const models=["gemini-3.8-flash","gemini-3.7-flash","gemini-3.6-flash","gemini-3.5-flash-lite","gemini-2.5-flash"];
+    const models=["gemini-2.5-flash","gemini-2.0-flash"];
 
     async function generateChunk(chunkIndex:number,chunkCount:number){
       const start=chunkIndex*chunkSize+1;
@@ -81,6 +96,7 @@ Deno.serve(async req=>{
       let lastError="Unable to generate batch "+(chunkIndex+1)+".";
       let capacityFailure=false;
       for(const model of models){
+        if(!geminiKey)break;
         for(let attempt=0;attempt<3;attempt++){
           const controller=new AbortController();
           const timer=setTimeout(()=>controller.abort(),25000);
@@ -138,9 +154,8 @@ Deno.serve(async req=>{
             }
 
             const qs=Array.isArray(parsed?.questions)?parsed.questions:[];
-            if(qs.length!==chunkCount){
-              lastError="Gemini returned "+qs.length+" questions for batch "+(chunkIndex+1)+"; expected "+chunkCount+".";
-              
+            if(!validQuestionBatch(qs,chunkCount,needHindi)){
+              lastError="Gemini returned an incomplete or invalid question batch "+(chunkIndex+1)+".";
               continue;
             }
             return qs;
@@ -153,6 +168,39 @@ Deno.serve(async req=>{
           }
         }
         if(capacityFailure)await new Promise(r=>setTimeout(r,1000));
+      }
+      if(openAiKey){
+        for(let attempt=0;attempt<2;attempt++){
+          const controller=new AbortController();
+          const timer=setTimeout(()=>controller.abort(),30000);
+          try{
+            const response=await fetch("https://api.openai.com/v1/chat/completions",{
+              method:"POST",signal:controller.signal,
+              headers:{"Content-Type":"application/json","Authorization":"Bearer "+openAiKey},
+              body:JSON.stringify({
+                model:"gpt-4o-mini",temperature:0.3,response_format:{type:"json_object"},
+                messages:[
+                  {role:"system",content:"Generate accurate exam-focused MCQs. Return only valid JSON with a questions array. Each question must have exactly four options and exactly one correct option. Follow the requested language fields."},
+                  {role:"user",content:promptText+"\nReturn JSON shaped as {questions:[{question,question_hi,explanation,explanation_hi,options:[{text,text_hi,correct}]}]}. Include Hindi fields only when requested. Output exactly "+chunkCount+" questions."}
+                ]
+              })
+            });
+            const payload=await response.json().catch(()=>({}));
+            if(!response.ok){
+              lastError=payload?.error?.message||("OpenAI HTTP "+response.status);
+              console.error("OpenAI fallback generation error",{status:response.status,error:payload?.error||payload});
+              if([408,429,500,502,503,504].includes(response.status)&&attempt===0){await new Promise(r=>setTimeout(r,1200));continue}
+              break;
+            }
+            const raw=payload?.choices?.[0]?.message?.content||"";
+            let parsed:any;
+            try{parsed=parseModelJson(raw)}catch{lastError="OpenAI fallback returned invalid JSON.";continue}
+            const qs=Array.isArray(parsed?.questions)?parsed.questions:[];
+            if(qs.length!==chunkCount){lastError="OpenAI fallback returned "+qs.length+" questions; expected "+chunkCount+".";continue}
+            return qs;
+          }catch(e){lastError=e instanceof Error?e.message:String(e);console.error("OpenAI fallback request failed",{attempt:attempt+1,error:lastError})}
+          finally{clearTimeout(timer)}
+        }
       }
       throw new Error(lastError || ("Unable to generate batch "+(chunkIndex+1)+"."));
     }
@@ -230,12 +278,11 @@ Deno.serve(async req=>{
 
     return out({ok:true,test_id:test.id,question_count:allQuestions.length,requested_count:count});
   }catch(e){
-    if(createdTestId){
+    if(createdTestId&&cleanupAdmin){
       try{
-        await admin.from("test_series").delete().eq("id",createdTestId);
-      }catch(cleanupError){
-        console.error("AI quiz cleanup failed",cleanupError);
-      }
+        const {error:cleanupError}=await cleanupAdmin.from("test_series").delete().eq("id",createdTestId);
+        if(cleanupError)console.error("AI quiz cleanup failed",cleanupError);
+      }catch(cleanupError){console.error("AI quiz cleanup failed",cleanupError)}
     }
     console.error("AI test generation failed",e);
     return out({error:e instanceof Error?e.message:"AI test generation failed.",code:"AI_QUIZ_GENERATION_FAILED"},502);

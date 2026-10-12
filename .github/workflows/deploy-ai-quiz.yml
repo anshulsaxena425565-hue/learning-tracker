@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "supabase/functions/generate-ai-test/**"
+      - "supabase/functions/translate-test-mcq/**"
       - ".github/workflows/deploy-ai-quiz.yml"
   workflow_dispatch:
 
@@ -25,5 +26,7 @@ jobs:
           version: latest
       - name: Verify function source
         run: test -f supabase/functions/generate-ai-test/index.ts
-      - name: Deploy generate-ai-test
-        run: supabase functions deploy generate-ai-test --project-ref "$PROJECT_ID" --use-api
+      - name: Deploy AI generation and translation functions
+        run: |
+          supabase functions deploy generate-ai-test --project-ref "$PROJECT_ID" --use-api
+          supabase functions deploy translate-test-mcq --project-ref "$PROJECT_ID" --use-api
