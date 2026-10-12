@@ -31,7 +31,7 @@ export default function TestSeries({courseId,onStart,standalone=false}){
   if(!parsed.length)return setMessage('English MCQs could not be parsed. Use Q1 + A/B/C/D + Answer format.');
   if(rawHi.trim()&&parsedHi.length!==parsed.length)return setMessage('Hindi MCQ count does not match English. English: '+parsed.length+' · Hindi: '+parsedHi.length+'.');
   setBusy(true);
-  if(!rawHi.trim()){
+  if(!rawHi.trim()&&defaultLanguage!=='en'){
    setMessage('Generating Hindi version…');
    try{
     const tr=await supabase.functions.invoke('translate-test-mcq',{body:{
