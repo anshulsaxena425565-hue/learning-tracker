@@ -3,15 +3,6 @@ create or replace function public.admin_update_xp_reward_settings(p_global_enabl
 declare v_row public.xp_reward_settings%rowtype; begin if not public.is_platform_admin() then raise exception 'Platform admin access required'; end if; if p_lesson_xp<0 or p_lesson_xp>1000 or p_quiz_xp_per_ten_percent<0 or p_quiz_xp_per_ten_percent>100 or p_watch_xp_per_minute<0 or p_watch_xp_per_minute>100 then raise exception 'XP settings are outside allowed limits'; end if; update public.xp_reward_settings set global_enabled=p_global_enabled,team_enabled=p_team_enabled,lesson_xp=p_lesson_xp,quiz_xp_per_ten_percent=p_quiz_xp_per_ten_percent,watch_xp_per_minute=p_watch_xp_per_minute,show_user_panel=p_show_user_panel,updated_by=auth.uid(),updated_at=now() where id=1 returning * into v_row; return to_jsonb(v_row); end; $$;
 revoke all on function public.admin_update_xp_reward_settings(boolean,boolean,integer,integer,integer,boolean) from public,anon;
 grant execute on function public.admin_update_xp_reward_settings(boolean,boolean,integer,integer,integer,boolean) to authenticated;
-create or replace function public.get_xp_reward_center(p_team_id uuid default null) returns jsonb language plpgsql stable security definer set search_path=public as $$
-declare v_uid uuid:=auth.uid(); v_settings jsonb; v_global_xp bigint; v_team_xp bigint:=0; v_global_rewards jsonb; v_team_rewards jsonb; v_claims jsonb; begin
-if v_uid is null then raise exception 'Authentication required'; end if;
-select to_jsonb(s) into v_settings from public.xp_reward_settings s where id=1;
-v_global_xp:=public.xp_points_for_user(v_uid,null);
-if p_team_id is not null then if not exists(select 1 from public.team_members tm where tm.team_id=p_team_id and tm.user_id=v_uid) then raise exception 'Team membership required'; end if; v_team_xp:=public.xp_points_for_user(v_uid,p_team_id); end if;
-select coalesce(jsonb_agg(jsonb_build_object('id',r.id,'scope',r.scope,'title',r.title,'description',r.description,'xp_required',r.xp_required,'reward_type',r.reward_type,'reward_details',r.reward_details,'claim_status',c.status)), '[]'::jsonb) into v_global_rewards from public.xp_rewards r left join public.xp_reward_claims c on c.reward_id=r.id and c.user_id=v_uid where r.scope='global' and r.active=true;
-select coalesce(jsonb_agg(jsonb_build_object('id',r.id,'scope',r.scope,'team_id',r.team_id,'title',r.title,'description',r.description,'xp_required',r.xp_required,'reward_type',r.reward_type,'reward_details',r.reward_details,'claim_status',c.status)), '[]'::jsonb) into v_team_rewards from public.xp_rewards r left join public.xp_reward_claims c on c.reward_id=r.id and c.user_id=v_uid where r.scope='team' and r.team_id=p_team_id and r.active=true;
-select coalesce(jsonb_agg(jsonb_build_object('id',c.id,'reward_title',r.title,'claimed_at',c.claimed_at,'status',c.status,'review_note',c.review_note) order by c.claimed_at desc), '[]'::jsonb) into v_claims from public.xp_reward_claims c join public.xp_rewards r on r.id=c.reward_id where c.user_id=v_uid;
-return jsonb_build_object('settings',v_settings,'global_xp',v_global_xp,'team_xp',v_team_xp,'global_rewards',v_global_rewards,'team_rewards',v_team_rewards,'recent_claims',v_claims); end; $$;
-revoke all on function public.get_xp_reward_center(uuid) from public,anon;
-grant execute on function public.get_xp_reward_center(uuid) to authenticated;
+create or replace function public.get_xp_rewards_visibility() returns boolean language sql stable security definer set search_path=public as $$ select show_user_panel from public.xp_reward_settings where id=1 $$;
+revoke all on function public.get_xp_rewards_visibility() from public,anon;
+grant execute on function public.get_xp_rewards_visibility() to authenticated;
