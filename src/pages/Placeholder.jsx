@@ -1,6 +1,8 @@
 import{useEffect,useMemo,useState}from'react';import{supabase}from'../lib/supabase';import{Coins,Lightning,ChartLineUp,SlidersHorizontal,FloppyDisk,ArrowUpRight,Sparkle,ShieldCheck,CurrencyInr}from'@phosphor-icons/react';
+import AdminRewards from './AdminRewards';
+import AdminRewards from './AdminRewards';
 
-const TABS=[['overview','Overview'],['users','Users'],['teams','Teams'],['admins','Admins'],['credits','Credits']];
+const TABS=[['overview','Overview'],['users','Users'],['teams','Teams'],['admins','Admins'],['credits','Credits'],['rewards','XP Rewards']];
 const fmt=v=>v?new Date(v).toLocaleString(undefined,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
 const initials=v=>String(v||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase();
 const n=v=>Number(v||0);
@@ -64,7 +66,7 @@ export default function Admin(){
   <header className="admin-hero admin-hero-v3"><div><span className="admin-kicker">LEARNINGBEYOND · PLATFORM OPERATIONS</span><h1>Command <span>Center</span></h1><p>Platform-wide visibility, with deep drill-down into every team and learner.</p><div className="admin-hero-actions"><button onClick={load}>↻ Refresh</button><span>{busy?'Syncing…':'● Live platform data'}</span></div></div><div className="admin-system-card"><span className="admin-live-dot"/>SYSTEM ONLINE<strong>{d.profiles.length} users</strong><small>{d.teams.length} teams · {d.courses.length} courses · {d.tests.length} assessments</small></div></header>
   {msg&&<div className="admin-message">{msg}<button onClick={()=>setMsg('')}>×</button></div>}
   <nav className="admin-tabs">{TABS.map(x=><button key={x[0]} className={tab===x[0]?'active':''} onClick={()=>{setTab(x[0]);setQ('')}}>{x[1]}</button>)}</nav>
-  {tab==='credits'?<div className="admin-credit-console-v2">
+  {tab==='rewards'?<AdminRewards/>:tab==='credits'?<div className="admin-credit-console-v2">
  <section className="admin-credit-hero">
   <div className="admin-credit-hero-copy"><span className="admin-credit-kicker"><Coins size={14} weight="fill"/> CREDITS CONTROL CENTER</span><h2>Power the platform with Credits.</h2><p>Control what every action costs, shape your pricing packs, and keep the economy transparent for every learner.</p><div className="admin-credit-hero-actions"><span><ShieldCheck size={15}/> Changes apply platform-wide</span><span><Lightning size={15} weight="fill"/> Live pricing rules</span></div></div>
   <div className="admin-credit-hero-orb"><Coins size={48} weight="duotone"/><Sparkle size={17} weight="fill"/></div>
