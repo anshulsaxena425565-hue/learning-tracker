@@ -1,0 +1,43 @@
+import React,{useEffect,useState} from 'react';
+import {supabase} from '../lib/supabase';
+import '../styles/xp-rewards.css';
+
+const blank={id:null,scope:'global',team_id:'',title:'',description:'',xp_required:100,reward_type:'badge',reward_details:'',active:true};
+export default function AdminRewards(){
+ const [data,setData]=useState({settings:{global_enabled:false,team_enabled:false,lesson_xp:20,quiz_xp_per_ten_percent:1},rewards:[],claims:[]});
+ const [teams,setTeams]=useState([]),[form,setForm]=useState(blank),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ async function load(){setBusy(true);const [a,b]=await Promise.all([supabase.rpc('admin_get_xp_rewards'),supabase.from('teams').select('id,name').order('name')]);if(a.error)setMessage(a.error.message);else setData(a.data||data);if(b.error)setMessage(b.error.message);else setTeams(b.data||[]);setBusy(false)}
+ useEffect(()=>{load()},[]);
+ const updateSettings=async()=>{setBusy(true);const s=data.settings;const{error}=await supabase.rpc('admin_update_xp_reward_settings',{p_global_enabled:!!s.global_enabled,p_team_enabled:!!s.team_enabled,p_lesson_xp:Number(s.lesson_xp),p_quiz_xp_per_ten_percent:Number(s.quiz_xp_per_ten_percent)});setBusy(false);setMessage(error?error.message:'Reward settings saved.');if(!error)load()};
+ const saveReward=async(e)=>{e.preventDefault();if(busy)return;setBusy(true);const{error}=await supabase.rpc('admin_save_xp_reward',{p_id:form.id||null,p_scope:form.scope,p_team_id:form.scope==='team'?form.team_id:null,p_title:form.title,p_description:form.description,p_xp_required:Number(form.xp_required),p_reward_type:form.reward_type,p_reward_details:form.reward_details,p_active:!!form.active});setBusy(false);if(error){setMessage(error.message);return}setMessage('Reward saved.');setForm(blank);load()};
+ const deleteReward=async(id)=>{if(!window.confirm('Remove this reward? Existing claims will be preserved.'))return;const{error}=await supabase.rpc('admin_delete_xp_reward',{p_id:id});setMessage(error?error.message:'Reward removed.');if(!error)load()};
+ const review=async(id,status)=>{const note=status==='fulfilled'?(window.prompt('Optional fulfillment note')||''):status==='rejected'?(window.prompt('Reason for rejection')||'') : (window.prompt('Approval note (optional)')||'');const{error}=await supabase.rpc('admin_review_xp_reward_claim',{p_claim_id:id,p_status:status,p_note:note});setMessage(error?error.message:'Claim updated.');if(!error)load()};
+ const edit=(r)=>setForm({...r,team_id:r.team_id||'',active:!!r.active});
+ const s=data.settings||{};
+ return <section className="xpr-admin">
+  <header className="xpr-hero"><div><span className="xpr-kicker">XP ECONOMY · SUPER ADMIN</span><h2>Rewards control center</h2><p>Set XP earning rules, enable global or team rewards, and review learner claims.</p></div><span className="xpr-hero-icon">🏆</span></header>
+  {message&&<div className="xpr-message" role="status">{message}<button onClick={()=>setMessage('')}>×</button></div>}
+  <section className="xpr-card"><div className="xpr-card-head"><div><h3>Reward system switches</h3><p>Both systems are off by default. Changes only take effect when saved.</p></div></div>
+   <div className="xpr-switch-grid"><label className="xpr-switch"><span><b>Global rewards</b><small>XP earned across all teams counts toward platform-wide rewards.</small></span><input type="checkbox" checked={!!s.global_enabled} onChange={e=>setData(d=>({...d,settings:{...d.settings,global_enabled:e.target.checked}}))}/></label>
+   <label className="xpr-switch"><span><b>Team-wise rewards</b><small>Each team's XP is tracked separately for its own rewards.</small></span><input type="checkbox" checked={!!s.team_enabled} onChange={e=>setData(d=>({...d,settings:{...d.settings,team_enabled:e.target.checked}}))}/></label></div>
+   <div className="xpr-rules"><label>XP per completed lesson<input type="number" min="0" max="1000" value={s.lesson_xp??20} onChange={e=>setData(d=>({...d,settings:{...d.settings,lesson_xp:e.target.value}}))}/></label><label>XP per 10% quiz score<input type="number" min="0" max="100" value={s.quiz_xp_per_ten_percent??1} onChange={e=>setData(d=>({...d,settings:{...d.settings,quiz_xp_per_ten_percent:e.target.value}}))}/></label><button disabled={busy} onClick={updateSettings}>{busy?'Saving…':'Save XP rules & switches'}</button></div>
+  </section>
+  <div className="xpr-admin-grid"><section className="xpr-card"><div className="xpr-card-head"><div><h3>{form.id?'Edit reward':'Create a reward'}</h3><p>Rewards can be badges, digital rewards, perks, or items fulfilled by your team.</p></div></div>
+   <form className="xpr-form" onSubmit={saveReward}><label>Reward scope<select value={form.scope} onChange={e=>setForm(f=>({...f,scope:e.target.value,team_id:e.target.value==='global'?'':f.team_id}))}><option value="global">Global (all Learning Beyond)</option><option value="team">Team-specific</option></select></label>
+   {form.scope==='team'&&<label>Team<select required value={form.team_id} onChange={e=>setForm(f=>({...f,team_id:e.target.value}))}><option value="">Select a team</option>{teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label>}
+   <label>Reward name<input required minLength="2" maxLength="100" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} placeholder="e.g. Learning Champion"/></label>
+   <label>XP required<input required type="number" min="1" value={form.xp_required} onChange={e=>setForm(f=>({...f,xp_required:e.target.value}))}/></label>
+   <label>Reward type<select value={form.reward_type} onChange={e=>setForm(f=>({...f,reward_type:e.target.value}))}>{['badge','digital','physical','perk','other'].map(x=><option key={x} value={x}>{x[0].toUpperCase()+x.slice(1)}</option>)}</select></label>
+   <label>Description<textarea rows="2" maxLength="1000" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} placeholder="What does the learner earn?"/></label>
+   <label>Fulfillment details<textarea rows="2" maxLength="1000" value={form.reward_details} onChange={e=>setForm(f=>({...f,reward_details:e.target.value}))} placeholder="How will the reward be delivered?"/></label>
+   <label className="xpr-inline-check"><input type="checkbox" checked={!!form.active} onChange={e=>setForm(f=>({...f,active:e.target.checked}))}/> Active and visible when the relevant system is enabled</label>
+   <div className="xpr-form-actions"><button disabled={busy} type="submit">{busy?'Saving…':form.id?'Update reward':'Create reward'}</button>{form.id&&<button type="button" className="xpr-secondary" onClick={()=>setForm(blank)}>Cancel edit</button>}</div></form>
+  </section>
+  <section className="xpr-card"><div className="xpr-card-head"><div><h3>Configured rewards</h3><p>{data.rewards.length} reward rules</p></div><button className="xpr-secondary" onClick={load} disabled={busy}>Refresh</button></div>
+   <div className="xpr-reward-list">{data.rewards.map(r=><article className="xpr-reward-row" key={r.id}><div className="xpr-reward-icon">{r.scope==='global'?'🌍':'👥'}</div><div className="xpr-reward-copy"><b>{r.title}</b><small>{r.scope==='global'?'Global':r.team_name||'Team'} · {r.xp_required.toLocaleString()} XP · {r.reward_type}</small><p>{r.description||'No description provided.'}</p></div><span className={'xpr-pill '+(r.active?'on':'off')}>{r.active?'Active':'Paused'}</span><div className="xpr-row-actions"><button onClick={()=>edit(r)}>Edit</button><button className="danger" onClick={()=>deleteReward(r.id)}>Remove</button></div></article>)}{!data.rewards.length&&<div className="xpr-empty">No rewards configured yet. Create the first reward on the left.</div>}</div>
+  </section></div>
+  <section className="xpr-card"><div className="xpr-card-head"><div><h3>Learner reward claims</h3><p>Review requests and mark real-world or digital rewards fulfilled.</p></div></div>
+   <div className="xpr-claims">{data.claims.map(c=><article key={c.id} className="xpr-claim-row"><div><b>{c.user_name||'Learner'} · {c.reward_title}</b><small>{c.scope==='global'?'Global':c.team_name||'Team'} · {new Date(c.claimed_at).toLocaleString()}</small>{c.review_note&&<p>{c.review_note}</p>}</div><span className={'xpr-pill '+c.status}>{c.status}</span><div className="xpr-row-actions">{c.status==='pending'&&<><button onClick={()=>review(c.id,'approved')}>Approve</button><button className="danger" onClick={()=>review(c.id,'rejected')}>Reject</button></>}{c.status==='approved'&&<button onClick={()=>review(c.id,'fulfilled')}>Mark fulfilled</button>}</div></article>)}{!data.claims.length&&<div className="xpr-empty">No reward claims yet.</div>}</div>
+  </section>
+ </section>
+}
