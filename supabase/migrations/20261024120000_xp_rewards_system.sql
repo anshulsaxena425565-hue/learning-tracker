@@ -66,7 +66,7 @@ as $$
     ), 0)
     +
     coalesce((
-      select sum(round(ta.percentage::numeric / 10)::bigint * s.quiz_xp_per_ten_percent)
+      select sum(round(ta.percentage::numeric / 10)::bigint * s.quiz_xp_per_ten_percent)::bigint
       from public.test_attempts ta
       join public.test_series ts on ts.id = ta.test_id
       cross join public.xp_reward_settings s
