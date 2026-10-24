@@ -240,6 +240,15 @@ begin
 end;
 $$;
 
+revoke all on function public.get_xp_reward_center(uuid) from public, anon;
+revoke all on function public.get_xp_team_leaderboard(uuid) from public, anon;
+revoke all on function public.claim_xp_reward(uuid,uuid) from public, anon;
+revoke all on function public.admin_get_xp_rewards() from public, anon;
+revoke all on function public.admin_update_xp_reward_settings(boolean,boolean,integer,integer) from public, anon;
+revoke all on function public.admin_save_xp_reward(uuid,text,uuid,text,text,integer,text,text,boolean) from public, anon;
+revoke all on function public.admin_delete_xp_reward(uuid) from public, anon;
+revoke all on function public.admin_review_xp_reward_claim(uuid,text,text) from public, anon;
+
 grant execute on function public.get_xp_reward_center(uuid) to authenticated;
 grant execute on function public.get_xp_team_leaderboard(uuid) to authenticated;
 grant execute on function public.claim_xp_reward(uuid,uuid) to authenticated;
