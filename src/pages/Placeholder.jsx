@@ -1,6 +1,5 @@
 import{useEffect,useMemo,useState}from'react';import{supabase}from'../lib/supabase';import{Coins,Lightning,ChartLineUp,SlidersHorizontal,FloppyDisk,ArrowUpRight,Sparkle,ShieldCheck,CurrencyInr}from'@phosphor-icons/react';
 import AdminRewards from './AdminRewards';
-import AdminRewards from './AdminRewards';
 
 const TABS=[['overview','Overview'],['users','Users'],['teams','Teams'],['admins','Admins'],['credits','Credits'],['rewards','XP Rewards']];
 const fmt=v=>v?new Date(v).toLocaleString(undefined,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
