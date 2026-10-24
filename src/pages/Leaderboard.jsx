@@ -16,7 +16,6 @@ export default function Leaderboard(){
  const[period,setPeriod]=useState('month'),[courseId,setCourseId]=useState('all'),[metric,setMetric]=useState('xp'),[tab,setTab]=useState('overview'),[quizStats,setQuizStats]=useState({tests:[],attempts:[],loading:true}),[selected,setSelected]=useState(null),[xpByUser,setXpByUser]=useState({});
  const courseList=useMemo(()=>courses||[],[courses]);
  useEffect(()=>{let alive=true;if(!team?.id){setXpByUser({});return()=>{alive=false}}supabase.rpc('get_xp_team_leaderboard',{p_team_id:team.id}).then(({data,error})=>{if(!alive)return;if(error){console.warn('Unable to load authoritative XP leaderboard',error.message);return}const next={};(data||[]).forEach(x=>{next[x.user_id]=Number(x.xp||0)});setXpByUser(next)});return()=>{alive=false}},[team?.id]);
- useEffect(()=>{let alive=true;if(!team?.id){setXpByUser({});return()=>{alive=false}}supabase.rpc('get_xp_team_leaderboard',{p_team_id:team.id}).then(({data,error})=>{if(!alive)return;if(error){console.warn('Unable to load authoritative XP leaderboard',error.message);return}const next={};(data||[]).forEach(x=>{next[x.user_id]=Number(x.xp||0)});setXpByUser(next)});return()=>{alive=false}},[team?.id]);
  const selectedCourse=courseId==='all'?null:courseList.find(c=>c.id===courseId)||null;
  const courseVideoIds=useMemo(()=>new Set(selectedCourse?(videos[selectedCourse.id]||[]).map(v=>v.id):Object.values(videos).flat().map(v=>v.id)),[selectedCourse,videos]);
  const totalLessons=courseVideoIds.size;
