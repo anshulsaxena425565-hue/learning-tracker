@@ -3,7 +3,7 @@ import { Lifebuoy, X, PaperPlaneTilt, EnvelopeSimple } from '@phosphor-icons/rea
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTeam } from '../context/TeamContext'
-import './helpdesk.css'
+import './layout/helpdesk.css'
 
 export default function HelpDesk() {
   const { user, dataUser } = useAuth()
