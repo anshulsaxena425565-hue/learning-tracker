@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useTeam } from '../../context/TeamContext'
 import { supabase } from '../../lib/supabase'
 import { useCredits } from '../../context/CreditsContext'
+import HelpDesk from '../HelpDesk'
 import { Coins, MagnifyingGlass, SquaresFour, BookOpenText, UsersThree, ChatsCircle, TrendUp, UserCircle, ShieldCheck, CaretLeft, CaretRight, Plus, SignOut, List, X } from '@phosphor-icons/react'
 
 const items = [
@@ -33,5 +34,6 @@ export default function AppShell({ children }) {
     {open && <div className="mobile-nav">{items.map(([path, label, icon]) => <NavLink to={path} onClick={() => setOpen(false)} key={path}><Icon name={icon} />{label}</NavLink>)}{platformAdmin && <NavLink to="/app/admin" onClick={() => setOpen(false)}><Icon name="shield" />Admin</NavLink>}</div>}
     <header className="global-topbar"><button className="mobile-menu-btn" onClick={() => setOpen(value => !value)} aria-label={open ? 'Close navigation' : 'Open navigation'}><Icon name={open ? 'close' : 'list'} size={21} /></button><div className="global-search"><MagnifyingGlass size={18} /><input placeholder="Search LearningBeyond…" /></div><div className="global-topbar-actions"><button className="credit-wallet" onClick={() => go('/app/credits')}><Coins size={18} weight="fill" /><span><small>CREDITS</small><b>{credits.toLocaleString()}</b></span></button><button className="add-credit-btn" onClick={() => go('/app/credits')}><Plus size={16} weight="bold" /> Add Credits</button></div></header>
     <main className="content">{children}</main>
+    <HelpDesk />
   </div>
 }
